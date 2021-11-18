@@ -36,6 +36,7 @@ class PostnordClientTest extends TestCase
             'streetName' => 'Finlaysoninkuja',
             'streetNumber' => '19',
             'numberOfServicePoints'=> 1,
+            'typeId' => 38 // TODO, figure out what this should be. 38 was found from a response without any type restrictions
         ];
 
         $results = $this->client->getServicePointsByAddress($params);
