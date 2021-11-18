@@ -4,8 +4,6 @@ namespace Tests\Postnord;
 use PHPUnit\Framework\TestCase;
 use Vilkas\Postnord\Client\PostnordClient;
 
-use function PHPSTORM_META\map;
-
 class PostnordClientTest extends TestCase
 {
     /**
