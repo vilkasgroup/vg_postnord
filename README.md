@@ -4,10 +4,12 @@ TODO
 
 # Running tests
 
-Tests require apikey and host name to be defined
+Tests require apikey to be defined.
 
 ```
-POSTNORD_HOST=atapi2.postnord.com POSTNORD_APIKEY=asdf php vendor/bin/phpunit tests
+POSTNORD_APIKEY=asdf composer run-script test
 ```
+
+You can also define `POSTNORD_HOST` if left out it will default to `atapi2.postnord.com`
 
 get your apikey from: https://atdeveloper.postnord.com/signup

@@ -15,10 +15,12 @@ class PostnordClientTest extends TestCase
      */
     protected function setUp(): void
     {
-        if (!getenv('POSTNORD_HOST') || !getenv('POSTNORD_APIKEY')) {
+        $host = getenv('POSTNORD_HOST') ?: 'atapi2.postnord.com';
+
+        if (!$host || !getenv('POSTNORD_APIKEY')) {
             $this->markTestSkipped('POSTNORD_HOST and or POSTNORD_APIKEY environment variables are not set');
         }
-        $this->client = new PostnordClient(getenv('POSTNORD_HOST'), getenv('POSTNORD_APIKEY'));
+        $this->client = new PostnordClient($host, getenv('POSTNORD_APIKEY'));
     }
 
     /**
