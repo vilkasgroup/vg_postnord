@@ -35,7 +35,6 @@ class PostnordClientTest extends TestCase
             'postalCode' => '33210',
             'streetName' => 'Finlaysoninkuja',
             'streetNumber' => '19',
-            'srId' => 'EPSG:4326', // hmm, what is this...
             'numberOfServicePoints'=> 1,
         ];
 
@@ -48,6 +47,9 @@ class PostnordClientTest extends TestCase
 
         // check the closest servicePoint country, it should be the same as above
         $firstPoint = $results['servicePoints'][0];
+
+        var_dump($firstPoint);
+
         $this->assertEquals($params['countryCode'], $firstPoint['visitingAddress']['countryCode']);
     }
 
@@ -60,7 +62,6 @@ class PostnordClientTest extends TestCase
             'postalCode' => '99999',
             'streetName' => 'eivarmastiole',
             'streetNumber' => '19',
-            'srId' => 'EPSG:4326', // hmm, what is this...
             'numberOfServicePoints'=> 1,
         ];
 

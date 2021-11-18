@@ -66,6 +66,7 @@ class PostnordClient
             'responseFilter' => 'public', // probably something that we always want
             //'typeId' => 25, // TODO: what is this magic number? cannot find any information in dev documentation
             'numberOfServicePoints' => 100, // lets try to keep this high enough by default
+            'srId' => 'EPSG:4326', // https://en.wikipedia.org/wiki/World_Geodetic_System
         ];
         $options = $this->mergeOptions($defaults, $options);
 
