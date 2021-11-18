@@ -19,6 +19,13 @@ class PostnordClient
      */
     protected $apikey;
 
+    /**
+     * hostname for http requests
+     * @var string
+     */
+    protected $host;
+
+
     public function __construct(string $host, string $apikey)
     {
         if (empty($host) || empty($apikey)) {
@@ -38,7 +45,7 @@ class PostnordClient
     /**
      * Build url with the hostname and endpoint and possible getParameters
      */
-    public function buildUrl($endpoint)
+    public function buildUrl(string $endpoint): string
     {
         $template = "{host}{path}";
         $data = [
@@ -58,7 +65,7 @@ class PostnordClient
      *
      *
      */
-    public function getServicePointsByAddress($options): array
+    public function getServicePointsByAddress(array $options): array
     {
         $defaults = [
             'returnType' => 'json',
