@@ -54,6 +54,10 @@ class PostnordClientTest extends TestCase
         $this->assertEquals($params['countryCode'], $firstPoint['visitingAddress']['countryCode']);
     }
 
+    /**
+     * Test "empty" result for service points
+     */
+    /*
     public function testGetServicePointsByAddressNoPoints(): void
     {
         $params = [
@@ -68,5 +72,41 @@ class PostnordClientTest extends TestCase
 
         $results = $this->client->getServicePointsByAddress($params);
         $this->assertArrayNotHasKey('servicePoints', $results);
+    }
+    */
+
+    public function testGetBasicServiceCodes(): void
+    {
+        $params = [];
+
+        $results = $this->client->getBasicServiceCodes($params);
+        $this->assertArrayHasKey('data', $results);
+    }
+
+    public function testGetAdditionalServiceCodes(): void
+    {
+        $params = [];
+
+        $results = $this->client->getAdditionalServiceCodes($params);
+        $this->assertArrayHasKey('data', $results);
+    }
+
+    public function testGetValidCombinationsOfServiceCodes(): void
+    {
+        $params = [];
+
+        $results = $this->client->getValidCombinationsOfServiceCodes($params);
+        $this->assertArrayHasKey('data', $results);
+    }
+
+
+    public function testGetSurchargeHealthCheck(): void
+    {
+        $this->markTestSkipped('This errors out on their end all the time');
+        $params = [];
+
+        $results = $this->client->getSurchargeHealthCheck($params);
+        $this->assertArrayHasKey('status', $results);
+        $this->assertEquals('UP', $results['status']);
     }
 }
