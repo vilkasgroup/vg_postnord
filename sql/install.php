@@ -1,5 +1,6 @@
 <?php
-$sql = array();
+
+$sql = [];
 
 $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'vg_postnord` (
     `id_vg_postnord` int(11) NOT NULL AUTO_INCREMENT,

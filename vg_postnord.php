@@ -1,4 +1,5 @@
 <?php
+
 if (!defined('_PS_VERSION_')) {
     exit;
 }
@@ -15,7 +16,7 @@ class Vg_postnord extends Module
         $this->author = 'Vilkas Group Oy';
         $this->need_instance = 0;
 
-        /**
+        /*
          * Set $this->bootstrap to true if your module is compliant with bootstrap (PrestaShop 1.6)
          */
         $this->bootstrap = true;
@@ -25,7 +26,7 @@ class Vg_postnord extends Module
         $this->displayName = $this->l('Postnord');
         $this->description = $this->l('Postnord shipping for your Prestashop');
 
-        $this->ps_versions_compliancy = array('min' => '1.7', 'max' => _PS_VERSION_);
+        $this->ps_versions_compliancy = ['min' => '1.7', 'max' => _PS_VERSION_];
     }
 
     /**
@@ -58,18 +59,18 @@ class Vg_postnord extends Module
      */
     public function getContent()
     {
-        /**
+        /*
          * If values have been submitted in the form, process.
          */
-        if (((bool)Tools::isSubmit('submitVg_postnordModule')) == true) {
+        if (((bool) Tools::isSubmit('submitVg_postnordModule')) == true) {
             $this->postProcess();
         }
 
         $this->context->smarty->assign('module_dir', $this->_path);
 
-        $output = $this->context->smarty->fetch($this->local_path.'views/templates/admin/configure.tpl');
+        $output = $this->context->smarty->fetch($this->local_path . 'views/templates/admin/configure.tpl');
 
-        return $output.$this->renderForm();
+        return $output . $this->renderForm();
     }
 
     /**
@@ -88,16 +89,16 @@ class Vg_postnord extends Module
         $helper->identifier = $this->identifier;
         $helper->submit_action = 'submitVg_postnordModule';
         $helper->currentIndex = $this->context->link->getAdminLink('AdminModules', false)
-            .'&configure='.$this->name.'&tab_module='.$this->tab.'&module_name='.$this->name;
+            . '&configure=' . $this->name . '&tab_module=' . $this->tab . '&module_name=' . $this->name;
         $helper->token = Tools::getAdminTokenLite('AdminModules');
 
-        $helper->tpl_vars = array(
+        $helper->tpl_vars = [
             'fields_value' => $this->getConfigFormValues(), /* Add values for your inputs */
             'languages' => $this->context->controller->getLanguages(),
             'id_language' => $this->context->language->id,
-        );
+        ];
 
-        return $helper->generateForm(array($this->getConfigForm()));
+        return $helper->generateForm([$this->getConfigForm()]);
     }
 
     /**
@@ -105,50 +106,50 @@ class Vg_postnord extends Module
      */
     protected function getConfigForm()
     {
-        return array(
-            'form' => array(
-                'legend' => array(
+        return [
+            'form' => [
+                'legend' => [
                 'title' => $this->l('Settings'),
                 'icon' => 'icon-cogs',
-                ),
-                'input' => array(
-                    array(
+                ],
+                'input' => [
+                    [
                         'type' => 'switch',
                         'label' => $this->l('Debug mode'),
                         'name' => 'VG_POSTNORD_DEBUG_MODE',
                         'is_bool' => true,
                         'desc' => $this->l('Write more debug logs'),
-                        'values' => array(
-                            array(
+                        'values' => [
+                            [
                                 'id' => 'active_on',
                                 'value' => true,
-                                'label' => $this->l('Enabled')
-                            ),
-                            array(
+                                'label' => $this->l('Enabled'),
+                            ],
+                            [
                                 'id' => 'active_off',
                                 'value' => false,
-                                'label' => $this->l('Disabled')
-                            )
-                        ),
-                    ),
-                    array(
+                                'label' => $this->l('Disabled'),
+                            ],
+                        ],
+                    ],
+                    [
                         'type' => 'text',
                         'desc' => $this->l('Get this infromation from Postnord. Usually something like: atapi2.postnord.com'),
                         'name' => 'VG_POSTNORD_HOST',
                         'label' => $this->l('Postnord hostname'),
-                    ),
-                    array(
+                    ],
+                    [
                         'type' => 'text',
                         'name' => 'VG_POSTNORD_APIKEY',
                         'desc' => $this->l('Get this information from Postnord. Something like abc123123123123abc123'),
                         'label' => $this->l('Postnord apikey'),
-                    ),
-                ),
-                'submit' => array(
+                    ],
+                ],
+                'submit' => [
                     'title' => $this->l('Save'),
-                ),
-            ),
-        );
+                ],
+            ],
+        ];
     }
 
     /**
@@ -156,11 +157,11 @@ class Vg_postnord extends Module
      */
     protected function getConfigFormValues()
     {
-        return array(
+        return [
             'VG_POSTNORD_DEBUG_MODE' => Configuration::get('VG_POSTNORD_DEBUG_MODE'),
             'VG_POSTNORD_HOST' => Configuration::get('VG_POSTNORD_HOST'),
             'VG_POSTNORD_APIKEY' => Configuration::get('VG_POSTNORD_APIKEY'),
-        );
+        ];
     }
 
     /**
@@ -176,13 +177,13 @@ class Vg_postnord extends Module
     }
 
     /**
-    * Add the CSS & JavaScript files you want to be loaded in the BO.
-    */
+     * Add the CSS & JavaScript files you want to be loaded in the BO.
+     */
     public function hookBackOfficeHeader()
     {
         if (Tools::getValue('module_name') == $this->name) {
-            $this->context->controller->addJS($this->_path.'views/js/back.js');
-            $this->context->controller->addCSS($this->_path.'views/css/back.css');
+            $this->context->controller->addJS($this->_path . 'views/js/back.js');
+            $this->context->controller->addCSS($this->_path . 'views/css/back.css');
         }
     }
 
@@ -191,8 +192,8 @@ class Vg_postnord extends Module
      */
     public function hookHeader()
     {
-        $this->context->controller->addJS($this->_path.'/views/js/front.js');
-        $this->context->controller->addCSS($this->_path.'/views/css/front.css');
+        $this->context->controller->addJS($this->_path . '/views/js/front.js');
+        $this->context->controller->addCSS($this->_path . '/views/css/front.css');
     }
 
     /**

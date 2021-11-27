@@ -1,4 +1,7 @@
-<?php declare(strict_types = 1);
+<?php
+
+declare(strict_types=1);
+
 namespace Vilkas\Postnord\Client;
 
 use Exception;
@@ -9,31 +12,33 @@ class PostnordClient
 {
     /**
      * Client for making HTTP-requests
+     *
      * @var HttpClient
      */
     protected $httpClient;
 
     /**
      * apikey
+     *
      * @var string
      */
     protected $apikey;
 
     /**
      * hostname for http requests
+     *
      * @var string
      */
     protected $host;
 
-
     public function __construct(string $host, string $apikey)
     {
         if (empty($host) || empty($apikey)) {
-            throw new Exception("Missing host or apikey");
+            throw new Exception('Missing host or apikey');
         }
 
-        if (substr($host, 0, 4) !== "http") {
-            $host = 'https://'.$host;
+        if (substr($host, 0, 4) !== 'http') {
+            $host = 'https://' . $host;
         }
 
         $this->host = $host;
@@ -47,7 +52,7 @@ class PostnordClient
      */
     public function buildUrl(string $endpoint): string
     {
-        $template = "{host}{path}";
+        $template = '{host}{path}';
         $data = [
             '{host}' => $this->host,
             '{path}' => $endpoint,
@@ -84,6 +89,7 @@ class PostnordClient
                 // TODO: log the error
                 var_dump($httpLogs . $content);
                 throw new Exception('Error while calling service http dump: ' . $httpLogs . $content);
+
                 return [];
             }
             $content = $response->getContent();
@@ -107,8 +113,6 @@ class PostnordClient
      * Get service points by address
      *
      * https://guides.atdeveloper.postnord.com/#747cfedf-fa97-4145-8a3e-5031c38416f9
-     *
-     *
      */
     public function getServicePointsByAddress(array $parameters): array
     {
@@ -128,6 +132,7 @@ class PostnordClient
         } catch (Exception $e) {
             // TODO log the error and do something sane
             throw $e;
+
             return [];
         }
 
@@ -154,6 +159,7 @@ class PostnordClient
         } catch (Exception $e) {
             // TODO log the error and do something sane
             throw $e;
+
             return [];
         }
 
@@ -176,6 +182,7 @@ class PostnordClient
         } catch (Exception $e) {
             // TODO log the error and do something sane
             throw $e;
+
             return [];
         }
 
@@ -198,6 +205,7 @@ class PostnordClient
         } catch (Exception $e) {
             // TODO log the error and do something sane
             throw $e;
+
             return [];
         }
 
@@ -220,6 +228,7 @@ class PostnordClient
         } catch (Exception $e) {
             // TODO log the error and do something sane
             throw $e;
+
             return [];
         }
 
@@ -237,6 +246,7 @@ class PostnordClient
         if (!array_key_exists('apikey', $defaults)) {
             $defaults['apikey'] = $this->apikey;
         }
+
         return array_replace($defaults, $options);
     }
 }

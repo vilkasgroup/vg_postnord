@@ -1,4 +1,7 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
+
 namespace Tests\Postnord;
 
 use PHPUnit\Framework\TestCase;
@@ -10,6 +13,7 @@ class PostnordClientTest extends TestCase
      * @var PostnordClient
      */
     protected $client;
+
     /**
      * Skip everything if environment variables are not available and the client cannot be setup
      */
@@ -35,8 +39,8 @@ class PostnordClientTest extends TestCase
             'postalCode' => '33210',
             'streetName' => 'Finlaysoninkuja',
             'streetNumber' => '19',
-            'numberOfServicePoints'=> 1,
-            'typeId' => 38 // TODO, figure out what this should be. 38 was found from a response without any type restrictions
+            'numberOfServicePoints' => 1,
+            'typeId' => 38, // TODO, figure out what this should be. 38 was found from a response without any type restrictions
         ];
 
         $results = $this->client->getServicePointsByAddress($params);
@@ -98,7 +102,6 @@ class PostnordClientTest extends TestCase
         $results = $this->client->getValidCombinationsOfServiceCodes($params);
         $this->assertArrayHasKey('data', $results);
     }
-
 
     public function testGetSurchargeHealthCheck(): void
     {
