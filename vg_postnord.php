@@ -70,11 +70,11 @@ class Vg_postnord extends Module
         if (((bool) Tools::isSubmit('submitVg_postnordModule')) == true) {
             if ($this->postProcess()) {
                 $message = $this->displayConfirmation(
-                    $this->trans("Settings saved successfully.", [], "Modules.Vgpostnord.Settings")
+                    $this->trans("Settings saved successfully.", [], "Modules.Vgpostnord.Admin")
                 );
             } else {
                 $message = $this->displayError(
-                    $this->trans("Could not save settings.", [], "Modules.Vgpostnord.Settings")
+                    $this->trans("Could not save settings.", [], "Modules.Vgpostnord.Admin")
                 );
             }
             $this->postProcess();
