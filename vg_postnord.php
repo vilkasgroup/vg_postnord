@@ -3,7 +3,7 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
-class Vg_postnord extends CarrierModule
+class Vg_postnord extends Module
 {
     protected $config_form = false;
 
@@ -34,27 +34,21 @@ class Vg_postnord extends CarrierModule
      */
     public function install()
     {
-        if (extension_loaded('curl') == false) {
-            $this->_errors[] = $this->l('You have to enable the cURL extension on your server to install this module');
-            return false;
-        }
-
-        $carrier = $this->addCarrier();
-        $this->addZones($carrier);
-        $this->addGroups($carrier);
-        $this->addRanges($carrier);
-        Configuration::updateValue('VG_POSTNORD_LIVE_MODE', false);
+        Configuration::updateValue('VG_POSTNORD_DEBUG_MODE', false);
+        Configuration::updateValue('VG_POSTNORD_HOST', '');
+        Configuration::updateValue('VG_POSTNORD_APIKEY', '');
 
         return parent::install() &&
             $this->registerHook('header') &&
             $this->registerHook('backOfficeHeader') &&
-            $this->registerHook('updateCarrier') &&
             $this->registerHook('displayCarrierExtraContent');
     }
 
     public function uninstall()
     {
-        Configuration::deleteByName('VG_POSTNORD_LIVE_MODE');
+        Configuration::deleteByName('VG_POSTNORD_DEBUG_MODE');
+        Configuration::deleteByName('VG_POSTNORD_HOST');
+        Configuration::deleteByName('VG_POSTNORD_APIKEY');
 
         return parent::uninstall();
     }
@@ -120,10 +114,10 @@ class Vg_postnord extends CarrierModule
                 'input' => array(
                     array(
                         'type' => 'switch',
-                        'label' => $this->l('Live mode'),
-                        'name' => 'VG_POSTNORD_LIVE_MODE',
+                        'label' => $this->l('Debug mode'),
+                        'name' => 'VG_POSTNORD_DEBUG_MODE',
                         'is_bool' => true,
-                        'desc' => $this->l('Use this module in live mode'),
+                        'desc' => $this->l('Write more debug logs'),
                         'values' => array(
                             array(
                                 'id' => 'active_on',
@@ -138,17 +132,16 @@ class Vg_postnord extends CarrierModule
                         ),
                     ),
                     array(
-                        'col' => 3,
                         'type' => 'text',
-                        'prefix' => '<i class="icon icon-envelope"></i>',
-                        'desc' => $this->l('Enter a valid email address'),
-                        'name' => 'VG_POSTNORD_ACCOUNT_EMAIL',
-                        'label' => $this->l('Email'),
+                        'desc' => $this->l('Get this infromation from Postnord. Usually something like: atapi2.postnord.com'),
+                        'name' => 'VG_POSTNORD_HOST',
+                        'label' => $this->l('Postnord hostname'),
                     ),
                     array(
-                        'type' => 'password',
-                        'name' => 'VG_POSTNORD_ACCOUNT_PASSWORD',
-                        'label' => $this->l('Password'),
+                        'type' => 'text',
+                        'name' => 'VG_POSTNORD_APIKEY',
+                        'desc' => $this->l('Get this information from Postnord. Something like abc123123123123abc123'),
+                        'label' => $this->l('Postnord apikey'),
                     ),
                 ),
                 'submit' => array(
@@ -164,9 +157,9 @@ class Vg_postnord extends CarrierModule
     protected function getConfigFormValues()
     {
         return array(
-            'VG_POSTNORD_LIVE_MODE' => Configuration::get('VG_POSTNORD_LIVE_MODE', true),
-            'VG_POSTNORD_ACCOUNT_EMAIL' => Configuration::get('VG_POSTNORD_ACCOUNT_EMAIL', 'contact@prestashop.com'),
-            'VG_POSTNORD_ACCOUNT_PASSWORD' => Configuration::get('VG_POSTNORD_ACCOUNT_PASSWORD', null),
+            'VG_POSTNORD_DEBUG_MODE' => Configuration::get('VG_POSTNORD_DEBUG_MODE'),
+            'VG_POSTNORD_HOST' => Configuration::get('VG_POSTNORD_HOST'),
+            'VG_POSTNORD_APIKEY' => Configuration::get('VG_POSTNORD_APIKEY'),
         );
     }
 
@@ -179,89 +172,6 @@ class Vg_postnord extends CarrierModule
 
         foreach (array_keys($form_values) as $key) {
             Configuration::updateValue($key, Tools::getValue($key));
-        }
-    }
-
-    public function getOrderShippingCost($params, $shipping_cost)
-    {
-        if (Context::getContext()->customer->logged == true) {
-            $id_address_delivery = Context::getContext()->cart->id_address_delivery;
-            $address = new Address($id_address_delivery);
-
-            /**
-             * Send the details through the API
-             * Return the price sent by the API
-             */
-            return 10;
-        }
-
-        return $shipping_cost;
-    }
-
-    public function getOrderShippingCostExternal($params)
-    {
-        return true;
-    }
-
-    protected function addCarrier()
-    {
-        $carrier = new Carrier();
-
-        $carrier->name = $this->l('My super carrier');
-        $carrier->is_module = true;
-        $carrier->active = 1;
-        $carrier->range_behavior = 1;
-        $carrier->need_range = 1;
-        $carrier->shipping_external = true;
-        $carrier->range_behavior = 0;
-        $carrier->external_module_name = $this->name;
-        $carrier->shipping_method = 2;
-
-        foreach (Language::getLanguages() as $lang) {
-            $carrier->delay[$lang['id_lang']] = $this->l('Super fast delivery');
-        }
-
-        if ($carrier->add() == true) {
-            @copy(dirname(__FILE__).'/views/img/carrier_image.jpg', _PS_SHIP_IMG_DIR_.'/'.(int)$carrier->id.'.jpg');
-            Configuration::updateValue('MYSHIPPINGMODULE_CARRIER_ID', (int)$carrier->id);
-            return $carrier;
-        }
-
-        return false;
-    }
-
-    protected function addGroups($carrier)
-    {
-        $groups_ids = array();
-        $groups = Group::getGroups(Context::getContext()->language->id);
-        foreach ($groups as $group) {
-            $groups_ids[] = $group['id_group'];
-        }
-
-        $carrier->setGroups($groups_ids);
-    }
-
-    protected function addRanges($carrier)
-    {
-        $range_price = new RangePrice();
-        $range_price->id_carrier = $carrier->id;
-        $range_price->delimiter1 = '0';
-        $range_price->delimiter2 = '10000';
-        $range_price->add();
-
-        $range_weight = new RangeWeight();
-        $range_weight->id_carrier = $carrier->id;
-        $range_weight->delimiter1 = '0';
-        $range_weight->delimiter2 = '10000';
-        $range_weight->add();
-    }
-
-    protected function addZones($carrier)
-    {
-        $zones = Zone::getZones();
-
-        foreach ($zones as $zone) {
-            $carrier->addZone($zone['id_zone']);
         }
     }
 
@@ -285,14 +195,14 @@ class Vg_postnord extends CarrierModule
         $this->context->controller->addCSS($this->_path.'/views/css/front.css');
     }
 
-    public function hookUpdateCarrier($params)
-    {
-        /**
-         * Not needed since 1.5
-         * You can identify the carrier by the id_reference
-        */
-    }
-
+    /**
+     * FRONT OFFICE / Carrier selection
+     *
+     * If the selected carrier is marked as a postnord carrier that has pickup locations show a selection screen of
+     * pickup point to the customer
+     *
+     * The pickup point will be saved as a ajax request to be used for label creation later
+     */
     public function hookDisplayCarrierExtraContent()
     {
         /* Place your code here. */
