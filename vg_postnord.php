@@ -23,10 +23,15 @@ class Vg_postnord extends Module
 
         parent::__construct();
 
-        $this->displayName = $this->l('Postnord');
-        $this->description = $this->l('Postnord shipping for your Prestashop');
+        $this->displayName = $this->trans("Postnord", [], "Modules.Vgpostnord.Admin");
+        $this->description = $this->trans("Postnord shipping for your Prestashop", [], "Modules.Vgpostnord.Admin");
 
         $this->ps_versions_compliancy = ['min' => '1.7', 'max' => _PS_VERSION_];
+    }
+
+    public function isUsingNewTranslationSystem(): bool
+    {
+        return true;
     }
 
     /**
@@ -63,6 +68,15 @@ class Vg_postnord extends Module
          * If values have been submitted in the form, process.
          */
         if (((bool) Tools::isSubmit('submitVg_postnordModule')) == true) {
+            if ($this->postProcess()) {
+                $message = $this->displayConfirmation(
+                    $this->trans("Settings saved successfully.", [], "Modules.Vgpostnord.Settings")
+                );
+            } else {
+                $message = $this->displayError(
+                    $this->trans("Could not save settings.", [], "Modules.Vgpostnord.Settings")
+                );
+            }
             $this->postProcess();
         }
 
@@ -70,7 +84,7 @@ class Vg_postnord extends Module
 
         $output = $this->context->smarty->fetch($this->local_path . 'views/templates/admin/configure.tpl');
 
-        return $output . $this->renderForm();
+        return $message . $output . $this->renderForm();
     }
 
     /**
@@ -109,44 +123,44 @@ class Vg_postnord extends Module
         return [
             'form' => [
                 'legend' => [
-                'title' => $this->l('Settings'),
+                'title' => $this->trans("Settings", [], "Modules.Vgpostnord.Admin"),
                 'icon' => 'icon-cogs',
                 ],
                 'input' => [
                     [
                         'type' => 'switch',
-                        'label' => $this->l('Debug mode'),
                         'name' => 'VG_POSTNORD_DEBUG_MODE',
+                        'label' => $this->trans("Debug mode", [], "Modules.Vgpostnord.Admin"),
+                        'desc' => $this->trans("Write more debug logs", [], "Modules.Vgpostnord.Admin"),
                         'is_bool' => true,
-                        'desc' => $this->l('Write more debug logs'),
                         'values' => [
                             [
                                 'id' => 'active_on',
                                 'value' => true,
-                                'label' => $this->l('Enabled'),
+                                'label' => $this->trans("Enabled", [], "Modules.Vgpostnord.Admin"),
                             ],
                             [
                                 'id' => 'active_off',
                                 'value' => false,
-                                'label' => $this->l('Disabled'),
+                                'label' => $this->trans("Disabled", [], "Modules.Vgpostnord.Admin"),
                             ],
                         ],
                     ],
                     [
                         'type' => 'text',
-                        'desc' => $this->l('Get this infromation from Postnord. Usually something like: atapi2.postnord.com'),
                         'name' => 'VG_POSTNORD_HOST',
-                        'label' => $this->l('Postnord hostname'),
+                        'label' => $this->trans("Postnord hostname", [], "Modules.Vgpostnord.Admin"),
+                        'desc' => $this->trans("Get this infromation from Postnord. Usually something like: atapi2.postnord.com", [], "Modules.Vgpostnord.Admin"),
                     ],
                     [
                         'type' => 'text',
                         'name' => 'VG_POSTNORD_APIKEY',
-                        'desc' => $this->l('Get this information from Postnord. Something like abc123123123123abc123'),
-                        'label' => $this->l('Postnord apikey'),
+                        'label' => $this->trans("Postnord apikey", [], "Modules.Vgpostnord.Admin"),
+                        'desc' => $this->trans("Get this information from Postnord. Something like abc123123123123abc123", [], "Modules.Vgpostnord.Admin"),
                     ],
                 ],
                 'submit' => [
-                    'title' => $this->l('Save'),
+                    'title' => $this->trans("Save", [], "Modules.Vgpostnord.Admin"),
                 ],
             ],
         ];
@@ -171,9 +185,13 @@ class Vg_postnord extends Module
     {
         $form_values = $this->getConfigFormValues();
 
+        $result = true;
+
         foreach (array_keys($form_values) as $key) {
-            Configuration::updateValue($key, Tools::getValue($key));
+            $result &= Configuration::updateValue($key, Tools::getValue($key));
         }
+
+        return $result;
     }
 
     /**
