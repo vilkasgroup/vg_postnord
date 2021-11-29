@@ -155,7 +155,7 @@ class PostnordClient
         $options['query'] = $parameters;
 
         try {
-            $response = $this->doRequest('GET', '/rest/shipment/v3/edi/servicecodes/adnlservicecodes/combinations', $options);
+            $response = $this->doRequest('GET', '/rest/shipment/v3/edi/servicecodes', $options);
         } catch (Exception $e) {
             // TODO log the error and do something sane
             throw $e;
@@ -164,6 +164,23 @@ class PostnordClient
         }
 
         return $response;
+    }
+
+    /**
+     * Helper for BasicServiceCodes that fetches only the services for one issuerCountry
+     */
+    public function getBasicServiceCodesFilterByIssuerCountryCode(string $countryCode): array
+    {
+        $rawData = $this->getBasicServiceCodes();
+        $all = $rawData['data'];
+
+        foreach ($all as $oneIssuer) {
+            if($oneIssuer['issuerCountryCode'] == $countryCode) {
+                return $oneIssuer['serviceCodeDetails'];
+            }
+        }
+
+        return [];
     }
 
     /**
@@ -201,7 +218,7 @@ class PostnordClient
         $options['query'] = $parameters;
 
         try {
-            $response = $this->doRequest('GET', '/rest/shipment/v3/edi/servicecodes', $options);
+            $response = $this->doRequest('GET', '/rest/shipment/v3/edi/servicecodes/adnlservicecodes/combinations', $options);
         } catch (Exception $e) {
             // TODO log the error and do something sane
             throw $e;

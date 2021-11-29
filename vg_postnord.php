@@ -45,6 +45,8 @@ class Vg_postnord extends Module
         Configuration::updateValue('VG_POSTNORD_DEBUG_MODE', false);
         Configuration::updateValue('VG_POSTNORD_HOST', '');
         Configuration::updateValue('VG_POSTNORD_APIKEY', '');
+        Configuration::updateValue('VG_POSTNORD_ISSUER_COUNTRY', '');
+        Configuration::updateValue('VG_POSTNORD_CARRIER_SETTINGS', '[]');
 
         $this->installSQL();
 
@@ -59,6 +61,8 @@ class Vg_postnord extends Module
         Configuration::deleteByName('VG_POSTNORD_DEBUG_MODE');
         Configuration::deleteByName('VG_POSTNORD_HOST');
         Configuration::deleteByName('VG_POSTNORD_APIKEY');
+        Configuration::deleteByName('VG_POSTNORD_ISSUER_COUNTRY');
+        Configuration::deleteByName('VG_POSTNORD_CARRIER_SETTINGS');
 
         $this->uninstallSQL();
 
@@ -162,7 +166,7 @@ class Vg_postnord extends Module
         $helper->token = Tools::getAdminTokenLite('AdminModules');
 
         $helper->tpl_vars = [
-            'fields_value' => $this->getConfigFormValues(), /* Add values for your inputs */
+            'fields_value' => $this->getAllFormValues(), /* Add values for your inputs */
             'languages' => $this->context->controller->getLanguages(),
             'id_language' => $this->context->language->id,
         ];
@@ -177,6 +181,10 @@ class Vg_postnord extends Module
             'carriers' => $this->getCarrierConfigForm(),
         ];
     }
+    protected function getAllFormValues() {
+        return array_merge($this->getConfigFormValues(), $this->getCarrierConfigFormValues());
+    }
+
 
     /**
      * Create the structure of your form.
@@ -210,6 +218,24 @@ class Vg_postnord extends Module
                         ],
                     ],
                     [
+                        'type' => 'select',
+                        'name' => 'VG_POSTNORD_ISSUER_COUNTRY',
+                        'label' => $this->trans("Postnord issuer Country", [], "Modules.Vgpostnord.Admin"),
+                        'options' => [
+                            'query' => [
+                                ['id' => 'FI', 'name' => 'FI'],
+                                ['id' => 'AX', 'name' => 'AX'],
+                                ['id' => 'SE', 'name' => 'SE'],
+                                ['id' => 'DK', 'name' => 'DK'],
+                                ['id' => 'NO', 'name' => 'NO'],
+                            ],
+                            'id' => 'id',
+                            'name' => 'name',
+                            'default' => null,
+                        ],
+                        'desc' => $this->trans("Get this infromation from Postnord.", [], "Modules.Vgpostnord.Admin"),
+                    ],
+                    [
                         'type' => 'text',
                         'name' => 'VG_POSTNORD_HOST',
                         'label' => $this->trans("Postnord hostname", [], "Modules.Vgpostnord.Admin"),
@@ -238,6 +264,7 @@ class Vg_postnord extends Module
             'VG_POSTNORD_DEBUG_MODE' => Configuration::get('VG_POSTNORD_DEBUG_MODE'),
             'VG_POSTNORD_HOST' => Configuration::get('VG_POSTNORD_HOST'),
             'VG_POSTNORD_APIKEY' => Configuration::get('VG_POSTNORD_APIKEY'),
+            'VG_POSTNORD_ISSUER_COUNTRY' => Configuration::get('VG_POSTNORD_ISSUER_COUNTRY'),
         ];
     }
 
@@ -245,6 +272,10 @@ class Vg_postnord extends Module
      * Creates a form for mapping carriers to pakettikauppa delivery methods.
      *
      * If api connection fails shows a warning message instead of the form
+     *
+     * These carrier configs are saved in VG_POSTNORD_CARRIER_SETTINGS as json
+     *
+     * And postprocess and getValues handles converting the values
      */
     protected function getCarrierConfigForm()
     {
@@ -264,6 +295,7 @@ class Vg_postnord extends Module
 
         $host = Configuration::get('VG_POSTNORD_HOST');
         $apikey = Configuration::get('VG_POSTNORD_APIKEY');
+        $issuerCountry = Configuration::get('VG_POSTNORD_ISSUER_COUNTRY');
 
         // if settings are not yet complete, show message instead of the form
         if(!$host || !$apikey) {
@@ -271,33 +303,102 @@ class Vg_postnord extends Module
             return $form;
         }
 
+        // get listing of possible Postnord service codes and extra services that are available for it
         try {
+            // first selection is empty
+            $ServiceCodes[] = [
+                'serviceCode_consigneeCountry' => 0,
+                'serviceName' => ' --- ',
+            ];
+
+            // get the possible service codes
             $client = new PostnordClient($host, $apikey);
-            $BasicServiceCodes = $client->getBasicServiceCodes([]);
+            $BasicServiceCodes = $client->getBasicServiceCodesFilterByIssuerCountryCode($issuerCountry);
+
+            // sort by id and name and consignee country to have some resemblance of login in the list
+            array_multisort(
+                array_column($BasicServiceCodes, 'serviceCode'),
+                array_column($BasicServiceCodes, 'serviceName'),
+                array_column($BasicServiceCodes, 'allowedConsigneeCountry'),
+                SORT_ASC,
+                $BasicServiceCodes
+            );
+
+            // and add them to the dropdown list
+            foreach ($BasicServiceCodes as $BasicServiceCode) {
+
+                $name = sprintf('%s, %s (%s => %s)', $BasicServiceCode['serviceCode'], $BasicServiceCode['serviceName'], $BasicServiceCode['allowedConsigneeCountry'], $BasicServiceCode['allowedConsignorCountry']);
+
+                $ServiceCodes[] = [
+                    'serviceCode_consigneeCountry' => $BasicServiceCode['serviceCode'] . '_' . $BasicServiceCode['allowedConsigneeCountry'],
+                    'serviceName' => $name,
+                ];
+            }
         } catch (Exception $e) {
             $form['form']['error'] = $this->trans('Failed fetching data from Postnord, check Host and Apikey', [], 'Modules.Vgpostnord.Admin');
             $form['form']['description'] = $e->getMessage();
             return $form;
         }
 
+        // build setting fields for each carrier
+        // each carrier is prefixed with id_carrier_reference
+        // and then their reference id
+        // and then the setting
+        foreach ($carriers as $carrier) {
+            // just a label
+            $carrier_selections[] = [
+                'type' => 'free',
+                'name' => 'id_carrier_reference_'.$carrier['id_reference'],
+                'label' => '<b>' . $carrier['name'] .'</b>',
+            ];
+
+            // which service code to use
+            $carrier_selections[] = [
+                'type' => 'select',
+                'options' => [
+                    'query' => $ServiceCodes,
+                    'id' => 'serviceCode_consigneeCountry',
+                    'name' => 'serviceName',
+                    'default' => null,
+                ],
+                'name' => 'id_carrier_reference_'.$carrier['id_reference']. '_service_code_consigneecountry',
+                'label' => $this->trans('Service code', [] , 'Modules.Vgpostnord.Admin'),
+                'class'    => 'fixed-width-xxl',
+            ];
+
+            // which service codes to fetch pickup locations for
+            $carrier_selections[] = [
+                'type' => 'text',
+                'name' => 'id_carrier_reference_'.$carrier['id_reference']. '_service_codes',
+                'label' => $this->trans('Service codes for pickup', [] , 'Modules.Vgpostnord.Admin'),
+            ];
+
+        }
+
+        $form['form']['input'] = $carrier_selections;
 
         return $form;
     }
 
     /**
-     *
+     * parse VG_POSTNORD_CARRIER_SETTINGS to config form values
      */
     protected function getCarrierConfigFormValues()
     {
         $carriers = Carrier::getCarriers((int) $this->context->language->id, true, false, false, null, Carrier::ALL_CARRIERS);
         $carrierValues = [];
 
-        foreach ($carriers as $carrier) {
-            $index = $carrier['id_reference'].'_'.$carrier['name'];
-            $carrierValues[$index] = $carrier['id_reference'];
-        }
+        $carrierSettings = json_decode(Configuration::get('VG_POSTNORD_CARRIER_SETTINGS'), true);
 
-        $carrierValues['postnord_submitcarrierconfig'] = 1;
+        foreach ($carriers as $carrier) {
+            // just for the label (free text). always empty data
+            $carrierValues['id_carrier_reference_'.$carrier['id_reference']] = '';
+
+            $keys = ['service_code_consigneecountry', 'service_codes'];
+            foreach($keys as $key) {
+                $carrierValues['id_carrier_reference_'.$carrier['id_reference'].'_'.$key] = $carrierSettings[$carrier['id_reference']][$key];
+            }
+        }
 
         return $carrierValues;
     }
@@ -307,13 +408,33 @@ class Vg_postnord extends Module
      */
     protected function postProcess()
     {
-        $form_values = $this->getConfigFormValues();
-
         $result = true;
 
-        foreach (array_keys($form_values) as $key) {
+        // basic config form values
+        $config_form_values = $this->getConfigFormValues();
+        foreach (array_keys($config_form_values) as $key) {
             $result &= Configuration::updateValue($key, Tools::getValue($key));
         }
+
+        // carrier settings into one json
+        $carrier_form_values = $this->getCarrierConfigFormValues();
+        $carrierConfig = [];
+        foreach (array_keys($carrier_form_values) as $key) {
+            // format is id_carrier_reference_IDX_key (except for the label which does not have a key at all)
+            $newkey = str_replace('id_carrier_reference_', '', $key);
+            $idx = filter_var($newkey, FILTER_SANITIZE_NUMBER_INT);
+
+            // skip the label
+            if($newkey == $idx) {
+                continue;
+            }
+            $newkey = str_replace($idx.'_', '', $newkey);
+
+            $carrierconfig[$idx][$newkey] = Tools::getValue($key);
+        }
+
+        // and save the carrier config
+        $result &= Configuration::updateValue('VG_POSTNORD_CARRIER_SETTINGS', json_encode($carrierconfig));
 
         return $result;
     }
