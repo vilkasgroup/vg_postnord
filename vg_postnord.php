@@ -44,6 +44,8 @@ class Vg_postnord extends Module
         Configuration::updateValue('VG_POSTNORD_HOST', '');
         Configuration::updateValue('VG_POSTNORD_APIKEY', '');
 
+        $this->installSQL();
+
         return parent::install() &&
             $this->registerHook('header') &&
             $this->registerHook('backOfficeHeader') &&
@@ -56,7 +58,57 @@ class Vg_postnord extends Module
         Configuration::deleteByName('VG_POSTNORD_HOST');
         Configuration::deleteByName('VG_POSTNORD_APIKEY');
 
+        $this->uninstallSQL();
+
         return parent::uninstall();
+    }
+
+    /**
+     * Create SQL Tables for module.
+     *
+     * @return bool `true` if every entity gets created correctly
+     */
+    private function installSQL()
+    {
+        $queries = include dirname(__FILE__).'/sql/install.php';
+        if (is_array($queries)) {
+            return $this->performInstallQueries($queries);
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Drops module SQL tables.
+     *
+     * @return bool `true` if removed correctly
+     */
+    private function uninstallSQL()
+    {
+        $queries = include dirname(__FILE__).'/sql/uninstall.php';
+        if (is_array($queries)) {
+            return $this->performInstallQueries($queries);
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Execute a collection of SQL queries of the install/uninstall procedures.
+     *
+     * @param array $queries list of raw SQL queries to execute
+     *
+     * @return bool `true` if all queries were executed successfuly
+     */
+    private function performInstallQueries(array $queries)
+    {
+        foreach ($queries as $query) {
+            if (!Db::getInstance()->execute($query)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
