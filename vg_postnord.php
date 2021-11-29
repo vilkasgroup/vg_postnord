@@ -1,5 +1,7 @@
 <?php
 
+use Vilkas\Postnord\Client\PostnordClient;
+
 if (!defined('_PS_VERSION_')) {
     exit;
 }
@@ -119,6 +121,7 @@ class Vg_postnord extends Module
         /*
          * If values have been submitted in the form, process.
          */
+        $message = '';
         if (((bool) Tools::isSubmit('submitVg_postnordModule')) == true) {
             if ($this->postProcess()) {
                 $message = $this->displayConfirmation(
@@ -164,7 +167,15 @@ class Vg_postnord extends Module
             'id_language' => $this->context->language->id,
         ];
 
-        return $helper->generateForm([$this->getConfigForm()]);
+        return $helper->generateForm($this->getConfigForms());
+    }
+
+    protected function getConfigForms()
+    {
+        return [
+            'general' => $this->getConfigForm(),
+            'carriers' => $this->getCarrierConfigForm(),
+        ];
     }
 
     /**
@@ -228,6 +239,67 @@ class Vg_postnord extends Module
             'VG_POSTNORD_HOST' => Configuration::get('VG_POSTNORD_HOST'),
             'VG_POSTNORD_APIKEY' => Configuration::get('VG_POSTNORD_APIKEY'),
         ];
+    }
+
+    /**
+     * Creates a form for mapping carriers to pakettikauppa delivery methods.
+     *
+     * If api connection fails shows a warning message instead of the form
+     */
+    protected function getCarrierConfigForm()
+    {
+        $carriers = Carrier::getCarriers((int) $this->context->language->id, true, false, false, null, Carrier::ALL_CARRIERS);
+
+        $form = [
+            'form' => [
+                'legend' => [
+                    'title' => $this->trans('Carrier Delivery Method Settings', [], 'Modules.Vgpostnord.Admin'),
+                    'icon' => 'icon-cogs',
+                ],
+                'submit' => [
+                    'title' => $this->trans("Save", [], "Modules.Vgpostnord.Admin"),
+                ],
+            ],
+        ];
+
+        $host = Configuration::get('VG_POSTNORD_HOST');
+        $apikey = Configuration::get('VG_POSTNORD_APIKEY');
+
+        // if settings are not yet complete, show message instead of the form
+        if(!$host || !$apikey) {
+            $form['form']['warning'] = $this->trans('Please complete Host and Apikey settings to configure Carriers.', [], 'Modules.Vgpostnord.Admin');
+            return $form;
+        }
+
+        try {
+            $client = new PostnordClient($host, $apikey);
+            $BasicServiceCodes = $client->getBasicServiceCodes([]);
+        } catch (Exception $e) {
+            $form['form']['error'] = $this->trans('Failed fetching data from Postnord, check Host and Apikey', [], 'Modules.Vgpostnord.Admin');
+            $form['form']['description'] = $e->getMessage();
+            return $form;
+        }
+
+
+        return $form;
+    }
+
+    /**
+     *
+     */
+    protected function getCarrierConfigFormValues()
+    {
+        $carriers = Carrier::getCarriers((int) $this->context->language->id, true, false, false, null, Carrier::ALL_CARRIERS);
+        $carrierValues = [];
+
+        foreach ($carriers as $carrier) {
+            $index = $carrier['id_reference'].'_'.$carrier['name'];
+            $carrierValues[$index] = $carrier['id_reference'];
+        }
+
+        $carrierValues['postnord_submitcarrierconfig'] = 1;
+
+        return $carrierValues;
     }
 
     /**

@@ -87,7 +87,7 @@ class PostnordClient
                 $content = $response->getContent(false);
                 $httpLogs = $response->getInfo('debug');
                 // TODO: log the error
-                var_dump($httpLogs . $content);
+                //var_dump($httpLogs . $content);
                 throw new Exception('Error while calling service http dump: ' . $httpLogs . $content);
 
                 return [];
