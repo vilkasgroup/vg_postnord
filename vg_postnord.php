@@ -40,7 +40,7 @@ class Vg_postnord extends Module
      * Don't forget to create update methods if needed:
      * http://doc.prestashop.com/display/PS16/Enabling+the+Auto-Update
      */
-    public function install()
+    public function install(): bool
     {
         Configuration::updateValue('VG_POSTNORD_DEBUG_MODE', false);
         Configuration::updateValue('VG_POSTNORD_HOST', '');
@@ -48,15 +48,15 @@ class Vg_postnord extends Module
         Configuration::updateValue('VG_POSTNORD_ISSUER_COUNTRY', '');
         Configuration::updateValue('VG_POSTNORD_CARRIER_SETTINGS', '[]');
 
-        $this->installSQL();
-
-        return parent::install() &&
-            $this->registerHook('header') &&
-            $this->registerHook('backOfficeHeader') &&
-            $this->registerHook('displayCarrierExtraContent');
+        return parent::install()
+            && $this->installSQL()
+            && $this->registerHook('header')
+            && $this->registerHook('backOfficeHeader')
+            && $this->registerHook('displayCarrierExtraContent')
+            ;
     }
 
-    public function uninstall()
+    public function uninstall(): bool
     {
         Configuration::deleteByName('VG_POSTNORD_DEBUG_MODE');
         Configuration::deleteByName('VG_POSTNORD_HOST');
@@ -64,9 +64,9 @@ class Vg_postnord extends Module
         Configuration::deleteByName('VG_POSTNORD_ISSUER_COUNTRY');
         Configuration::deleteByName('VG_POSTNORD_CARRIER_SETTINGS');
 
-        $this->uninstallSQL();
-
-        return parent::uninstall();
+        return parent::uninstall()
+            && $this->uninstallSQL()
+            ;
     }
 
     /**
@@ -74,7 +74,7 @@ class Vg_postnord extends Module
      *
      * @return bool `true` if every entity gets created correctly
      */
-    private function installSQL()
+    private function installSQL(): bool
     {
         $queries = include dirname(__FILE__).'/sql/install.php';
         if (is_array($queries)) {
@@ -89,7 +89,7 @@ class Vg_postnord extends Module
      *
      * @return bool `true` if removed correctly
      */
-    private function uninstallSQL()
+    private function uninstallSQL(): bool
     {
         $queries = include dirname(__FILE__).'/sql/uninstall.php';
         if (is_array($queries)) {
@@ -100,13 +100,13 @@ class Vg_postnord extends Module
     }
 
     /**
-     * Execute a collection of SQL queries of the install/uninstall procedures.
+     * Execute a collection of SQL queries of the installation/uninstallation procedures.
      *
      * @param array $queries list of raw SQL queries to execute
      *
-     * @return bool `true` if all queries were executed successfuly
+     * @return bool `true` if all queries were executed successfully
      */
-    private function performInstallQueries(array $queries)
+    private function performInstallQueries(array $queries): bool
     {
         foreach ($queries as $query) {
             if (!Db::getInstance()->execute($query)) {
@@ -120,13 +120,13 @@ class Vg_postnord extends Module
     /**
      * Load the configuration form
      */
-    public function getContent()
+    public function getContent(): string
     {
         /*
          * If values have been submitted in the form, process.
          */
         $message = '';
-        if (((bool) Tools::isSubmit('submitVg_postnordModule')) == true) {
+        if ((Tools::isSubmit('submitVg_postnordModule')) == true) {
             if ($this->postProcess()) {
                 $message = $this->displayConfirmation(
                     $this->trans("Settings saved successfully.", [], "Modules.Vgpostnord.Admin")
@@ -136,7 +136,6 @@ class Vg_postnord extends Module
                     $this->trans("Could not save settings.", [], "Modules.Vgpostnord.Admin")
                 );
             }
-            $this->postProcess();
         }
 
         $this->context->smarty->assign('module_dir', $this->_path);
@@ -149,7 +148,7 @@ class Vg_postnord extends Module
     /**
      * Create the form that will be displayed in the configuration of your module.
      */
-    protected function renderForm()
+    protected function renderForm(): string
     {
         $helper = new HelperForm();
 
@@ -174,22 +173,23 @@ class Vg_postnord extends Module
         return $helper->generateForm($this->getConfigForms());
     }
 
-    protected function getConfigForms()
+    protected function getConfigForms(): array
     {
         return [
             'general' => $this->getConfigForm(),
             'carriers' => $this->getCarrierConfigForm(),
         ];
     }
-    protected function getAllFormValues() {
+
+    protected function getAllFormValues(): array
+    {
         return array_merge($this->getConfigFormValues(), $this->getCarrierConfigFormValues());
     }
-
 
     /**
      * Create the structure of your form.
      */
-    protected function getConfigForm()
+    protected function getConfigForm(): array
     {
         return [
             'form' => [
@@ -233,13 +233,13 @@ class Vg_postnord extends Module
                             'name' => 'name',
                             'default' => null,
                         ],
-                        'desc' => $this->trans("Get this infromation from Postnord.", [], "Modules.Vgpostnord.Admin"),
+                        'desc' => $this->trans("Get this information from Postnord.", [], "Modules.Vgpostnord.Admin"),
                     ],
                     [
                         'type' => 'text',
                         'name' => 'VG_POSTNORD_HOST',
                         'label' => $this->trans("Postnord hostname", [], "Modules.Vgpostnord.Admin"),
-                        'desc' => $this->trans("Get this infromation from Postnord. Usually something like: atapi2.postnord.com", [], "Modules.Vgpostnord.Admin"),
+                        'desc' => $this->trans("Get this information from Postnord. Usually something like: atapi2.postnord.com", [], "Modules.Vgpostnord.Admin"),
                     ],
                     [
                         'type' => 'text',
@@ -258,7 +258,7 @@ class Vg_postnord extends Module
     /**
      * Set values for the inputs.
      */
-    protected function getConfigFormValues()
+    protected function getConfigFormValues(): array
     {
         return [
             'VG_POSTNORD_DEBUG_MODE' => Configuration::get('VG_POSTNORD_DEBUG_MODE'),
@@ -277,7 +277,7 @@ class Vg_postnord extends Module
      *
      * And postprocess and getValues handles converting the values
      */
-    protected function getCarrierConfigForm()
+    protected function getCarrierConfigForm(): array
     {
         $carriers = Carrier::getCarriers((int) $this->context->language->id, true, false, false, null, Carrier::ALL_CARRIERS);
 
@@ -298,7 +298,7 @@ class Vg_postnord extends Module
         $issuerCountry = Configuration::get('VG_POSTNORD_ISSUER_COUNTRY');
 
         // if settings are not yet complete, show message instead of the form
-        if(!$host || !$apikey) {
+        if (!$host || !$apikey) {
             $form['form']['warning'] = $this->trans('Please complete Host and Apikey settings to configure Carriers.', [], 'Modules.Vgpostnord.Admin');
             return $form;
         }
@@ -363,7 +363,7 @@ class Vg_postnord extends Module
                 ],
                 'name' => 'id_carrier_reference_'.$carrier['id_reference']. '_service_code_consigneecountry',
                 'label' => $this->trans('Service code', [] , 'Modules.Vgpostnord.Admin'),
-                'class'    => 'fixed-width-xxl',
+                'class' => 'fixed-width-xxl',
             ];
 
             // which service codes to fetch pickup locations for
@@ -383,7 +383,7 @@ class Vg_postnord extends Module
     /**
      * parse VG_POSTNORD_CARRIER_SETTINGS to config form values
      */
-    protected function getCarrierConfigFormValues()
+    protected function getCarrierConfigFormValues(): array
     {
         $carriers = Carrier::getCarriers((int) $this->context->language->id, true, false, false, null, Carrier::ALL_CARRIERS);
         $carrierValues = [];
@@ -395,7 +395,7 @@ class Vg_postnord extends Module
             $carrierValues['id_carrier_reference_'.$carrier['id_reference']] = '';
 
             $keys = ['service_code_consigneecountry', 'service_codes'];
-            foreach($keys as $key) {
+            foreach ($keys as $key) {
                 $carrierValues['id_carrier_reference_'.$carrier['id_reference'].'_'.$key] = $carrierSettings[$carrier['id_reference']][$key];
             }
         }
@@ -406,7 +406,7 @@ class Vg_postnord extends Module
     /**
      * Save form data.
      */
-    protected function postProcess()
+    protected function postProcess(): bool
     {
         $result = true;
 
@@ -418,23 +418,23 @@ class Vg_postnord extends Module
 
         // carrier settings into one json
         $carrier_form_values = $this->getCarrierConfigFormValues();
-        $carrierConfig = [];
+        $carrier_config = [];
         foreach (array_keys($carrier_form_values) as $key) {
             // format is id_carrier_reference_IDX_key (except for the label which does not have a key at all)
             $newkey = str_replace('id_carrier_reference_', '', $key);
             $idx = filter_var($newkey, FILTER_SANITIZE_NUMBER_INT);
 
             // skip the label
-            if($newkey == $idx) {
+            if ($newkey == $idx) {
                 continue;
             }
             $newkey = str_replace($idx.'_', '', $newkey);
 
-            $carrierconfig[$idx][$newkey] = Tools::getValue($key);
+            $carrier_config[$idx][$newkey] = Tools::getValue($key);
         }
 
         // and save the carrier config
-        $result &= Configuration::updateValue('VG_POSTNORD_CARRIER_SETTINGS', json_encode($carrierconfig));
+        $result &= Configuration::updateValue('VG_POSTNORD_CARRIER_SETTINGS', json_encode($carrier_config));
 
         return $result;
     }
