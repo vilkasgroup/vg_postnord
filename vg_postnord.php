@@ -503,8 +503,18 @@ class Vg_postnord extends CarrierModule
      *
      * The pickup point will be saved as a ajax request to be used for label creation later
      */
-    public function hookDisplayCarrierExtraContent()
+    public function hookDisplayCarrierExtraContent($params)
     {
+        // prefill with the zipcode user has already given
+        $id_address = $params['cart']->id_address_delivery;
+        $address = new Address($id_address);
+        $this->context->smarty->assign('vg_postnord_carrier_id', intval($params['carrier']['id']));
+        $this->context->smarty->assign('vg_postnord_carrier_reference', intval($params['carrier']['id_reference']));
+        $this->context->smarty->assign('vg_postnord_postcode_prefill', $address->postcode);
+
+        $ctrl_url = $this->context->link->getModuleLink('vg_postnord', 'search', [], true);
+        $this->context->smarty->assign('vg_postnord_search_pickuppoints_action', $ctrl_url);
+
         return $this->display(__FILE__, 'carrierextracontent.tpl');
     }
 
