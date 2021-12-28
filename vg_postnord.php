@@ -6,7 +6,7 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
-class Vg_postnord extends Module
+class Vg_postnord extends CarrierModule
 {
     protected $config_form = false;
 
@@ -431,12 +431,48 @@ class Vg_postnord extends Module
             $newkey = str_replace($idx.'_', '', $newkey);
 
             $carrier_config[$idx][$newkey] = Tools::getValue($key);
+
+        }
+
+        // set the carriers that are marked to use pickuip to is_module so that it can do displayCarrierExtraContent
+        foreach ($carrier_config as $id_carrier_reference => $oneconfig) {
+            if(strlen($oneconfig['service_codes'])) {
+                $this->setCarrierToPostNord($id_carrier_reference, true);
+            } else {
+                $this->setCarrierToPostNord($id_carrier_reference, false);
+            }
         }
 
         // and save the carrier config
         $result &= Configuration::updateValue('VG_POSTNORD_CARRIER_SETTINGS', json_encode($carrier_config));
 
         return $result;
+    }
+
+    /**
+     * Set carrier to `is_module` = 1 to get displayCarrierExtraContent to trigger
+     */
+    public function setCarrierToPostNord(int $id_carrier_reference, bool $status): bool {
+        $db = \Db::getInstance();
+        if($status) {
+            return $db->Execute(
+                'UPDATE `'._DB_PREFIX_.'carrier`
+                SET
+                `external_module_name` = "vg_postnord",
+                `is_module` = 1,
+                `need_range` = 1
+                WHERE `id_reference` = '.(int) $id_carrier_reference
+            );
+        } else {
+            return $db->Execute(
+                'UPDATE `'._DB_PREFIX_.'carrier`
+                SET `external_module_name` = "",
+                `is_module` = 0,
+                `need_range` = 0
+                WHERE `id_reference` = '.(int) $id_carrier_reference
+                .' AND external_module_name="vg_postnord"'
+            );
+        }
     }
 
     /**
@@ -469,6 +505,24 @@ class Vg_postnord extends Module
      */
     public function hookDisplayCarrierExtraContent()
     {
-        /* Place your code here. */
+        return $this->display(__FILE__, 'carrierextracontent.tpl');
+    }
+
+
+
+    /**
+     * required as we are the carrier module
+     *
+     * as we are setting the need_range=1 for the carrier the
+     * getOrderShippingCost method will be called
+     */
+    public function getOrderShippingCost($params, $shipping_cost)
+    {
+        // just pass back the original shipping_cost
+        return $shipping_cost;
+    }
+    public function getOrderShippingCostExternal($params)
+    {
+        return false;
     }
 }
