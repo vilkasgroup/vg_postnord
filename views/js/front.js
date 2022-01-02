@@ -111,7 +111,6 @@ $(document).ready(function () {
         const $button = $(this);
         const $container = $button.parents('.vg_postnord_pickupselection_container');
         const $resultsDiv = $container.find('.vg_postnord_pickup_search_results');
-        const id_carrier = $container.data('carrierid');
         const actionurl = $container.data('searchurl');
 
         // inject three dummy points to show searching status
@@ -138,12 +137,19 @@ $(document).ready(function () {
             // render the results
             $resultsDiv.empty();
 
-            onePoint = resp.servicePoints.forEach(element =>
-                $resultsDiv.append(renderPickupPoint(element))
-            );
+            if(resp.servicePoints) {
+                resp.servicePoints.forEach((element, i) =>
+                    $resultsDiv.append(renderPickupPoint(element, i))
+                );
+                // and now that we have results rendered, select the first one
+                $resultsDiv.find('.vg_postnord_pickupPoint').first().click();
+            } else if(resp.errortext) {
+                $resultsDiv.html('<h3 class="alert alert-warning">' + resp.errortext + '</h3>');
+            } else {
+                $resultsDiv.html('<h3 class="alert alert-warning">Unknown error, please try again later</h3>');
+                console.error(resp);
+            }
 
-            // and now that we have results rendered, select the first one
-            $resultsDiv.find('.vg_postnord_pickupPoint').first().click();
         }).fail(function (jqXHR, textStatus) {
             console.error(jqXHR);
             $resultsDiv.html('<h3 class="alert alert-warning">' + jqXHR.statusText + '</h3>');
@@ -181,19 +187,25 @@ $(document).ready(function () {
     /**
      * Render one pickup point as html. data from pickupoint api
      */
-    function renderPickupPoint($servicePoint) {
+    function renderPickupPoint($servicePoint, $i) {
         console.debug($servicePoint);
 
         let name = $servicePoint.name;
         let servicePointId = $servicePoint.servicePointId;
 
-        return `
-        <div class="vg_postnord_pickupPoint col-md-4" onclick="VgPostnordStorePickupPoint(this, '${servicePointId}')">
+        html = `
+        <div class="vg_postnord_pickupPoint col-md-4 col-xs-12" onclick="VgPostnordStorePickupPoint(this, '${servicePointId}')">
           <h4 class="vg_postnord_pickup_name">${name}</h4>
           <p class="vg_postnord_pickup_street">${$servicePoint.visitingAddress.streetName} ${$servicePoint.visitingAddress.streetNumber}</p>
           <p class="vg_postnord_pickup_zipcity">${$servicePoint.visitingAddress.postalCode} ${$servicePoint.visitingAddress.city}</p>
         </div>
         `;
+
+        if(($i+1) % 3 === 0) {
+            html += '<div class="clearfix visible-xs-block"></div>'
+        }
+
+        return html;
     }
 });
 

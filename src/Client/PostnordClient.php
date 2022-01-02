@@ -6,7 +6,9 @@ namespace Vilkas\Postnord\Client;
 
 use Exception;
 use Symfony\Component\HttpClient\HttpClient;
-use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
+use Symfony\Contracts\HttpClient\Exception\HttpExceptionInterface;
+use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
+use Symfony\Contracts\HttpClient\Exception\DecodingExceptionInterface;
 
 class PostnordClient
 {
@@ -82,7 +84,11 @@ class PostnordClient
         try {
             $response = $this->httpClient->request($method, $url, $options);
 
-            if ($response->getStatusCode() != 200) {
+            // this will throw for all 300-599 and other errors
+            $content = $response->getContent();
+
+            /*
+            if ($response->getStatusCode() === 200) {
                 // try to read the response, it will probably give nice error information
                 $content = $response->getContent(false);
                 $httpLogs = $response->getInfo('debug');
@@ -92,13 +98,52 @@ class PostnordClient
 
                 return [];
             }
-            $content = $response->getContent();
-        } catch (ExceptionInterface $e) {
-            // TODO: log me
+
+            $content = $response->getContent(false);
+            */
+        } catch (HttpExceptionInterface $e) {
+            // for 400 error we can try to dig up a bit better response from the api
+            // and throw it as a new exception for controllers to show
+
+            if ($response->getStatusCode() === 400) {
+                $content = $response->getContent(false);
+                try {
+                    $results = json_decode($content, true);
+                } catch (Exception $e) {
+                    // TODO: log me, json_decode failed
+                    throw $e;
+                }
+                if ($results) {
+                    if(array_key_exists('servicePointInformationResponse', $results)) {
+                        $servicePointInformationResponse = $results['servicePointInformationResponse'];
+                        //throw new Exception(json_encode($servicePointInformationResponse));
+                        if(array_key_exists('compositeFault', $servicePointInformationResponse)) {
+                            $compositeFaults = $servicePointInformationResponse['compositeFault']['faults'];
+                            $msg = '';
+                            foreach ($compositeFaults as $compositeFault) {
+                                $msg .= $compositeFault['explanationText'];
+                            }
+                            throw new Exception($msg);
+                        }
+                    }
+                }
+            }
+
+            // try to return the content as is, it probably contains some valid debug data
+            throw new Exception($e->getResponse()->getContent(false));
+        } catch (TransportExceptionInterface $e) {
+            // TODO: make this better
+            throw $e;
+        } catch (DecodingExceptionInterface $e) {
+            // TODO: make this better
+            throw $e;
+        } catch (Exception $e) {
+            // TODO: make this better
+            // something bad happened
             throw $e;
         }
 
-        // decode the response
+        // decode the json response
         try {
             $results = json_decode($content, true);
         } catch (Exception $e) {
@@ -126,14 +171,14 @@ class PostnordClient
         ];
         $parameters = $this->mergeOptions($defaults, $parameters);
         $options['query'] = $parameters;
+        $options['timeout'] = 3; // maybe enough?
 
         try {
             $response = $this->doRequest('GET', '/rest/businesslocation/v5/servicepoints/nearest/byaddress', $options);
         } catch (Exception $e) {
-            // TODO log the error and do something sane
-            throw $e;
-
-            return [];
+            return [
+                'error' => $e->getMessage(),
+            ];
         }
 
         if (array_key_exists('servicePointInformationResponse', $response)) {

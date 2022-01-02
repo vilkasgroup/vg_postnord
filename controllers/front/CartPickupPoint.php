@@ -39,9 +39,12 @@ class Vg_postnordCartPickupPointModuleFrontController extends ModuleFrontControl
             }
             $this->renderResponse($pickupPoints, 200);
         } elseif ($action === 'save') {
-
-            $servicepointid = Tools::getValue('servicePointId');
-            $this->savePickupPoint($Cart, $servicepointid);
+            try {
+                $servicepointid = Tools::getValue('servicePointId');
+                $this->savePickupPoint($Cart, $servicepointid);
+            } catch (Exception $e) {
+                $this->renderResponse(['error' => $e->getMessage()], 500);
+            }
             $this->renderResponse([], 200);
         } else {
             $this->renderResponse(['error' => 'invalid action'], 400);
@@ -65,11 +68,11 @@ class Vg_postnordCartPickupPointModuleFrontController extends ModuleFrontControl
     /**
      * Search for pickup points with the cart address.
      *
-     * TODO: allow override from the zip code field
-     *
      * Returns results directly from postnord api or an error
+     *
+     * throws when fails
      */
-    private function searchPickupPoints(Cart $Cart)
+    private function searchPickupPoints(Cart $Cart): array
     {
         $id_address = $Cart->id_address_delivery;
         $Address = new Address($id_address);
@@ -94,7 +97,8 @@ class Vg_postnordCartPickupPointModuleFrontController extends ModuleFrontControl
             'typeId' => $typeId, // TODO, figure out what this should be. 38 was found from a response without any type restrictions
         ];
 
-        return $this->client->getServicePointsByAddress($params);
+        $data =$this->client->getServicePointsByAddress($params);
+        return $data;
     }
 
 
@@ -105,9 +109,7 @@ class Vg_postnordCartPickupPointModuleFrontController extends ModuleFrontControl
     {
         $manager = $this->get('doctrine.orm.entity_manager');
         $repo = $manager->getRepository(VgPostnordCartData::class);
-
         $repo->upsertCartServicePointId($Cart->id, $servicepointid);
-
     }
 
     /**
