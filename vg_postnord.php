@@ -141,8 +141,9 @@ class Vg_postnord extends CarrierModule
         $this->context->smarty->assign('module_dir', $this->_path);
 
         $output = $this->context->smarty->fetch($this->local_path . 'views/templates/admin/configure.tpl');
+        $footer = $this->context->smarty->fetch($this->local_path . 'views/templates/admin/configure_footer.tpl');
 
-        return $message . $output . $this->renderForm();
+        return $message . $output . $this->renderForm() . $footer;
     }
 
     /**
@@ -364,6 +365,7 @@ class Vg_postnord extends CarrierModule
                 'name' => 'id_carrier_reference_'.$carrier['id_reference']. '_service_code_consigneecountry',
                 'label' => $this->trans('Service code', [] , 'Modules.Vgpostnord.Admin'),
                 'class' => 'fixed-width-xxl',
+                'desc' => $this->trans("Service code for this carrier", [], "Modules.Vgpostnord.Admin"),
             ];
 
             // which service codes to fetch pickup locations for
@@ -371,8 +373,8 @@ class Vg_postnord extends CarrierModule
                 'type' => 'text',
                 'name' => 'id_carrier_reference_'.$carrier['id_reference']. '_service_codes',
                 'label' => $this->trans('Service codes for pickup', [] , 'Modules.Vgpostnord.Admin'),
+                'desc' => $this->trans("Comma separated list of service codes to use to filter pickuppoints. See possible values below. Leave empty for no filtering.", [], "Modules.Vgpostnord.Admin"),
             ];
-
         }
 
         $form['form']['input'] = $carrier_selections;

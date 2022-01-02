@@ -143,8 +143,8 @@ $(document).ready(function () {
                 );
                 // and now that we have results rendered, select the first one
                 $resultsDiv.find('.vg_postnord_pickupPoint').first().click();
-            } else if(resp.errortext) {
-                $resultsDiv.html('<h3 class="alert alert-warning">' + resp.errortext + '</h3>');
+            } else if(resp.error) {
+                $resultsDiv.html('<h3 class="alert alert-warning">' + resp.error + '</h3>');
             } else {
                 $resultsDiv.html('<h3 class="alert alert-warning">Unknown error, please try again later</h3>');
                 console.error(resp);
