@@ -383,7 +383,7 @@ class Vg_postnord extends CarrierModule
     /**
      * parse VG_POSTNORD_CARRIER_SETTINGS to config form values
      */
-    protected function getCarrierConfigFormValues(): array
+    public function getCarrierConfigFormValues(): array
     {
         $carriers = Carrier::getCarriers((int) $this->context->language->id, true, false, false, null, Carrier::ALL_CARRIERS);
         $carrierValues = [];
@@ -401,6 +401,24 @@ class Vg_postnord extends CarrierModule
         }
 
         return $carrierValues;
+    }
+
+    /**
+     * get All carrier configurations, basically just decoded configuration
+     * The array id is carrier id_reference
+     */
+    public function getCarrierConfigurations(): array
+    {
+        $carrierSettings = json_decode(Configuration::get('VG_POSTNORD_CARRIER_SETTINGS'), true);
+        return $carrierSettings;
+    }
+
+    /**
+     * get one carrier configuration
+     */
+    public function getCarrierConfiguration($id_carrier_reference): array
+    {
+        return $this->getCarrierConfigurations()[$id_carrier_reference];
     }
 
     /**
@@ -436,7 +454,7 @@ class Vg_postnord extends CarrierModule
 
         // set the carriers that are marked to use pickuip to is_module so that it can do displayCarrierExtraContent
         foreach ($carrier_config as $id_carrier_reference => $oneconfig) {
-            if(strlen($oneconfig['service_codes'])) {
+            if($oneconfig['service_code_consigneecountry']) {
                 $this->setCarrierToPostNord($id_carrier_reference, true);
             } else {
                 $this->setCarrierToPostNord($id_carrier_reference, false);
@@ -512,7 +530,7 @@ class Vg_postnord extends CarrierModule
         $this->context->smarty->assign('vg_postnord_carrier_reference', intval($params['carrier']['id_reference']));
         $this->context->smarty->assign('vg_postnord_postcode_prefill', $address->postcode);
 
-        $ctrl_url = $this->context->link->getModuleLink('vg_postnord', 'search', [], true);
+        $ctrl_url = $this->context->link->getModuleLink('vg_postnord', 'CartPickupPoint', [], true);
         $this->context->smarty->assign('vg_postnord_search_pickuppoints_action', $ctrl_url);
 
         return $this->display(__FILE__, 'carrierextracontent.tpl');

@@ -1,11 +1,108 @@
- $(document).ready(function () {
+$(document).ready(function () {
 
-    const dummyPoint = `
-                <div class="vg_postnord_pickupPoint col-md-4">
-                  <img class="logo" src="/modules/vg_postnord/views/img/carrier_image.jpg">
-                  <p class="data">TODO</p>
-                </div>
-                `;
+    /**
+     * same format as from the api but minimal data
+     */
+    const dummyPointData = {
+        "name": "Pickuplocation",
+        "servicePointId": "0",
+        "phoneNoToCashRegister": null,
+        "routingCode": "TUR",
+        "handlingOffice": null,
+        "locationDetail": null,
+        "routeDistance": 389,
+        "pickup": {
+            "cashOnDelivery": null,
+            "products": [
+                {
+                    "name": "Parcel",
+                    "timeSlots": {
+                        "availableForPickupStandard": [],
+                        "availableForPickupEarlyCollect": []
+                    }
+                }
+            ],
+            "heavyGoodsProducts": []
+        },
+        "visitingAddress": {
+            "countryCode": "FI",
+            "city": "CITY",
+            "streetName": "Street",
+            "streetNumber": "123",
+            "postalCode": "12345",
+            "additionalDescription": null
+        },
+        "deliveryAddress": {
+            "countryCode": "FI",
+            "city": "CITY",
+            "streetName": "Street",
+            "streetNumber": "123",
+            "postalCode": "12345",
+            "additionalDescription": null
+        },
+        "notificationArea": null,
+        "coordinates": [
+            {
+                "countryCode": "FI",
+                "northing": 61.500284,
+                "easting": 23.756063,
+                "srId": "EPSG:4326"
+            }
+        ],
+        "openingHours": {
+            "specialDates": [],
+            "postalServices": [
+                {
+                    "openTime": "07:00",
+                    "openDay": "Monday",
+                    "closeTime": "21:00",
+                    "closeDay": "Monday"
+                },
+                {
+                    "openTime": "07:00",
+                    "openDay": "Tuesday",
+                    "closeTime": "21:00",
+                    "closeDay": "Tuesday"
+                },
+                {
+                    "openTime": "07:00",
+                    "openDay": "Wednesday",
+                    "closeTime": "21:00",
+                    "closeDay": "Wednesday"
+                },
+                {
+                    "openTime": "07:00",
+                    "openDay": "Thursday",
+                    "closeTime": "21:00",
+                    "closeDay": "Thursday"
+                },
+                {
+                    "openTime": "07:00",
+                    "openDay": "Friday",
+                    "closeTime": "21:00",
+                    "closeDay": "Friday"
+                },
+                {
+                    "openTime": "08:00",
+                    "openDay": "Saturday",
+                    "closeTime": "21:00",
+                    "closeDay": "Saturday"
+                },
+                {
+                    "openTime": "11:00",
+                    "openDay": "Sunday",
+                    "closeTime": "21:00",
+                    "closeDay": "Sunday"
+                }
+            ]
+        },
+        "type": {
+            "groupTypeId": 1,
+            "groupTypeName": "Service agent",
+            "typeId": 38,
+            "typeName": "Hämtställe"
+        }
+    };
 
     // dynamic selector for some other modules that show the basket differently
     $('body').on('click', '.vg_postnord_pickupselection_container button.vg_postnord_searchbutton', function (e) {
@@ -22,13 +119,13 @@
         $resultsDiv.empty();
         $resultsDiv.addClass('vg_postnord_loading');
         for (i = 0; i < 3; i++) {
+            dummyPoint = renderPickupPoint(dummyPointData);
             $resultsDiv.append(dummyPoint);
         }
 
         // build our data for the request
         let data = {
             'action': 'search',
-            'id_carrier': id_carrier,
             'zipcode': $container.find('.vg_postnord_zipcode').val(),
         }
 
@@ -38,14 +135,19 @@
             url: actionurl,
             data: data
         }).done(function (resp) {
-            // show the results
-            $resultsDiv.html(resp);
-            // and now that we have results, select the first one
-            $resultsDiv.find('.pickupPoint').first().click();
+            // render the results
+            $resultsDiv.empty();
+
+            onePoint = resp.servicePoints.forEach(element =>
+                $resultsDiv.append(renderPickupPoint(element))
+            );
+
+            // and now that we have results rendered, select the first one
+            $resultsDiv.find('.vg_postnord_pickupPoint').first().click();
         }).fail(function (jqXHR, textStatus) {
             console.error(jqXHR);
-            $resultsDiv.html('<h3 class="alert alert-warning">'+jqXHR.statusText+'</h3>');
-        }).always(function() {
+            $resultsDiv.html('<h3 class="alert alert-warning">' + jqXHR.statusText + '</h3>');
+        }).always(function () {
             $resultsDiv.removeClass('vg_postnord_loading');
             $button.prop('disabled', false);
         });
@@ -60,7 +162,7 @@
     $('body').on('change', '.delivery-option input[type=radio]', function (e) {
         // the radio value is actually id_carrier
         const id_carrier = parseInt($(this).val());
-        $('.vg_postnord_pickupselection_container[data-carrierid="'+id_carrier+'"] button.vg_postnord_searchbutton').click();
+        $('.vg_postnord_pickupselection_container[data-carrierid="' + id_carrier + '"] button.vg_postnord_searchbutton').click();
     });
 
     // the checkout module does not have the searchbutton in a similar way, trigger when it looks like its done
@@ -75,27 +177,59 @@
             }
         });
     }
+
+    /**
+     * Render one pickup point as html. data from pickupoint api
+     */
+    function renderPickupPoint($servicePoint) {
+        console.debug($servicePoint);
+
+        let name = $servicePoint.name;
+        let servicePointId = $servicePoint.servicePointId;
+
+        return `
+        <div class="vg_postnord_pickupPoint col-md-4" onclick="VgPostnordStorePickupPoint(this, '${servicePointId}')">
+          <h4 class="vg_postnord_pickup_name">${name}</h4>
+          <p class="vg_postnord_pickup_street">${$servicePoint.visitingAddress.streetName} ${$servicePoint.visitingAddress.streetNumber}</p>
+          <p class="vg_postnord_pickup_zipcity">${$servicePoint.visitingAddress.postalCode} ${$servicePoint.visitingAddress.city}</p>
+        </div>
+        `;
+    }
 });
 
-function storePickupPoint(element, selectedpickupid, carrieridreference, url) {
+/**
+ * Store pickup point
+ */
+function VgPostnordStorePickupPoint(elem, servicePointId) {
+    const $element = $(elem);
+    const $container = $element.parents('.vg_postnord_pickupselection_container');
+    const $resultsDiv = $container.find('.vg_postnord_pickup_search_results');
+    const actionurl = $container.data('searchurl');
+
+    const continueButton = $('button[name="confirmDeliveryOption"]');
+    continueButton.prop('disabled', false);
+
     // clear selected class
-    $(element).parent('.pickupPoints').find('.pickupPoint').removeClass('selected');
+    $resultsDiv.find('.vg_postnord_pickupPoint').removeClass('selected');
+    $container.addClass('vg_postnord_loading');
 
     $.ajax({
         type: "POST",
-        url: url,
+        url: actionurl,
         data: {
-            action: 'savepickup',
-            pickupCode: selectedpickupid,
-            carrierIdReference: carrieridreference,
+            action: 'save',
+            servicePointId: servicePointId,
         }
     }).done(function (resp) {
         // highlight our selected
-        $(element).addClass('selected');
-        $("#pickupResultMsg").html(resp.responseText);
+        $element.addClass('selected');
     }).fail(function (jqXHR, textStatus) {
         console.error(jqXHR);
+        $resultsDiv.find('.vg_postnord_pickupPoint').removeClass('selected');
         alert("Failed saving pickup location: " + textStatus);
+    }).always(function () {
+        $container.removeClass('vg_postnord_loading');
+        continueButton.prop('disabled', false);
     });
 
 }

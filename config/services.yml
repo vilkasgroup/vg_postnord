@@ -1,0 +1,6 @@
+services:
+  vilkas.postnord.repository.vgpostnordcartdata:
+    class: 'Vilkas\Postnord\Repository\VgPostnordCartDataRepository'
+    factory: ["@doctrine.orm.default_entity_manager", getRepository]
+    arguments:
+      - Vilkas\Postnord\Entity\VgPostnordCartData
