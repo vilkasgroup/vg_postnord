@@ -1,17 +1,21 @@
-<?php declare(strict_types = 1);
+<?php
+
+declare(strict_types = 1);
 
 use Vilkas\Postnord\Client\PostnordClient;
 use Vilkas\Postnord\Entity\VgPostnordCartData;
 
 class Vg_postnordCartPickupPointModuleFrontController extends ModuleFrontController
 {
+    /** @var PostnordClient */
     private $client;
+
     private $issuerCountry;
 
     /**
      * Handles various actions indicated by $_POST['action'].
      *
-     * @throws PrestaShopException
+     * @throws Exception
      */
     public function initContent()
     {
@@ -70,7 +74,7 @@ class Vg_postnordCartPickupPointModuleFrontController extends ModuleFrontControl
      *
      * Returns results directly from postnord api or an error
      *
-     * throws when fails
+     * @throws Exception when fails
      */
     private function searchPickupPoints(Cart $Cart): array
     {
@@ -94,13 +98,11 @@ class Vg_postnordCartPickupPointModuleFrontController extends ModuleFrontControl
             //'streetName' => $Address->address1,
             //'streetNumber' => '19',
             'numberOfServicePoints' => 100, // TODO: this should probably be a setting?
-            'typeId' => $typeId, // TODO, figure out what this should be. 38 was found from a response without any type restrictions
+            'typeId' => $typeId // "type of the service point" or service code, see module configuration page
         ];
 
-        $data =$this->client->getServicePointsByAddress($params);
-        return $data;
+        return $this->client->getServicePointsByAddress($params);
     }
-
 
     /**
      * Save the selected pickup point to cart data
@@ -115,9 +117,9 @@ class Vg_postnordCartPickupPointModuleFrontController extends ModuleFrontControl
     /**
      * render response as json
      */
-    private function renderResponse(array $data, int $statuscode=200)
+    private function renderResponse(array $data, int $status_code = 200)
     {
-        http_response_code($statuscode);
+        http_response_code($status_code);
         header('Content-Type: application/json');
         echo json_encode($data);
         exit;
