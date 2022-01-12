@@ -1,0 +1,47 @@
+{#
+/**
+* 2022 Vilkas Group Oy
+*
+* NOTICE OF LICENSE
+*
+* This source file is subject to the Open Software License 3.0 (OSL-3.0)
+* that is bundled with this package in the file LICENSE.txt.
+* It is also available through the world-wide-web at this URL:
+* https://opensource.org/licenses/OSL-3.0
+*
+*  @author    Vilkas Group Oy <techsupport@vilkas.fi>
+*  @copyright 2022 Vilkas Group Oy
+*  @license   https://opensource.org/licenses/OSL-3.0  Open Software License 3.0 (OSL-3.0)
+*  International Registered Trademark & Property of Vilkas Group Oy
+*/
+#}
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-header-title">Postnord</h3>
+  </div>
+  <div class="card-body">
+    <div class="vg-postnord-order-shipment-info">
+      Some info here :)
+    </div>
+    <div class="vg-postnord-action-buttons">
+      <div>
+        <form id="vg-postnord-create-booking-form" method="POST" action="{{ path('admin_vg_postnord_create_booking') }}">
+          <input type="hidden" id="id-order" name="id_order" value="{{ id_order }}">
+          <input type="hidden" id="generate-label" name="generate_label" value="0">
+        </form>
+        <button type="submit" form="vg-postnord-create-booking-form" class="btn btn-primary">
+          {{ 'Create booking'|trans({}, 'Modules.Vgpostnord.Admin') }}
+        </button>
+      </div>
+      <div>
+        <form id="vg-postnord-create-booking-with-label-form" method="POST" action="{{ path('admin_vg_postnord_create_booking') }}">
+          <input type="hidden" id="id-order" name="id_order" value="{{ id_order }}">
+          <input type="hidden" id="generate-label" name="generate_label" value="1">
+        </form>
+        <button type="submit" form="vg-postnord-create-booking-with-label-form" class="btn btn-primary">
+          {{ 'Create booking and generate label'|trans({}, 'Modules.Vgpostnord.Admin') }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

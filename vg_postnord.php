@@ -53,6 +53,7 @@ class Vg_postnord extends CarrierModule
             && $this->registerHook('header')
             && $this->registerHook('backOfficeHeader')
             && $this->registerHook('displayCarrierExtraContent')
+            && $this->registerHook('displayAdminOrderMain')
             ;
     }
 
@@ -544,8 +545,6 @@ class Vg_postnord extends CarrierModule
         return $this->display(__FILE__, 'carrierextracontent.tpl');
     }
 
-
-
     /**
      * required as we are the carrier module
      *
@@ -557,8 +556,26 @@ class Vg_postnord extends CarrierModule
         // just pass back the original shipping_cost
         return $shipping_cost;
     }
-    public function getOrderShippingCostExternal($params)
+    public function getOrderShippingCostExternal($params): bool
     {
         return false;
+    }
+
+    /**
+     * Show shipment actions on the BO order page
+     */
+    public function hookDisplayAdminOrderMain(array $params): ?string
+    {
+        try {
+            /** @var Twig\Environment $twig */
+            $twig = $this->get("twig");
+            return $twig->render("@Modules/vg_postnord/views/templates/admin/order-actions.html.twig", [
+                "id_order" => $params["id_order"]
+            ]);
+        } catch (Exception $e) {
+            throw $e;
+            // TODO: log
+            return null;
+        }
     }
 }
