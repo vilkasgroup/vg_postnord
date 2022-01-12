@@ -3,6 +3,7 @@
     "description": "Postnord integration for prestashop",
     "type": "prestashop-module",
     "require": {
+        "php": ">=7.2.0",
         "symfony/http-client": "^5.0"
     },
     "require-dev": {
