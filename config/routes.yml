@@ -1,0 +1,5 @@
+admin_vg_postnord_create_booking:
+  path: vg_postnord/create_booking
+  methods: [POST]
+  defaults:
+    _controller: 'Vilkas\Postnord\Controller\Admin\VgPostnordBookingController::createBookingAction'
