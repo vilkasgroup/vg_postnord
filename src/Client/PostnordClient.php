@@ -5,6 +5,10 @@ declare(strict_types=1);
 namespace Vilkas\Postnord\Client;
 
 use Exception;
+use Monolog\Handler\StreamHandler;
+use Monolog\Logger;
+use Psr\Log\AbstractLogger;
+use Psr\Log\NullLogger;
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Contracts\HttpClient\Exception\HttpExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
@@ -33,6 +37,16 @@ class PostnordClient
      */
     protected $host;
 
+    /**
+     * Logger (Monolog by default)
+     *
+     * @var AbstractLogger
+     */
+    protected $logger;
+
+    /**
+     * @throws Exception
+     */
     public function __construct(string $host, string $apikey)
     {
         if (empty($host) || empty($apikey)) {
@@ -47,6 +61,13 @@ class PostnordClient
         $this->apikey = $apikey;
 
         $this->httpClient = HttpClient::create();
+
+        if (defined("_PS_VERSION_") && defined("_PS_ROOT_DIR_")) {
+            $this->logger = new Logger("vg_postnord");
+            $this->logger->pushHandler(new StreamHandler(_PS_ROOT_DIR_ . "/var/logs/postnord-client.log"));
+        } else {
+            $this->logger = new NullLogger();
+        }
     }
 
     /**
