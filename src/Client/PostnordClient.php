@@ -10,28 +10,29 @@ use Monolog\Logger;
 use Psr\Log\AbstractLogger;
 use Psr\Log\NullLogger;
 use Symfony\Component\HttpClient\HttpClient;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\HttpExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
-use Symfony\Contracts\HttpClient\Exception\DecodingExceptionInterface;
 
 class PostnordClient
 {
     /**
-     * Client for making HTTP-requests
+     * Client for making HTTP requests
      *
      * @var HttpClient
      */
     protected $httpClient;
 
     /**
-     * apikey
+     * API key
      *
      * @var string
      */
     protected $apikey;
 
     /**
-     * hostname for http requests
+     * Hostname for HTTP requests
      *
      * @var string
      */
@@ -81,21 +82,20 @@ class PostnordClient
             '{path}' => $endpoint,
         ];
 
-        $url = str_replace(array_keys($data), array_values($data), $template);
-
-        return $url;
+        return str_replace(array_keys($data), array_values($data), $template);
     }
 
     /**
      * Do a request and check that the response is somewhat valid
      *
-     * method, one of GET POST PUT etc
-     * endpoint path of the url to call
-     * options parameters for HttpClient
+     * @param string method    one of GET POST PUT etc.
+     * @param string endpoint  path of the url to call
+     * @param array  options   parameters for HttpClient
      *
-     * Returns json_decoded response.
+     * @return array json_decoded response.
      *
-     * If request or decoding fails throws Exception
+     * @throws ExceptionInterface
+     * @throws Exception
      */
     public function doRequest(string $method, string $endpoint, array $options): array
     {
@@ -179,16 +179,18 @@ class PostnordClient
      * Get service points by address
      *
      * https://guides.atdeveloper.postnord.com/#747cfedf-fa97-4145-8a3e-5031c38416f9
+     *
+     * @throws Exception
      */
     public function getServicePointsByAddress(array $parameters): array
     {
         $defaults = [
-            'returnType' => 'json',
-            'context' => 'optionalservicepoint',
-            'responseFilter' => 'public', // probably something that we always want
-            //'typeId' => 25, // TODO: what is this magic number? cannot find any information in dev documentation
-            'numberOfServicePoints' => 100, // lets try to keep this high enough by default
-            'srId' => 'EPSG:4326', // https://en.wikipedia.org/wiki/World_Geodetic_System
+            'returnType'            => 'json',
+            'context'               => 'optionalservicepoint',
+            'responseFilter'        => 'public', // probably something that we always want
+            'typeId'                => '', // "type of the service point" or service code, see module configuration page
+            'numberOfServicePoints' => 100, // let's try to keep this high enough by default
+            'srId'                  => 'EPSG:4326', // https://en.wikipedia.org/wiki/World_Geodetic_System
         ];
         $parameters = $this->mergeOptions($defaults, $parameters);
         $options['query'] = $parameters;
@@ -214,7 +216,7 @@ class PostnordClient
      *
      * https://guides.atdeveloper.postnord.com/#0c2721e2-3aa8-4bbb-bf39-049721601c01
      */
-    public function getBasicServiceCodes()
+    public function getBasicServiceCodes(): array
     {
         $defaults = [];
         $parameters = $this->mergeOptions($defaults, []);
@@ -254,7 +256,7 @@ class PostnordClient
      *
      * https://guides.atdeveloper.postnord.com/#ee279552-541c-4220-a843-ccdda8a048f7
      */
-    public function getAdditionalServiceCodes()
+    public function getAdditionalServiceCodes(): array
     {
         $defaults = [];
         $parameters = $this->mergeOptions($defaults, []);
@@ -277,7 +279,7 @@ class PostnordClient
      *
      * https://guides.atdeveloper.postnord.com/#479cf9ca-4763-42e5-91ac-ab24812343b4
      */
-    public function getValidCombinationsOfServiceCodes()
+    public function getValidCombinationsOfServiceCodes(): array
     {
         $defaults = [];
         $parameters = $this->mergeOptions($defaults, []);
@@ -300,7 +302,7 @@ class PostnordClient
      *
      * https://guides.atdeveloper.postnord.com/#cb2ac083-992b-4a3b-aaec-01ab50ea5654
      */
-    public function getSurchargeHealthCheck()
+    public function getSurchargeHealthCheck(): array
     {
         $defaults = [];
         $parameters = $this->mergeOptions($defaults, []);
@@ -319,9 +321,9 @@ class PostnordClient
     }
 
     /**
-     * helper for merging defaults and optiosn. options will overwrite defaults.
+     * Helper for merging defaults and options. Options will overwrite defaults.
      *
-     * always injects apikey into parameters, it seems to be required for almost everything
+     * Always injects apikey into parameters, it seems to be required for almost everything.
      */
     private function mergeOptions(array $defaults, array $options): array
     {
