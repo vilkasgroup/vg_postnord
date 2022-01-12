@@ -152,16 +152,17 @@ class PostnordClient
             }
 
             // try to return the content as is, it probably contains some valid debug data
-            throw new Exception($e->getResponse()->getContent(false));
+            $content = $e->getResponse()->getContent(false);
+            $this->logger->error("API request response other than 200", ["status" => $status, "content" => $content, "exception" => $e->getMessage()]);
+            throw new Exception($content);
         } catch (TransportExceptionInterface $e) {
             // TODO: make this better
-            throw $e;
-        } catch (DecodingExceptionInterface $e) {
-            // TODO: make this better
+            $this->logger->error("Network error occurred", ["exception" => $e->getMessage()]);
             throw $e;
         } catch (Exception $e) {
             // TODO: make this better
             // something bad happened
+            $this->logger->error("Something bad happened", ["exception" => $e->getMessage()]);
             throw $e;
         }
 
