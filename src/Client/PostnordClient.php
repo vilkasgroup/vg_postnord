@@ -128,11 +128,12 @@ class PostnordClient
 
             if ($response->getStatusCode() === 400) {
                 $content = $response->getContent(false);
-                try {
-                    $results = json_decode($content, true);
-                } catch (Exception $e) {
-                    // TODO: log me, json_decode failed
-                    throw $e;
+
+                $results = json_decode($content, true);
+                if ($results === null) {
+                    // TODO: probably needs more information
+                    $this->logger->error("Could not decode JSON response");
+                    throw new Exception("Could not decode JSON response");
                 }
                 if ($results) {
                     if(array_key_exists('servicePointInformationResponse', $results)) {
@@ -165,11 +166,11 @@ class PostnordClient
         }
 
         // decode the json response
-        try {
-            $results = json_decode($content, true);
-        } catch (Exception $e) {
-            // TODO: log me, json_decode failed
-            throw $e;
+        $results = json_decode($content, true);
+        if ($results === null) {
+            // TODO: probably needs more information
+            $this->logger->error("Could not decode JSON response");
+            throw new Exception("Could not decode JSON response");
         }
 
         return $results;
