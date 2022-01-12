@@ -341,6 +341,8 @@ class Vg_postnord extends CarrierModule
             return $form;
         }
 
+        $carrier_selections = [];
+
         // build setting fields for each carrier
         // each carrier is prefixed with id_carrier_reference
         // and then their reference id
@@ -377,6 +379,10 @@ class Vg_postnord extends CarrierModule
             ];
         }
 
+        if (!$carrier_selections) {
+            $form['form']['description'] = $this->trans('No carriers found.', [], 'Modules.Vgpostnord.Admin');
+        }
+
         $form['form']['input'] = $carrier_selections;
 
         return $form;
@@ -398,7 +404,7 @@ class Vg_postnord extends CarrierModule
 
             $keys = ['service_code_consigneecountry', 'service_codes'];
             foreach ($keys as $key) {
-                $carrierValues['id_carrier_reference_'.$carrier['id_reference'].'_'.$key] = $carrierSettings[$carrier['id_reference']][$key];
+                $carrierValues['id_carrier_reference_'.$carrier['id_reference'].'_'.$key] = $carrierSettings[$carrier['id_reference']][$key] ?? '';
             }
         }
 
