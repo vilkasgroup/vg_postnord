@@ -334,4 +334,22 @@ class PostnordClient
 
         return array_replace($defaults, $options);
     }
+
+    private function generateBaseParameters(): array
+    {
+        // TODO: in progress, can also be removed if found unnecessary
+        return [
+            "messageDate" => new \DateTime("c"), // ISO 8601
+            "messageId"   => "", // TODO: generate
+            "application" => [
+                "name" => "", // TODO: need to get from module probably
+                "version" => "" // TODO: need to get from module probably
+            ]
+        ];
+    }
+
+    public function createBooking(array $parameters)
+    {
+
+    }
 }
