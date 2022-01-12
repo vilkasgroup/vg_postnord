@@ -117,8 +117,8 @@ $(document).ready(function () {
         $button.prop('disabled', true);
         $resultsDiv.empty();
         $resultsDiv.addClass('vg_postnord_loading');
-        for (i = 0; i < 3; i++) {
-            dummyPoint = renderPickupPoint(dummyPointData);
+        for (let i = 0; i < 3; i++) {
+            let dummyPoint = renderPickupPoint(dummyPointData);
             $resultsDiv.append(dummyPoint);
         }
 
@@ -137,7 +137,7 @@ $(document).ready(function () {
             // render the results
             $resultsDiv.empty();
 
-            if(resp.servicePoints) {
+            if (resp.servicePoints) {
                 resp.servicePoints.forEach((element, i) =>
                     $resultsDiv.append(renderPickupPoint(element, i))
                 );
@@ -193,7 +193,7 @@ $(document).ready(function () {
         let name = $servicePoint.name;
         let servicePointId = $servicePoint.servicePointId;
 
-        html = `
+        let html = `
         <div class="vg_postnord_pickupPoint col-md-4 col-xs-12" onclick="VgPostnordStorePickupPoint(this, '${servicePointId}')">
           <h4 class="vg_postnord_pickup_name">${name}</h4>
           <p class="vg_postnord_pickup_street">${$servicePoint.visitingAddress.streetName} ${$servicePoint.visitingAddress.streetNumber}</p>
@@ -201,7 +201,7 @@ $(document).ready(function () {
         </div>
         `;
 
-        if(($i+1) % 3 === 0) {
+        if (($i+1) % 3 === 0) {
             html += '<div class="clearfix visible-xs-block"></div>'
         }
 
