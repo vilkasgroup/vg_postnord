@@ -101,10 +101,15 @@ class PostnordClient
     {
         $url = $this->buildUrl($endpoint);
 
-        // make the request and do a sanity check for it
         try {
             $response = $this->httpClient->request($method, $url, $options);
+            $status   = $response->getStatusCode();
+        } catch (TransportExceptionInterface $e) {
+            $this->logger->error("Unsupported option passed to HttpClient", ["exception" => $e->getMessage(), "options" => json_encode($options)]);
+            throw $e;
+        }
 
+        try {
             // this will throw for all 300-599 and other errors
             $content = $response->getContent();
 
@@ -125,8 +130,7 @@ class PostnordClient
         } catch (HttpExceptionInterface $e) {
             // for 400 error we can try to dig up a bit better response from the api
             // and throw it as a new exception for controllers to show
-
-            if ($response->getStatusCode() === 400) {
+            if ($status === Response::HTTP_BAD_REQUEST) {
                 $content = $response->getContent(false);
 
                 $results = json_decode($content, true);
@@ -135,18 +139,16 @@ class PostnordClient
                     $this->logger->error("Could not decode JSON response");
                     throw new Exception("Could not decode JSON response");
                 }
-                if ($results) {
-                    if(array_key_exists('servicePointInformationResponse', $results)) {
-                        $servicePointInformationResponse = $results['servicePointInformationResponse'];
-                        //throw new Exception(json_encode($servicePointInformationResponse));
-                        if(array_key_exists('compositeFault', $servicePointInformationResponse)) {
-                            $compositeFaults = $servicePointInformationResponse['compositeFault']['faults'];
-                            $msg = '';
-                            foreach ($compositeFaults as $compositeFault) {
-                                $msg .= $compositeFault['explanationText'];
-                            }
-                            throw new Exception($msg);
+
+                if (is_array($results) && array_key_exists('servicePointInformationResponse', $results)) {
+                    $servicePointInformationResponse = $results['servicePointInformationResponse'];
+                    if (array_key_exists('compositeFault', $servicePointInformationResponse)) {
+                        $compositeFaults = $servicePointInformationResponse['compositeFault']['faults'];
+                        $msg = '';
+                        foreach ($compositeFaults as $compositeFault) {
+                            $msg .= $compositeFault['explanationText'];
                         }
+                        throw new Exception($msg);
                     }
                 }
             }
