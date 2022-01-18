@@ -9,59 +9,59 @@ use Vilkas\Postnord\Client\PostnordClient;
 
 class PostnordClientTest extends TestCase
 {
-    /**
-     * @var PostnordClient
-     */
-    protected $client;
+	/**
+	 * @var PostnordClient
+	 */
+	protected $client;
 
-    /**
-     * Skip everything if environment variables are not available and the client cannot be setup
-     */
-    protected function setUp(): void
-    {
-        $host = getenv('POSTNORD_HOST') ?: 'atapi2.postnord.com';
+	/**
+	 * Skip everything if environment variables are not available and the client cannot be setup
+	 */
+	protected function setUp(): void
+	{
+		$host = getenv('POSTNORD_HOST') ?: 'atapi2.postnord.com';
 
-        if (!$host || !getenv('POSTNORD_APIKEY')) {
-            $this->markTestSkipped('POSTNORD_HOST and or POSTNORD_APIKEY environment variables are not set');
-        }
-        $this->client = new PostnordClient($host, getenv('POSTNORD_APIKEY'));
-    }
+		if (!$host || !getenv('POSTNORD_APIKEY')) {
+			$this->markTestSkipped('POSTNORD_HOST and or POSTNORD_APIKEY environment variables are not set');
+		}
+		$this->client = new PostnordClient($host, getenv('POSTNORD_APIKEY'));
+	}
 
-    /**
-     * test fetching some service points
-     */
-    public function testGetServicePointsByAddress(): void
-    {
-        $params = [
-            'countryCode' => 'FI',
-            'agreementCountry' => 'FI',
-            'city' => 'Tampere',
-            'postalCode' => '33210',
-            'streetName' => 'Finlaysoninkuja',
-            'streetNumber' => '19',
-            'numberOfServicePoints' => 1,
-            'typeId' => 38, // TODO, figure out what this should be. 38 was found from a response without any type restrictions
-        ];
+	/**
+	 * test fetching some service points
+	 */
+	public function testGetServicePointsByAddress(): void
+	{
+		$params = [
+			'countryCode' => 'FI',
+			'agreementCountry' => 'FI',
+			'city' => 'Tampere',
+			'postalCode' => '33210',
+			'streetName' => 'Finlaysoninkuja',
+			'streetNumber' => '19',
+			'numberOfServicePoints' => 1,
+			'typeId' => 38, // typeId is the service code for pick up filter. 38 is "38 - Servicepoint (FIN)"
+		];
 
-        $results = $this->client->getServicePointsByAddress($params);
+		$results = $this->client->getServicePointsByAddress($params);
 
-        // found service points
-        $this->assertArrayHasKey('servicePoints', $results);
-        // no idea what this should be used for
-        $this->assertArrayHasKey('customerSupports', $results);
+		// found service points
+		$this->assertArrayHasKey('servicePoints', $results);
+		// no idea what this should be used for
+		$this->assertArrayHasKey('customerSupports', $results);
 
-        // check the closest servicePoint country, it should be the same as above
-        $firstPoint = $results['servicePoints'][0];
+		// check the closest servicePoint country, it should be the same as above
+		$firstPoint = $results['servicePoints'][0];
 
-        //var_dump($firstPoint);
+		// var_dump($firstPoint);
 
-        $this->assertEquals($params['countryCode'], $firstPoint['visitingAddress']['countryCode']);
-    }
+		$this->assertEquals($params['countryCode'], $firstPoint['visitingAddress']['countryCode']);
+	}
 
-    /**
-     * Test "empty" result for service points
-     */
-    /*
+	/**
+	 * Test "empty" result for service points
+	 */
+	/*
     public function testGetServicePointsByAddressNoPoints(): void
     {
         $params = [
@@ -79,37 +79,94 @@ class PostnordClientTest extends TestCase
     }
     */
 
-    public function testGetBasicServiceCodes(): void
-    {
-        $params = [];
+	public function testGetBasicServiceCodes(): void
+	{
+		$params = [];
 
-        $results = $this->client->getBasicServiceCodes($params);
-        $this->assertArrayHasKey('data', $results);
-    }
+		$results = $this->client->getBasicServiceCodes($params);
+		$this->assertArrayHasKey('data', $results);
+	}
 
-    public function testGetAdditionalServiceCodes(): void
-    {
-        $params = [];
+	public function testGetAdditionalServiceCodes(): void
+	{
+		$params = [];
 
-        $results = $this->client->getAdditionalServiceCodes($params);
-        $this->assertArrayHasKey('data', $results);
-    }
+		$results = $this->client->getAdditionalServiceCodes($params);
+		$this->assertArrayHasKey('data', $results);
+	}
 
-    public function testGetValidCombinationsOfServiceCodes(): void
-    {
-        $params = [];
+	public function testGetValidCombinationsOfServiceCodes(): void
+	{
+		$params = [];
 
-        $results = $this->client->getValidCombinationsOfServiceCodes($params);
-        $this->assertArrayHasKey('data', $results);
-    }
+		$results = $this->client->getValidCombinationsOfServiceCodes($params);
+		$this->assertArrayHasKey('data', $results);
+	}
 
-    public function testGetSurchargeHealthCheck(): void
-    {
-        $this->markTestSkipped('This errors out on their end all the time');
-        $params = [];
+	public function testGetSurchargeHealthCheck(): void
+	{
+		$this->markTestSkipped('This errors out on their end all the time');
+		$params = [];
 
-        $results = $this->client->getSurchargeHealthCheck($params);
-        $this->assertArrayHasKey('status', $results);
-        $this->assertEquals('UP', $results['status']);
-    }
+		$results = $this->client->getSurchargeHealthCheck($params);
+		$this->assertArrayHasKey('status', $results);
+		$this->assertEquals('UP', $results['status']);
+	}
+
+	public function testGenerateBooking(): void
+	{
+		$pickupAddress = [
+			'name' => "Pn K-supermarket Kuninkaankulma",
+			'servicePointId' => '9325',
+			'visitingAddress' => [
+				"countryCode" => "FI",
+				"city" => "TAMPERE",
+				"streetName" => "Kuninkaankatu",
+				"streetNumber" => "14",
+				"postalCode" => "33210",
+				"additionalDescription" => NULL
+			]
+		];
+		$email = 'customer@prestashop.com';
+		$address = new Address('first', 'last', 'Venuksenkuja 5', 'M', '0123456789', '01480', 'Vantaa', 'FI');
+		$order = [];
+		$country = 'FI';
+
+		$results = $this->client->generateBooking($email, $address, $order, $pickupAddress, $country);
+		var_dump($results);
+		$this->assertArrayHasKey('shipment', $results);
+	}
+}
+
+class Address
+{
+	public string $firstname;
+	public string $lastname;
+	public string $address1;
+	public string $address2;
+	public string $phone;
+	public string $postcode;
+	public string $city;
+	public string $country;
+
+	public function __construct(
+		string $firstname,
+		string $lastname,
+		string $address1,
+		string $address2,
+		string $phone,
+		string $postcode,
+		string $city,
+		string $country
+	) {
+
+		$this->firstname = $firstname;
+		$this->lastname = $lastname;
+		$this->address1 = $address1;
+		$this->address2 = $address2;
+		$this->phone = $phone;
+		$this->postcode = $postcode;
+		$this->city = $city;
+		$this->country = $country;
+	}
 }
