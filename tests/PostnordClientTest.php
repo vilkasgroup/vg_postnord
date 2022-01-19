@@ -113,8 +113,16 @@ class PostnordClientTest extends TestCase
 		$this->assertEquals('UP', $results['status']);
 	}
 
-	public function testGenerateBooking(): void
+	public function testCreateBooking(): void
 	{
+		$shopAddress = [
+			'shop_name' => 'Temp Dev',
+			'shop_party_id' => '1111111111',
+			'shop_street' => 'Finlaysoninkuja 19',
+			'shop_postcode' => '33210',
+			'shop_city' => 'Tamperere',
+			'shop_country' => 'FI'
+		];
 		$pickupAddress = [
 			'name' => "Pn K-supermarket Kuninkaankulma",
 			'servicePointId' => '9325',
@@ -128,45 +136,23 @@ class PostnordClientTest extends TestCase
 			]
 		];
 		$email = 'customer@prestashop.com';
-		$address = new Address('first', 'last', 'Venuksenkuja 5', 'M', '0123456789', '01480', 'Vantaa', 'FI');
+		$address = (object)[
+			'firstname' => 'first',
+			'lastname' => 'last',
+			'address1' => 'Venuksenkuja 5',
+			'address2' => 'M',
+			'phone' => '0123456789',
+			'postcode' => '01480',
+			'city' => 'Vantaa',
+			'country' => 'FI'
+		];
 		$order = [];
 		$country = 'FI';
-
-		$results = $this->client->generateBooking($email, $address, $order, $pickupAddress, $country);
+		$labelInfo = [
+			'paperSize' => 'LABEL'
+		];
+		$results = $this->client->createBookingWithPDF($email, $address, $order, $pickupAddress, $shopAddress, $country, $labelInfo);
 		var_dump($results);
-		$this->assertArrayHasKey('shipment', $results);
-	}
-}
-
-class Address
-{
-	public string $firstname;
-	public string $lastname;
-	public string $address1;
-	public string $address2;
-	public string $phone;
-	public string $postcode;
-	public string $city;
-	public string $country;
-
-	public function __construct(
-		string $firstname,
-		string $lastname,
-		string $address1,
-		string $address2,
-		string $phone,
-		string $postcode,
-		string $city,
-		string $country
-	) {
-
-		$this->firstname = $firstname;
-		$this->lastname = $lastname;
-		$this->address1 = $address1;
-		$this->address2 = $address2;
-		$this->phone = $phone;
-		$this->postcode = $postcode;
-		$this->city = $city;
-		$this->country = $country;
+		$this->assertArrayHasKey('bookingId', $results);
 	}
 }

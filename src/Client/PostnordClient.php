@@ -4,12 +4,9 @@ declare(strict_types=1);
 
 namespace Vilkas\Postnord\Client;
 
-use DateTime;
 use Exception;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
-use PrestaShop\PrestaShop\Adapter\Entity\Customer;
-use PrestaShop\PrestaShop\Adapter\Entity\Order;
 use Psr\Log\AbstractLogger;
 use Psr\Log\NullLogger;
 use Symfony\Component\HttpClient\HttpClient;
@@ -355,15 +352,15 @@ class PostnordClient
 		];
 	}
 
-	public function createBooking(array $parameters)
+	public function createBooking(string $customerEmail, $address, array $order, array $pickupAddress, array $shopAddress, string $country = 'FI')
 	{
 		$defaults = [];
 		$parameters = $this->mergeOptions($defaults, []);
 		$options['query'] = $parameters;
-		$options['json'] = $parameters;
+		$options['json'] = $this->generateBooking($customerEmail, $address, $order, $pickupAddress, $shopAddress, $country);
 
 		try {
-			$response = $this->doRequest('POST', 'rest/shipment/v3/edi', $options);
+			$response = $this->doRequest('POST', '/rest/shipment/v3/edi', $options);
 		} catch (Exception $e) {
 			// TODO: Log error
 			throw $e;
@@ -373,6 +370,26 @@ class PostnordClient
 
 		return $response;
 	}
+
+	public function createBookingWithPDF(string $customerEmail, $address, array $order, array $pickupAddress, array $shopAddress, string $country = 'FI', array $labelInfo)
+	{
+		$defaults = [];
+		$parameters = $this->mergeOptions($defaults, $labelInfo);
+		$options['query'] = $parameters;
+		$options['json'] = $this->generateBooking($customerEmail, $address, $order, $pickupAddress, $shopAddress, $country);
+
+		try {
+			$response = $this->doRequest('POST', '/rest/shipment/v3/edi/labels/pdf', $options);
+		} catch (Exception $e) {
+			// TODO: Log error
+			throw $e;
+
+			return [];
+		}
+
+		return $response;
+	}
+
 
 	// Just to get issuer code
 	//Z11=PostNord Denmark, Z12=PostNord Sweden, Z13=PostNord Norway, Z14=PostNord Finland
@@ -406,8 +423,12 @@ class PostnordClient
 	 * deliveryParty is pick up point, from $data?
 	 * 
 	 */
-
-	public function generateBooking(string $customerEmail, $address, array $order, array $pickupAddress, string $country = 'FI'): array
+	/**
+	 * Fix array stuff
+	 * itemId number?
+	 * partyId 10 number
+	 */
+	public function generateBooking(string $customerEmail, $address, array $order, array $pickupAddress, array $shopAddress, string $country = 'FI'): array
 	{
 		$datetime = date(DATE_ISO8601);
 
@@ -416,22 +437,23 @@ class PostnordClient
 			'messageFunction' => 'Instruction',
 			'messageId' => uniqid(),
 			'application' => [
-				'applicationId' => 1234,
 				'name' => 'vg_postnord',
 				'version' => '0.0.1'
 			],
 			'updateIndicator' => 'Original', //enum: Original, Update, Deletion
 			'shipment' => [
-				'shipmentIdentification' => [
-					'shipmentId' => '0' //from data?
-				],
-				'dateAndTimes' => [
-					'loadingDate' => $datetime
-				],
-				'service' => [
-					'basicServiceCode' => '19', //from data
-					'additionalServiceCode' => ['A3', 'A7'],
-					'freeText' => '', //from data
+				[
+					'shipmentIdentification' => [
+						'shipmentId' => '0' //from data?
+					],
+					'dateAndTimes' => [
+						'loadingDate' => $datetime
+					],
+					'service' => [
+						'basicServiceCode' => '19', //from data
+						'additionalServiceCode' => ['A3', 'A7']
+					],
+					'freeText' => [], //from data
 					'numberOfPackages' => [
 						'value' => 1
 					],
@@ -441,20 +463,20 @@ class PostnordClient
 					],
 					'parties' => [
 						'consignor' => [
-							'issuerCode' => $this->getIssuerCode('FI'), //Z11=PostNord Denmark, Z12=PostNord Sweden, Z13=PostNord Norway, Z14=PostNord Finland
+							'issuerCode' => $this->getIssuerCode($shopAddress['shop_country']), //Z11=PostNord Denmark, Z12=PostNord Sweden, Z13=PostNord Norway, Z14=PostNord Finland
 							'partyIdentification' => [
-								'partyId' => '1111111',
+								'partyId' => $shopAddress['shop_party_id'],
 								'partyIdType' => '160', //160=customer number,167=VAT customer number,156=Service point ID, 229=Geographic location
 							],
 							'party' => [
 								'nameIdentification' => [
-									'name' => 'Merchant'
+									'name' => $shopAddress['shop_name']
 								],
 								'address' => [
-									'streets' => ['Finlaysoninkuja 19'],
-									'postalCode' => '01480',
-									'city' => 'Vantaa',
-									'countryCode' => 'FI'
+									'streets' => [$shopAddress['shop_street']],
+									'postalCode' => $shopAddress['shop_postcode'],
+									'city' => $shopAddress['shop_city'],
+									'countryCode' => $shopAddress['shop_country']
 								]
 							]
 						],
@@ -496,15 +518,19 @@ class PostnordClient
 						]
 					],
 					"goodsItem" => [
-						'packageTypeCode' => 'PC',
-						'items' => [
-							'itemIdentification' => [
-								'itemId' => 'something',
-								'itemIdType' => 'SSCC', //SSCC for Nordic and DPD to other countries
-							],
-							'grossWeight' => [
-								'value' => 2,
-								'unit' => 'KGM'
+						[
+							'packageTypeCode' => 'PC',
+							'items' => [
+								[
+									'itemIdentification' => [
+										'itemId' => '0',
+										'itemIdType' => 'SSCC', //SSCC for Nordic and DPD to other countries
+									],
+									'grossWeight' => [
+										'value' => 2,
+										'unit' => 'KGM'
+									]
+								]
 							]
 						]
 					]
