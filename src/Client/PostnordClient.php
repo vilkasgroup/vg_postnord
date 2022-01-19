@@ -339,25 +339,17 @@ class PostnordClient
 		return array_replace($defaults, $options);
 	}
 
-	private function generateBaseParameters(): array
-	{
-		// TODO: in progress, can also be removed if found unnecessary
-		return [
-			"messageDate" => new \DateTime("c"), // ISO 8601
-			"messageId"   => "", // TODO: generate
-			"application" => [
-				"name" => "", // TODO: need to get from module probably
-				"version" => "" // TODO: need to get from module probably
-			]
-		];
-	}
+	/**
+	 * Create booking with given info
+	 * currently asked for $shopAddress (testing purpose) but can be changed to extract from configuration
+	 */
 
-	public function createBooking(string $customerEmail, $address, array $order, array $pickupAddress, array $shopAddress, string $country = 'FI')
+	public function createBooking(string $customerEmail, $customerAddress, array $order, array $pickupAddress, array $shopAddress, string $country = 'FI')
 	{
 		$defaults = [];
 		$parameters = $this->mergeOptions($defaults, []);
 		$options['query'] = $parameters;
-		$options['json'] = $this->generateBooking($customerEmail, $address, $order, $pickupAddress, $shopAddress, $country);
+		$options['json'] = $this->generateBooking($customerEmail, $customerAddress, $order, $pickupAddress, $shopAddress, $country);
 
 		try {
 			$response = $this->doRequest('POST', '/rest/shipment/v3/edi', $options);
@@ -371,15 +363,41 @@ class PostnordClient
 		return $response;
 	}
 
-	public function createBookingWithPDF(string $customerEmail, $address, array $order, array $pickupAddress, array $shopAddress, string $country = 'FI', array $labelInfo)
+	/**
+	 * Similar to createBooking but with PDF label or ZFL in the future 
+	 */
+	public function createBookingWithPDF(string $customerEmail, $customerAddress, array $order, array $pickupAddress, array $shopAddress, string $country = 'FI', array $labelInfo)
 	{
 		$defaults = [];
 		$parameters = $this->mergeOptions($defaults, $labelInfo);
 		$options['query'] = $parameters;
-		$options['json'] = $this->generateBooking($customerEmail, $address, $order, $pickupAddress, $shopAddress, $country);
+		$options['json'] = $this->generateBooking($customerEmail, $customerAddress, $order, $pickupAddress, $shopAddress, $country);
 
 		try {
 			$response = $this->doRequest('POST', '/rest/shipment/v3/edi/labels/pdf', $options);
+		} catch (Exception $e) {
+			// TODO: Log error
+			throw $e;
+
+			return [];
+		}
+
+		return $response;
+	}
+
+
+	/**
+	 * 
+	 */
+	public function getPDFLabelFromId(string $labelId, array $labelInfo): array
+	{
+		$defaults = [];
+		$parameters = $this->mergeOptions($defaults, $labelInfo);
+		$options['query'] = $parameters;
+		$options['json'] = [['id' => $labelId]];
+
+		try {
+			$response = $this->doRequest('POST', '/rest/shipment/v3/labels/ids/pdf', $options);
 		} catch (Exception $e) {
 			// TODO: Log error
 			throw $e;
@@ -423,12 +441,7 @@ class PostnordClient
 	 * deliveryParty is pick up point, from $data?
 	 * 
 	 */
-	/**
-	 * Fix array stuff
-	 * itemId number?
-	 * partyId 10 number
-	 */
-	public function generateBooking(string $customerEmail, $address, array $order, array $pickupAddress, array $shopAddress, string $country = 'FI'): array
+	protected function generateBooking(string $customerEmail, $customerAddress, array $order, array $pickupAddress, array $shopAddress, string $country = 'FI'): array
 	{
 		$datetime = date(DATE_ISO8601);
 
@@ -484,18 +497,18 @@ class PostnordClient
 							'issuerCode' => $this->getIssuerCode($country),
 							'party' => [
 								'nameIdentification' => [
-									'name' => "{$address->firstname} {$address->lastname}"
+									'name' => "{$customerAddress->firstname} {$customerAddress->lastname}"
 								],
 								'address' => [
-									'streets' => ["{$address->address1} {$address->address2}"],
-									'postalCode' => $address->postcode,
-									'city' => $address->city,
+									'streets' => ["{$customerAddress->address1} {$customerAddress->address2}"],
+									'postalCode' => $customerAddress->postcode,
+									'city' => $customerAddress->city,
 									'countryCode' => $country
 								],
 								'contact' => [
-									'contactName' => "{$address->firstname} {$address->lastname}",
+									'contactName' => "{$customerAddress->firstname} {$customerAddress->lastname}",
 									'emailAddress' => $customerEmail,
-									'smsNo' => $address->phone
+									'smsNo' => $customerAddress->phone
 								]
 							]
 						],

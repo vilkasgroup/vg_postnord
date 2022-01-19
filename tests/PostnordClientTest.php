@@ -148,11 +148,61 @@ class PostnordClientTest extends TestCase
 		];
 		$order = [];
 		$country = 'FI';
+		$results = $this->client->createBooking($email, $address, $order, $pickupAddress, $shopAddress, $country);
+		// var_dump($results);
+		$this->assertArrayHasKey('bookingId', $results);
+	}
+	public function testCreateBookingWithPDF(): void
+	{
+		$shopAddress = [
+			'shop_name' => 'Temp Dev',
+			'shop_party_id' => '1111111111',
+			'shop_street' => 'Finlaysoninkuja 19',
+			'shop_postcode' => '33210',
+			'shop_city' => 'Tamperere',
+			'shop_country' => 'FI'
+		];
+		$pickupAddress = [
+			'name' => "Pn K-supermarket Kuninkaankulma",
+			'servicePointId' => '9325',
+			'visitingAddress' => [
+				"countryCode" => "FI",
+				"city" => "TAMPERE",
+				"streetName" => "Kuninkaankatu",
+				"streetNumber" => "14",
+				"postalCode" => "33210",
+				"additionalDescription" => NULL
+			]
+		];
+		$email = 'customer@prestashop.com';
+		$address = (object)[
+			'firstname' => 'first',
+			'lastname' => 'last',
+			'address1' => 'Venuksenkuja 5',
+			'address2' => 'M',
+			'phone' => '0123456789',
+			'postcode' => '01480',
+			'city' => 'Vantaa',
+			'country' => 'FI'
+		];
+		$order = [];
+		$country = 'FI';
 		$labelInfo = [
 			'paperSize' => 'LABEL'
 		];
 		$results = $this->client->createBookingWithPDF($email, $address, $order, $pickupAddress, $shopAddress, $country, $labelInfo);
-		var_dump($results);
-		$this->assertArrayHasKey('bookingId', $results);
+		// var_dump($results);
+		$this->assertArrayHasKey('labelPrintout', $results);
+	}
+
+	public function testGetPDFLabelFromId(): void
+	{
+		$labelInfo = [
+			'paperSize' => 'LABEL'
+		];
+		$labelId = '00364300432996651506';
+		$results = $this->client->getPDFLabelFromId($labelId, $labelInfo);
+		// var_dump($results);
+		$this->assertArrayHasKey('printout', $results[0]);
 	}
 }
