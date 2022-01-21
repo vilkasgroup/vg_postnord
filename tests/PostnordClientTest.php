@@ -115,6 +115,7 @@ class PostnordClientTest extends TestCase
 
 	public function testCreateBooking(): void
 	{
+		// extract from VG_POSTNORD_SHOP_ADDRESS
 		$shopAddress = [
 			'shop_name' => 'Temp Dev',
 			'shop_party_id' => '1111111111',
@@ -123,6 +124,8 @@ class PostnordClientTest extends TestCase
 			'shop_city' => 'Tamperere',
 			'shop_country' => 'FI'
 		];
+		// Come from front office
+		// The data follows the format from Postnord
 		$pickupAddress = [
 			'name' => "Pn K-supermarket Kuninkaankulma",
 			'servicePointId' => '9325',
@@ -135,7 +138,9 @@ class PostnordClientTest extends TestCase
 				"additionalDescription" => NULL
 			]
 		];
+		// just customer email
 		$email = 'customer@prestashop.com';
+		// address is prestashop address object (customer address)
 		$address = (object)[
 			'firstname' => 'first',
 			'lastname' => 'last',
@@ -146,6 +151,7 @@ class PostnordClientTest extends TestCase
 			'city' => 'Vantaa',
 			'country' => 'FI'
 		];
+		// It would be nice if the $order follow this format
 		$order = [
 			'id' => '0',
 			'basicServiceCode' => '19',
@@ -154,7 +160,12 @@ class PostnordClientTest extends TestCase
 			'grossWeight' => 1.1,
 			// 'itemId'=>'Maybe same as shipmentId?'
 		];
+		// Customer country, default is 'FI'
 		$country = 'FI';
+		// check $labelInfo format in Post Nord documentation 
+		// $labelInfo = [
+		// 	'paperSize' => 'LABEL'
+		// ];
 		$results = $this->client->createBooking($email, $address, $order, $pickupAddress, $shopAddress, $country);
 		// var_dump($results);
 		$this->assertArrayHasKey('bookingId', $results);
@@ -204,6 +215,7 @@ class PostnordClientTest extends TestCase
 			// 'itemId'=>'Maybe same as shipmentId?'
 		];
 		$country = 'FI';
+		// check $labelInfo format in Post Nord documentation 
 		$labelInfo = [
 			'paperSize' => 'LABEL'
 		];
@@ -219,7 +231,7 @@ class PostnordClientTest extends TestCase
 		];
 		$labelId = '00364300432996651506';
 		$results = $this->client->getPDFLabelFromId($labelId, $labelInfo);
-		// var_dump($results);
+		var_dump($results);
 		$this->assertArrayHasKey('printout', $results[0]);
 	}
 }

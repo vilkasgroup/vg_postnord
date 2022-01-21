@@ -343,6 +343,7 @@ class PostnordClient
 	 * Create booking with given info
 	 * return PDF label if $labelInfo is provided
 	 * can return ZPL as well, it's not that different
+	 * Checked the testCreateBooking for the correct data format
 	 */
 
 	public function createBooking(string $customerEmail, $customerAddress, array $order, array $pickupAddress, array $shopAddress, string $country = 'FI', array $labelInfo = [])
@@ -360,9 +361,14 @@ class PostnordClient
 			}
 		} catch (Exception $e) {
 			// TODO: Log error
-			throw $e;
-
-			return [];
+			$error = json_decode($e->getMessage(), true);
+			$errorMessage = [
+				'errorMessage' => $error['message'],
+				'errorExplanation' => $error['compositeFault']['faults'][0]['explanationText'],
+				'errorValue' => $error['compositeFault']['faults'][0]['paramValues'][0]['value']
+			];
+			$this->logger->error('Error create booking' . $e->getMessage());
+			return $errorMessage;
 		}
 
 		return $response;
@@ -382,9 +388,14 @@ class PostnordClient
 			$response = $this->doRequest('POST', '/rest/shipment/v3/labels/ids/pdf', $options);
 		} catch (Exception $e) {
 			// TODO: Log error
-			throw $e;
-
-			return [];
+			$error = json_decode($e->getMessage(), true);
+			$errorMessage = [
+				'errorMessage' => $error['message'],
+				'errorExplanation' => $error['compositeFault']['faults'][0]['explanationText'],
+				'errorValue' => $error['compositeFault']['faults'][0]['paramValues'][0]['value']
+			];
+			$this->logger->error('Error getting label' . $e->getMessage());
+			return $errorMessage;
 		}
 
 		return $response;
