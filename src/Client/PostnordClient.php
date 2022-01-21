@@ -341,32 +341,11 @@ class PostnordClient
 
 	/**
 	 * Create booking with given info
-	 * currently asked for $shopAddress (testing purpose) but can be changed to extract from configuration
+	 * return PDF label if $labelInfo is provided
+	 * can return ZPL as well, it's not that different
 	 */
 
-	public function createBooking(string $customerEmail, $customerAddress, array $order, array $pickupAddress, array $shopAddress, string $country = 'FI')
-	{
-		$defaults = [];
-		$parameters = $this->mergeOptions($defaults, []);
-		$options['query'] = $parameters;
-		$options['json'] = $this->generateBooking($customerEmail, $customerAddress, $order, $pickupAddress, $shopAddress, $country);
-
-		try {
-			$response = $this->doRequest('POST', '/rest/shipment/v3/edi', $options);
-		} catch (Exception $e) {
-			// TODO: Log error
-			throw $e;
-
-			return [];
-		}
-
-		return $response;
-	}
-
-	/**
-	 * Similar to createBooking but with PDF label or ZFL in the future 
-	 */
-	public function createBookingWithPDF(string $customerEmail, $customerAddress, array $order, array $pickupAddress, array $shopAddress, string $country = 'FI', array $labelInfo)
+	public function createBooking(string $customerEmail, $customerAddress, array $order, array $pickupAddress, array $shopAddress, string $country = 'FI', array $labelInfo = [])
 	{
 		$defaults = [];
 		$parameters = $this->mergeOptions($defaults, $labelInfo);
@@ -374,7 +353,11 @@ class PostnordClient
 		$options['json'] = $this->generateBooking($customerEmail, $customerAddress, $order, $pickupAddress, $shopAddress, $country);
 
 		try {
-			$response = $this->doRequest('POST', '/rest/shipment/v3/edi/labels/pdf', $options);
+			if (empty($labelInfo)) {
+				$response = $this->doRequest('POST', '/rest/shipment/v3/edi', $options);
+			} else {
+				$response = $this->doRequest('POST', '/rest/shipment/v3/edi/labels/pdf', $options);
+			}
 		} catch (Exception $e) {
 			// TODO: Log error
 			throw $e;
@@ -384,7 +367,6 @@ class PostnordClient
 
 		return $response;
 	}
-
 
 	/**
 	 * 
@@ -435,7 +417,14 @@ class PostnordClient
 	 * generate request body for booking
 	 * 
 	 * application info can be extract from somewhere/database?
-	 * shipment info from $data
+	 * shipment info from $order = [
+	 * 'shipmentId'=>'id from DB?', 
+	 * 'basicServiceCode'=>'xx',
+	 * 'additionalServiceCode'=>['xx','yy'],
+	 * 'numberOfPackage'=>1,
+	 * 'grossWeight'=>1.1,
+	 * 'itemId'=>'Maybe same as shipmentId?'
+	 * ]
 	 * consignor is the merchant
 	 * consignee is customer. prestashop address object (customer address)
 	 * deliveryParty is pick up point, from $data?
@@ -457,21 +446,21 @@ class PostnordClient
 			'shipment' => [
 				[
 					'shipmentIdentification' => [
-						'shipmentId' => '0' //from data?
+						'shipmentId' => $order['id'] //from data?
 					],
 					'dateAndTimes' => [
 						'loadingDate' => $datetime
 					],
 					'service' => [
-						'basicServiceCode' => '19', //from data
-						'additionalServiceCode' => ['A3', 'A7']
+						'basicServiceCode' => $order['basicServiceCode'], //from data
+						'additionalServiceCode' => $order['additionalServiceCode'] //from data
 					],
 					'freeText' => [], //from data
 					'numberOfPackages' => [
-						'value' => 1
+						'value' => $order['numberOfPackages']
 					],
 					'totalGrossWeight' => [
-						'value' => 2, //from data
+						'value' => $order['grossWeight'], //from data
 						'unit' => 'KGM'
 					],
 					'parties' => [
@@ -536,11 +525,11 @@ class PostnordClient
 							'items' => [
 								[
 									'itemIdentification' => [
-										'itemId' => '0',
+										'itemId' => $order['id'],
 										'itemIdType' => 'SSCC', //SSCC for Nordic and DPD to other countries
 									],
 									'grossWeight' => [
-										'value' => 2,
+										'value' => $order['grossWeight'],
 										'unit' => 'KGM'
 									]
 								]

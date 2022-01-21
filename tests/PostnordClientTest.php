@@ -146,12 +146,22 @@ class PostnordClientTest extends TestCase
 			'city' => 'Vantaa',
 			'country' => 'FI'
 		];
-		$order = [];
+		$order = [
+			'id' => '0',
+			'basicServiceCode' => '19',
+			'additionalServiceCode' => ['A3', 'A7'],
+			'numberOfPackages' => 1,
+			'grossWeight' => 1.1,
+			// 'itemId'=>'Maybe same as shipmentId?'
+		];
 		$country = 'FI';
 		$results = $this->client->createBooking($email, $address, $order, $pickupAddress, $shopAddress, $country);
 		// var_dump($results);
 		$this->assertArrayHasKey('bookingId', $results);
+		$this->assertArrayHasKey('value', $results['idInformation'][0]['ids'][0]);
+		$this->assertRegExp('/\d{20}/m', $results['idInformation'][0]['ids'][0]['value']);
 	}
+
 	public function testCreateBookingWithPDF(): void
 	{
 		$shopAddress = [
@@ -185,12 +195,19 @@ class PostnordClientTest extends TestCase
 			'city' => 'Vantaa',
 			'country' => 'FI'
 		];
-		$order = [];
+		$order = [
+			'id' => '0',
+			'basicServiceCode' => '19',
+			'additionalServiceCode' => ['A3', 'A7'],
+			'numberOfPackages' => 1,
+			'grossWeight' => 1.1,
+			// 'itemId'=>'Maybe same as shipmentId?'
+		];
 		$country = 'FI';
 		$labelInfo = [
 			'paperSize' => 'LABEL'
 		];
-		$results = $this->client->createBookingWithPDF($email, $address, $order, $pickupAddress, $shopAddress, $country, $labelInfo);
+		$results = $this->client->createBooking($email, $address, $order, $pickupAddress, $shopAddress, $country, $labelInfo);
 		// var_dump($results);
 		$this->assertArrayHasKey('labelPrintout', $results);
 	}
