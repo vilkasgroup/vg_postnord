@@ -64,7 +64,7 @@ class PostnordClient
         $this->httpClient = HttpClient::create();
 
         if (defined("_PS_VERSION_") && defined("_PS_ROOT_DIR_")) {
-            $this->logger = new Logger("vg_postnord");
+            $this->logger = new Logger("vg_postnord_client");
             $this->logger->pushHandler(new StreamHandler(_PS_ROOT_DIR_ . "/var/logs/postnord-client.log"));
         } else {
             $this->logger = new NullLogger();
