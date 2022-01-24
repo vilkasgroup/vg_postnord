@@ -1,6 +1,17 @@
 <?php
 
+use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\ORMException;
+use Monolog\Handler\StreamHandler;
+use Monolog\Logger;
+use Psr\Log\AbstractLogger;
+use Symfony\Bundle\FrameworkBundle\Routing\Router;
 use Vilkas\Postnord\Client\PostnordClient;
+use Vilkas\Postnord\Entity\VgPostnordCartData;
+use PrestaShop\PrestaShop\Core\Grid\Action\Bulk\Type\SubmitBulkAction;
+use PrestaShop\PrestaShop\Core\Grid\Definition\GridDefinition;
+use PrestaShopBundle\Controller\Admin\Sell\Order\ActionsBarButtonsCollection;
+use PrestaShopBundle\Controller\Admin\Sell\Order\ActionsBarButton;
 
 if (!defined('_PS_VERSION_')) {
     exit;
@@ -9,6 +20,9 @@ if (!defined('_PS_VERSION_')) {
 class Vg_postnord extends CarrierModule
 {
     protected $config_form = false;
+
+    /** @var AbstractLogger */
+    private $logger;
 
     public function __construct()
     {
@@ -28,7 +42,9 @@ class Vg_postnord extends CarrierModule
         $this->displayName = $this->trans("Postnord", [], "Modules.Vgpostnord.Admin");
         $this->description = $this->trans("Postnord shipping for your Prestashop", [], "Modules.Vgpostnord.Admin");
 
-        $this->ps_versions_compliancy = ['min' => '1.7', 'max' => _PS_VERSION_];
+        $this->ps_versions_compliancy = ['min' => '1.7.7', 'max' => _PS_VERSION_];
+
+        $this->logger = static::getLogger();
     }
 
     public function isUsingNewTranslationSystem(): bool
@@ -116,6 +132,14 @@ class Vg_postnord extends CarrierModule
         }
 
         return true;
+    }
+
+    public static function getLogger(): Logger
+    {
+        $logger = new Logger("vg_postnord");
+        $logger->pushHandler(new StreamHandler(_PS_ROOT_DIR_ . "/var/logs/postnord.log"));
+
+        return $logger;
     }
 
     /**
@@ -573,8 +597,11 @@ class Vg_postnord extends CarrierModule
                 "id_order" => $params["id_order"]
             ]);
         } catch (Exception $e) {
-            throw $e;
-            // TODO: log
+            $this->logger->error("Could not render Twig template", [
+                "exception" => $e->getMessage(),
+                "hook"      => "displayAdminOrderMain",
+                "id_order"  => $id_order
+            ]);
             return null;
         }
     }
