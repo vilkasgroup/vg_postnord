@@ -27,6 +27,13 @@ class VgPostnordCartData
     private $id_cart;
 
     /**
+     * @var int
+     *
+     * @ORM\Column(name="id_order", type="integer", nullable=true)
+     */
+    private $id_order;
+
+    /**
      * @var string
      *
      * @ORM\Column(name="servicepointid", type="string", nullable=true)
@@ -70,6 +77,26 @@ class VgPostnordCartData
     public function setIdCart(int $id_cart): self
     {
         $this->id_cart = $id_cart;
+        return $this;
+    }
+
+
+    /**
+     * @return int
+     */
+    public function getIdOrder(): int
+    {
+        return $this->id_order;
+    }
+
+    /**
+     * @param int $id_order
+     *
+     * @return $this
+     */
+    public function setIdOrder(int $id_order): self
+    {
+        $this->id_order = $id_order;
         return $this;
     }
 
