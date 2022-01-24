@@ -51,7 +51,7 @@ class Vg_postnord extends CarrierModule
         return parent::install()
             && $this->installSQL()
             && $this->registerHook('header')
-            && $this->registerHook('backOfficeHeader')
+            && $this->registerHook('actionAdminControllerSetMedia')
             && $this->registerHook('displayCarrierExtraContent')
             && $this->registerHook('displayAdminOrderMain')
             ;
@@ -505,7 +505,7 @@ class Vg_postnord extends CarrierModule
     /**
      * Add the CSS & JavaScript files you want to be loaded in the BO.
      */
-    public function hookBackOfficeHeader()
+    public function hookActionAdminControllerSetMedia()
     {
         if (Tools::getValue('module_name') == $this->name) {
             $this->context->controller->addJS($this->_path . 'views/js/back.js');
