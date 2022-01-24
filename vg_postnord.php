@@ -590,11 +590,28 @@ class Vg_postnord extends CarrierModule
      */
     public function hookDisplayAdminOrderMain(array $params): ?string
     {
+        $id_order = (int) $params["id_order"];
+        try {
+            $order = new Order($id_order);
+        } catch (PrestaShopException $e) {
+            $this->logger->error("Error loading Product", [
+                "exception" => $e->getMessage(),
+                "hook"      => "displayAdminOrderMain",
+                "id_order"  => $id_order
+            ]);
+            return null;
+        }
+
+        $carrier = new Carrier($order->id_carrier);
+        if ($carrier->external_module_name !== $this->name) {
+            return null; // probably not a PostNord order
+        }
+
         try {
             /** @var Twig\Environment $twig */
             $twig = $this->get("twig");
             return $twig->render("@Modules/vg_postnord/views/templates/admin/order-actions.html.twig", [
-                "id_order" => $params["id_order"]
+                "id_order" => $id_order
             ]);
         } catch (Exception $e) {
             $this->logger->error("Could not render Twig template", [
