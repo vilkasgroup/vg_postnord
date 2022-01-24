@@ -29,7 +29,7 @@ class VgPostnordCartData
     /**
      * @var string
      *
-     * @ORM\Column(name="servicepointid", type="string", nullable=false)
+     * @ORM\Column(name="servicepointid", type="string", nullable=true)
      */
     private $servicepointid;
 
