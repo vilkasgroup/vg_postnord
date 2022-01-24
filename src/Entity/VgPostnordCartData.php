@@ -65,7 +65,7 @@ class VgPostnordCartData
     /**
      * @param int $id_cart
      *
-     * @return $this;
+     * @return $this
      */
     public function setIdCart(int $id_cart): self
     {
