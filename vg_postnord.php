@@ -70,6 +70,14 @@ class Vg_postnord extends CarrierModule
             && $this->registerHook('actionAdminControllerSetMedia')
             && $this->registerHook('displayCarrierExtraContent')
             && $this->registerHook('displayAdminOrderMain')
+            && $this->registerHook('actionValidateOrder')
+
+            // add "generate label" button to order preview
+            && $this->registerHook('displayOrderPreview')
+            // add "generate label" button to order buttons
+            && $this->registerHook('actionGetAdminOrderButtons')
+            // add "generate label" to orders bulk actions
+            && $this->registerHook('actionOrderGridDefinitionModifier')
             ;
     }
 
@@ -621,5 +629,200 @@ class Vg_postnord extends CarrierModule
             ]);
             return null;
         }
+    }
+
+    /**
+     * Add "Generate shipping label" button to order preview
+     */
+    public function hookDisplayOrderPreview(array $params): ?string
+    {
+        $id_order = (int) $params["order_id"];
+        $cartData = $this->_getCartDataByOrderId($id_order, "displayOrderPreview");
+        if (!$cartData) {
+            return null;
+        }
+
+        try {
+            /** @var Twig\Environment $twig */
+            $twig = $this->get("twig");
+
+            /** @var Router $router */
+            $router = $this->get("router");
+
+            return $twig->render("@Modules/vg_postnord/views/templates/admin/order-preview.html.twig", [
+                "generate_label_url" => $router->generate("admin_vg_postnord_ajax_generate_label"),
+                "id_cart_data"       => $cartData->getId()
+            ]);
+        } catch (Exception $e) {
+            $this->logger->error("Could not render Twig template", [
+                "exception"    => $e->getMessage(),
+                "hook"         => "displayOrderPreview",
+                "id_cart_data" => $cartData->getId()
+            ]);
+            return null;
+        }
+    }
+
+    /**
+     * Add "Generate shipping label" button to order page buttons
+     */
+    public function hookActionGetAdminOrderButtons(array $params)
+    {
+        $id_order = (int) $params["id_order"];
+        $cartData = $this->_getCartDataByOrderId($id_order, "actionGetAdminOrderButtons");
+        if (!$cartData) {
+            return null;
+        }
+
+        /** @var ActionsBarButtonsCollection $collection */
+        $collection = $params["actions_bar_buttons_collection"];
+
+        try {
+            /** @var Router $router */
+            $router = $this->get("router");
+
+            $collection->add(
+                new ActionsBarButton(
+                    "btn-primary btn-generate-label",
+                    [
+                        "name"              => "vg-postnord-generate-label-button",
+                        "data-id-cart-data" => $cartData->getId(),
+                        "data-url"          => $router->generate("admin_vg_postnord_ajax_generate_label")
+                    ],
+                    $this->trans("Generate shipping label", [], "Modules.Vgpostnord.Admin")
+                )
+            );
+        } catch (Exception $e) {
+            $this->logger->error("Error adding ActionsBarButton", [
+                "exception"    => $e->getMessage(),
+                "hook"         => "actionGetAdminOrderButtons",
+                "id_cart_data" => $cartData->getId()
+            ]);
+            return null;
+        }
+    }
+
+    /**
+     * Add "Generate shipping label" bulk action button to Order grid
+     */
+    public function hookActionOrderGridDefinitionModifier(array $params)
+    {
+        /** @var GridDefinition $gridDefinition */
+        $gridDefinition = $params["definition"];
+        $gridDefinition->getBulkActions()->add(
+            (new SubmitBulkAction("bulk_generate_shipping_label"))
+                ->setName($this->trans("Generate shipping label", [], "Modules.Vgpostnord.Admin"))
+                ->setOptions([
+                    "submit_route" => "admin_vg_postnord_bulk_generate_label"
+                ])
+        );
+    }
+
+    /**
+     * Save id_order in cart data if shipping method is PostNord
+     */
+    public function hookActionValidateOrder(array $params)
+    {
+        /** @var Cart $cart */
+        $cart = $params["cart"];
+
+        /** @var Order $order */
+        $order = $params["order"];
+
+        $carrier = new Carrier($order->id_carrier);
+        if ($carrier->external_module_name !== $this->name) {
+            return; // probably not a PostNord order
+        }
+
+        try {
+            /** @var EntityManager $entityManager */
+            $entityManager = $this->get('doctrine.orm.entity_manager');
+            $repository = $entityManager->getRepository(VgPostnordCartData::class);
+        } catch (Exception $e) {
+            $this->logger->error("Error getting entity manager or repository", [
+                "exception" => $e->getMessage(),
+                "hook"      => "actionValidateOrder",
+                "id_cart"   => $cart->id,
+                "id_order"  => $order->id
+            ]);
+            return;
+        }
+
+        $cartData = $repository->findOneBy(["id_cart" => $cart->id]);
+        if (!$cartData) {
+            $this->logger->error("Could not find Postnord cart data", [
+                "hook"     => "actionValidateOrder",
+                "id_cart"  => $cart->id,
+                "id_order" => $order->id
+            ]);
+            return;
+        }
+
+        $cartData->setIdOrder($order->id);
+        try {
+            $entityManager->persist($cartData);
+            $entityManager->flush();
+        } catch (ORMException $e) {
+            $this->logger->error("Error setting id_order of cart data", [
+                "exception" => $e->getMessage(),
+                "hook"      => "actionValidateOrder",
+                "id_cart"   => $cart->id,
+                "id_order"  => $order->id
+            ]);
+        }
+    }
+
+    /**
+     * Get VgPostNordCartData by Order ID
+     *
+     * Handles all the checks and logging, caller just needs to check if they got the data or null.
+     *
+     * @param int    $id_order Order ID
+     * @param string $hook     Hook name where this is being used (used for logging purposes)
+     *
+     * @return VgPostnordCartData|null
+     */
+    private function _getCartDataByOrderId(int $id_order, string $hook): ?VgPostnordCartData
+    {
+        try {
+            $order = new Order($id_order);
+        } catch (PrestaShopException $e) {
+            $this->logger->error("Error loading Product", [
+                "exception" => $e->getMessage(),
+                "hook"      => $hook,
+                "id_order"  => $id_order
+            ]);
+            return null;
+        }
+
+        $carrier = new Carrier($order->id_carrier);
+        if ($carrier->external_module_name !== $this->name) {
+            return null; // probably not a PostNord order
+        }
+
+        try {
+            /** @var EntityManager $entityManager */
+            $entityManager = $this->get("doctrine.orm.entity_manager");
+            $repository = $entityManager->getRepository(VgPostnordCartData::class);
+        } catch (Exception $e) {
+            $this->logger->error("Error getting entity manager or repository", [
+                "exception" => $e->getMessage(),
+                "hook"      => $hook,
+                "id_order"  => $id_order
+            ]);
+            return null;
+        }
+
+        $cartData = $repository->findOneBy(["id_cart" => $order->id_cart]);
+        if (!$cartData) {
+            $this->logger->error("Could not find Postnord cart data", [
+                "hook"     => $hook,
+                "id_order" => $order->id,
+                "id_cart"  => $order->id_cart
+            ]);
+            return null;
+        }
+
+        return $cartData;
     }
 }
