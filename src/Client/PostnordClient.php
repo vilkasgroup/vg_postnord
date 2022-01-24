@@ -390,14 +390,14 @@ class PostnordClient
                 $responseWithoutBase64 = $response;
                 unset($responseWithoutBase64['labelPrintout'][0]['printout']['data']);
                 $this->logger->debug('Booking created with data:\n' . print_r($responseWithoutBase64, true));
-                // var_dump($responseWithoutBase64);
             } else {
                 $this->logger->debug('Booking created with data:\n' . print_r($response, true));
             }
         } catch (Exception $e) {
             // TODO: Log error
             $this->logger->error('Error create booking' . $e->getMessage());
-
+            $error = json_decode($e->getMessage(), true);
+            throw new Exception($error['message']);
             return [];
         }
 
@@ -419,7 +419,7 @@ class PostnordClient
             if (isset(
                 $response['labelPrintout'][0]['printout']['data']
             )) {
-                // remove base64 pdf
+                // remove base64 pdf before logging
                 $responseWithoutBase64 = $response;
                 unset($responseWithoutBase64['labelPrintout'][0]['printout']['data']);
                 $this->logger->debug('Booking created with data:\n' . print_r($responseWithoutBase64, true));
@@ -427,7 +427,8 @@ class PostnordClient
         } catch (Exception $e) {
             // TODO: Log error
             $this->logger->error('Error getting label' . $e->getMessage());
-
+            $error = json_decode($e->getMessage(), true);
+            throw new Exception($error['message']);
             return [];
         }
 
