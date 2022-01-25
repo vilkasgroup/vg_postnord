@@ -70,9 +70,6 @@ class Vg_postnord extends CarrierModule
             && $this->registerHook('header')
             && $this->registerHook('actionAdminControllerSetMedia')
             && $this->registerHook('displayCarrierExtraContent')
-<<<<<<< HEAD
-            && $this->registerHook('displayAdminOrderMain');
-=======
             && $this->registerHook('displayAdminOrderMain')
             && $this->registerHook('actionValidateOrder')
 
@@ -81,9 +78,7 @@ class Vg_postnord extends CarrierModule
             // add "generate label" button to order buttons
             && $this->registerHook('actionGetAdminOrderButtons')
             // add "generate label" to orders bulk actions
-            && $this->registerHook('actionOrderGridDefinitionModifier')
-            ;
->>>>>>> main
+            && $this->registerHook('actionOrderGridDefinitionModifier');
     }
 
     public function uninstall(): bool
