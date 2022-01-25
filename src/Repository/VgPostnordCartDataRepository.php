@@ -42,7 +42,6 @@ class VgPostnordCartDataRepository extends EntityRepository
             $obj->setIdCart($id_cart);
             $manager->persist($obj);
             $manager->flush();
-            $obj->getId();
         }
 
         return $obj;

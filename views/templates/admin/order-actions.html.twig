@@ -26,8 +26,8 @@
     <div class="vg-postnord-action-buttons">
       <div>
         <form id="vg-postnord-create-booking-form" method="POST" action="{{ path('admin_vg_postnord_create_booking') }}">
-          <input type="hidden" id="id-order" name="id_order" value="{{ id_order }}">
-          <input type="hidden" id="generate-label" name="generate_label" value="0">
+          <input type="hidden" name="id_order" value="{{ id_order }}">
+          <input type="hidden" name="generate_label" value="0">
         </form>
         <button type="submit" form="vg-postnord-create-booking-form" class="btn btn-primary">
           {{ 'Create booking'|trans({}, 'Modules.Vgpostnord.Admin') }}
@@ -35,8 +35,8 @@
       </div>
       <div>
         <form id="vg-postnord-create-booking-with-label-form" method="POST" action="{{ path('admin_vg_postnord_create_booking') }}">
-          <input type="hidden" id="id-order" name="id_order" value="{{ id_order }}">
-          <input type="hidden" id="generate-label" name="generate_label" value="1">
+          <input type="hidden" name="id_order" value="{{ id_order }}">
+          <input type="hidden" name="generate_label" value="1">
         </form>
         <button type="submit" form="vg-postnord-create-booking-with-label-form" class="btn btn-primary">
           {{ 'Create booking and generate label'|trans({}, 'Modules.Vgpostnord.Admin') }}
