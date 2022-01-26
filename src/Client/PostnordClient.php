@@ -195,12 +195,12 @@ class PostnordClient
     public function getServicePointsByAddress(array $parameters): array
     {
         $defaults = [
-            'returnType' => 'json',
-            'context' => 'optionalservicepoint',
-            'responseFilter' => 'public', // probably something that we always want
-            'typeId' => '', // "type of the service point" or service code, see module configuration page
+            'returnType'            => 'json',
+            'context'               => 'optionalservicepoint',
+            'responseFilter'        => 'public', // probably something that we always want
+            'typeId'                => '', // "type of the service point" or service code, see module configuration page
             'numberOfServicePoints' => 100, // let's try to keep this high enough by default
-            'srId' => 'EPSG:4326', // https://en.wikipedia.org/wiki/World_Geodetic_System
+            'srId'                  => 'EPSG:4326', // https://en.wikipedia.org/wiki/World_Geodetic_System
         ];
         $parameters = $this->mergeOptions($defaults, $parameters);
         $options['query'] = $parameters;
