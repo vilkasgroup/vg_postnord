@@ -353,17 +353,28 @@ class PostnordClient
      * Create booking with given info
      * return PDF label if $labelInfo is provided
      * can return ZPL as well, it's not that different
-     * Checked the testCreateBooking for the correct data format.
+     * Check the testCreateBooking for the correct data format.
+     * @param string @customerEmail email of customer
+     * @param object $customerAddress Prestashop address object (customer address)
+     * @param array $order information about an order
+     * @param array $pickupAddress information about an pickup point, come from PostNord
+     * @param array $shopAddress Merchant address, in the setting
+     * @param string $country customer's country
+     * @param array $labelInfo label printout format (Paper size, number, etc.) from PostNord
+     *
+     * @return array  PostNord booking confirmation with/without PDF label
+     *
+     * @throws ExceptionInterface with error message from PostNord
      */
     public function createBooking(
         string $customerEmail,
-        $customerAddress,
+        object $customerAddress,
         array $order,
         array $pickupAddress,
         array $shopAddress,
         string $country = 'FI',
         array $labelInfo = []
-    ) {
+    ): array {
         $defaults = [];
         $parameters = $this->mergeOptions($defaults, $labelInfo);
         $options['query'] = $parameters;
@@ -398,14 +409,16 @@ class PostnordClient
             $this->logger->error('Error create booking' . $e->getMessage());
             $error = json_decode($e->getMessage(), true);
             throw new Exception($error['message']);
-            return [];
         }
 
         return $response;
     }
 
     /**
-     * Check $labelInfo format from Portnord.
+     * @param string @labelId id of the label (not the id of the booking)
+     * @param array $labelInfo label printout format (Paper size, number, etc.) from PostNord
+     * 
+     * @return array PDF label from PostNord
      */
     public function getPDFLabelFromId(string $labelId, array $labelInfo): array
     {
@@ -429,53 +442,44 @@ class PostnordClient
             $this->logger->error('Error getting label' . $e->getMessage());
             $error = json_decode($e->getMessage(), true);
             throw new Exception($error['message']);
-            return [];
         }
 
         return $response;
     }
 
     // Just to get issuer code
-    //Z11=PostNord Denmark, Z12=PostNord Sweden, Z13=PostNord Norway, Z14=PostNord Finland
+    // Z11=PostNord Denmark, Z12=PostNord Sweden, Z13=PostNord Norway, Z14=PostNord Finland
     private function getIssuerCode(string $country): string
     {
         switch ($country) {
-            case 'FI':
-                return 'Z14';
-                break;
             case 'NO':
                 return 'Z13';
-                break;
             case 'SE':
                 return 'Z12';
-                break;
             case 'DK':
                 return 'Z11';
-                break;
+            case 'FI':
             default:
                 return 'Z14';
-                break;
         }
     }
 
     /**
      * generate request body for booking
-     * application info can be extract from somewhere/database?
-     * shipment info from $order = [
-     * 'shipmentId'=>'id from DB?',
-     * 'basicServiceCode'=>'xx',
-     * 'additionalServiceCode'=>['xx','yy'],
-     * 'numberOfPackage'=>1,
-     * 'grossWeight'=>1.1,
-     * 'itemId'=>'Maybe same as shipmentId?'
-     * ]
-     * consignor is the merchant
-     * consignee is customer. prestashop address object (customer address)
-     * deliveryParty is pick up point, from $data?
+     * params is the same as createBooking
+     * @param object $customerAddress Prestashop address object (customer address)
+     * @param array $order information about an order
+     * @param array $pickupAddress information about an pickup point, come from PostNord
+     * @param array $shopAddress Merchant address, in the setting
+     * @param string $country customer's country
+     * @param array $labelInfo label printout format (Paper size, number, etc.) from PostNord
+     *
+     * @return array request body to create booking
+     *
      */
     protected function generateBooking(
         string $customerEmail,
-        $customerAddress,
+        object $customerAddress,
         array $order,
         array $pickupAddress,
         array $shopAddress,
