@@ -18,28 +18,28 @@ use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 class PostnordClient
 {
     /**
-     * Client for making HTTP requests
+     * Client for making HTTP requests.
      *
      * @var HttpClient
      */
     protected $httpClient;
 
     /**
-     * API key
+     * API key.
      *
      * @var string
      */
     protected $apikey;
 
     /**
-     * Hostname for HTTP requests
+     * Hostname for HTTP requests.
      *
      * @var string
      */
     protected $host;
 
     /**
-     * Logger (Monolog by default)
+     * Logger (Monolog by default).
      *
      * @var AbstractLogger
      */
@@ -54,7 +54,7 @@ class PostnordClient
             throw new Exception('Missing host or apikey');
         }
 
-        if (substr($host, 0, 4) !== 'http') {
+        if ('http' !== substr($host, 0, 4)) {
             $host = 'https://' . $host;
         }
 
@@ -63,16 +63,16 @@ class PostnordClient
 
         $this->httpClient = HttpClient::create();
 
-        if (defined("_PS_VERSION_") && defined("_PS_ROOT_DIR_")) {
-            $this->logger = new Logger("vg_postnord_client");
-            $this->logger->pushHandler(new StreamHandler(_PS_ROOT_DIR_ . "/var/logs/postnord-client.log"));
+        if (defined('_PS_VERSION_') && defined('_PS_ROOT_DIR_')) {
+            $this->logger = new Logger('vg_postnord_client');
+            $this->logger->pushHandler(new StreamHandler(_PS_ROOT_DIR_ . '/var/logs/postnord-client.log'));
         } else {
             $this->logger = new NullLogger();
         }
     }
 
     /**
-     * Build url with the hostname and endpoint and possible getParameters
+     * Build url with the hostname and endpoint and possible getParameters.
      */
     public function buildUrl(string $endpoint): string
     {
@@ -86,13 +86,13 @@ class PostnordClient
     }
 
     /**
-     * Do a request and check that the response is somewhat valid
+     * Do a request and check that the response is somewhat valid.
      *
-     * @param string method    one of GET POST PUT etc.
+     * @param string method    one of GET POST PUT etc
      * @param string endpoint  path of the url to call
      * @param array  options   parameters for HttpClient
      *
-     * @return array json_decoded response.
+     * @return array json_decoded response
      *
      * @throws ExceptionInterface
      * @throws Exception
@@ -103,9 +103,12 @@ class PostnordClient
 
         try {
             $response = $this->httpClient->request($method, $url, $options);
-            $status   = $response->getStatusCode();
+            $status = $response->getStatusCode();
         } catch (TransportExceptionInterface $e) {
-            $this->logger->error("Unsupported option passed to HttpClient", ["exception" => $e->getMessage(), "options" => json_encode($options)]);
+            $this->logger->error(
+                'Unsupported option passed to HttpClient',
+                ['exception' => $e->getMessage(), 'options' => json_encode($options)]
+            );
             throw $e;
         }
 
@@ -130,14 +133,14 @@ class PostnordClient
         } catch (HttpExceptionInterface $e) {
             // for 400 error we can try to dig up a bit better response from the api
             // and throw it as a new exception for controllers to show
-            if ($status === Response::HTTP_BAD_REQUEST) {
+            if (Response::HTTP_BAD_REQUEST === $status) {
                 $content = $response->getContent(false);
 
                 $results = json_decode($content, true);
-                if ($results === null) {
+                if (null === $results) {
                     // TODO: probably needs more information
-                    $this->logger->error("Could not decode JSON response");
-                    throw new Exception("Could not decode JSON response");
+                    $this->logger->error('Could not decode JSON response');
+                    throw new Exception('Could not decode JSON response');
                 }
 
                 if (is_array($results) && array_key_exists('servicePointInformationResponse', $results)) {
@@ -155,32 +158,35 @@ class PostnordClient
 
             // try to return the content as is, it probably contains some valid debug data
             $content = $e->getResponse()->getContent(false);
-            $this->logger->error("API request response other than 200", ["status" => $status, "content" => $content, "exception" => $e->getMessage()]);
+            $this->logger->error(
+                'API request response other than 200',
+                ['status' => $status, 'content' => $content, 'exception' => $e->getMessage()]
+            );
             throw new Exception($content);
         } catch (TransportExceptionInterface $e) {
             // TODO: make this better
-            $this->logger->error("Network error occurred", ["exception" => $e->getMessage()]);
+            $this->logger->error('Network error occurred', ['exception' => $e->getMessage()]);
             throw $e;
         } catch (Exception $e) {
             // TODO: make this better
             // something bad happened
-            $this->logger->error("Something bad happened", ["exception" => $e->getMessage()]);
+            $this->logger->error('Something bad happened', ['exception' => $e->getMessage()]);
             throw $e;
         }
 
         // decode the json response
         $results = json_decode($content, true);
-        if ($results === null) {
+        if (null === $results) {
             // TODO: probably needs more information
-            $this->logger->error("Could not decode JSON response");
-            throw new Exception("Could not decode JSON response");
+            $this->logger->error('Could not decode JSON response');
+            throw new Exception('Could not decode JSON response');
         }
 
         return $results;
     }
 
     /**
-     * Get service points by address
+     * Get service points by address.
      *
      * https://guides.atdeveloper.postnord.com/#747cfedf-fa97-4145-8a3e-5031c38416f9
      *
@@ -216,7 +222,7 @@ class PostnordClient
     }
 
     /**
-     * Get basic service codes
+     * Get basic service codes.
      *
      * https://guides.atdeveloper.postnord.com/#0c2721e2-3aa8-4bbb-bf39-049721601c01
      */
@@ -239,7 +245,7 @@ class PostnordClient
     }
 
     /**
-     * Helper for BasicServiceCodes that fetches only the services for one issuerCountry
+     * Helper for BasicServiceCodes that fetches only the services for one issuerCountry.
      */
     public function getBasicServiceCodesFilterByIssuerCountryCode(string $countryCode): array
     {
@@ -247,7 +253,7 @@ class PostnordClient
         $all = $rawData['data'];
 
         foreach ($all as $oneIssuer) {
-            if($oneIssuer['issuerCountryCode'] == $countryCode) {
+            if ($oneIssuer['issuerCountryCode'] == $countryCode) {
                 return $oneIssuer['serviceCodeDetails'];
             }
         }
@@ -256,7 +262,7 @@ class PostnordClient
     }
 
     /**
-     * Get additional service codes
+     * Get additional service codes.
      *
      * https://guides.atdeveloper.postnord.com/#ee279552-541c-4220-a843-ccdda8a048f7
      */
@@ -279,7 +285,7 @@ class PostnordClient
     }
 
     /**
-     * Get Valid Combinations of Service Codes
+     * Get Valid Combinations of Service Codes.
      *
      * https://guides.atdeveloper.postnord.com/#479cf9ca-4763-42e5-91ac-ab24812343b4
      */
@@ -290,7 +296,11 @@ class PostnordClient
         $options['query'] = $parameters;
 
         try {
-            $response = $this->doRequest('GET', '/rest/shipment/v3/edi/servicecodes/adnlservicecodes/combinations', $options);
+            $response = $this->doRequest(
+                'GET',
+                '/rest/shipment/v3/edi/servicecodes/adnlservicecodes/combinations',
+                $options
+            );
         } catch (Exception $e) {
             // TODO log the error and do something sane
             throw $e;
@@ -339,21 +349,253 @@ class PostnordClient
         return array_replace($defaults, $options);
     }
 
-    private function generateBaseParameters(): array
-    {
-        // TODO: in progress, can also be removed if found unnecessary
-        return [
-            "messageDate" => new \DateTime("c"), // ISO 8601
-            "messageId"   => "", // TODO: generate
-            "application" => [
-                "name" => "", // TODO: need to get from module probably
-                "version" => "" // TODO: need to get from module probably
-            ]
-        ];
+    /**
+     * Create booking with given info
+     * return PDF label if $labelInfo is provided
+     * can return ZPL as well, it's not that different
+     * Check the testCreateBooking for the correct data format.
+     *
+     * @param string @customerEmail email of customer
+     * @param object $customerAddress Prestashop address object (customer address)
+     * @param array $order information about an order
+     * @param array $pickupAddress information about an pickup point, come from PostNord
+     * @param array $shopAddress Merchant address, in the setting
+     * @param string $country customer's country
+     * @param array $labelInfo label printout format (Paper size, number, etc.) from PostNord
+     *
+     * @return array PostNord booking confirmation with/without PDF label
+     *
+     * @throws ExceptionInterface with error message from PostNord
+     */
+    public function createBooking(
+        string $customerEmail,
+        object $customerAddress,
+        array $order,
+        array $pickupAddress,
+        array $shopAddress,
+        string $country = 'FI',
+        array $labelInfo = []
+    ): array {
+        $defaults = [];
+        $parameters = $this->mergeOptions($defaults, $labelInfo);
+        $options['query'] = $parameters;
+        $options['json'] = $this->generateBooking(
+            $customerEmail,
+            $customerAddress,
+            $order,
+            $pickupAddress,
+            $shopAddress,
+            $country
+        );
+
+        try {
+            $this->logger->debug('Create booking with:\n' . print_r($options, true));
+            if (empty($labelInfo)) {
+                $response = $this->doRequest('POST', '/rest/shipment/v3/edi', $options);
+            } else {
+                $response = $this->doRequest('POST', '/rest/shipment/v3/edi/labels/pdf', $options);
+            }
+            if (isset(
+                $response['labelPrintout'][0]['printout']['data']
+            )) {
+                // remove base64 pdf
+                $responseWithoutBase64 = $response;
+                unset($responseWithoutBase64['labelPrintout'][0]['printout']['data']);
+                $this->logger->debug('Booking created with data:\n' . print_r($responseWithoutBase64, true));
+            } else {
+                $this->logger->debug('Booking created with data:\n' . print_r($response, true));
+            }
+        } catch (Exception $e) {
+            // TODO: Log error
+            $this->logger->error('Error create booking' . $e->getMessage());
+            $error = json_decode($e->getMessage(), true);
+            throw new Exception($error['message']);
+        }
+
+        return $response;
     }
 
-    public function createBooking(array $parameters)
+    /**
+     * @param string @labelId id of the label (not the id of the booking)
+     * @param array $labelInfo label printout format (Paper size, number, etc.) from PostNord
+     *
+     * @return array PDF label from PostNord
+     */
+    public function getPDFLabelFromId(string $labelId, array $labelInfo): array
     {
+        $defaults = [];
+        $parameters = $this->mergeOptions($defaults, $labelInfo);
+        $options['query'] = $parameters;
+        $options['json'] = [['id' => $labelId]];
+        try {
+            $this->logger->debug('Get label with:\n' . print_r($options, true));
+            $response = $this->doRequest('POST', '/rest/shipment/v3/labels/ids/pdf', $options);
+            if (isset(
+                $response['labelPrintout'][0]['printout']['data']
+            )) {
+                // remove base64 pdf before logging
+                $responseWithoutBase64 = $response;
+                unset($responseWithoutBase64['labelPrintout'][0]['printout']['data']);
+                $this->logger->debug('Booking created with data:\n' . print_r($responseWithoutBase64, true));
+            }
+        } catch (Exception $e) {
+            // TODO: Log error
+            $this->logger->error('Error getting label' . $e->getMessage());
+            $error = json_decode($e->getMessage(), true);
+            throw new Exception($error['message']);
+        }
 
+        return $response;
+    }
+
+    // Just to get issuer code
+    // Z11=PostNord Denmark, Z12=PostNord Sweden, Z13=PostNord Norway, Z14=PostNord Finland
+    private function getIssuerCode(string $country): string
+    {
+        switch ($country) {
+            case 'NO':
+                return 'Z13';
+            case 'SE':
+                return 'Z12';
+            case 'DK':
+                return 'Z11';
+            case 'FI':
+            default:
+                return 'Z14';
+        }
+    }
+
+    /**
+     * generate request body for booking
+     * params is the same as createBooking.
+     *
+     * @param object $customerAddress Prestashop address object (customer address)
+     * @param array $order information about an order
+     * @param array $pickupAddress information about an pickup point, come from PostNord
+     * @param array $shopAddress Merchant address, in the setting
+     * @param string $country customer's country
+     * @param array $labelInfo label printout format (Paper size, number, etc.) from PostNord
+     *
+     * @return array request body to create booking
+     */
+    protected function generateBooking(
+        string $customerEmail,
+        object $customerAddress,
+        array $order,
+        array $pickupAddress,
+        array $shopAddress,
+        string $country = 'FI'
+    ): array {
+        $datetime = date(DATE_ISO8601);
+
+        $body = [
+            'messageDate' => $datetime,
+            'messageFunction' => 'Instruction',
+            'messageId' => uniqid(),
+            'application' => [
+                'name' => 'vg_postnord',
+                'version' => '0.0.1',
+            ],
+            'updateIndicator' => 'Original', //enum: Original, Update, Deletion
+            'shipment' => [
+                [
+                    'shipmentIdentification' => [
+                        'shipmentId' => $order['id'], //from data?
+                    ],
+                    'dateAndTimes' => [
+                        'loadingDate' => $datetime,
+                    ],
+                    'service' => [
+                        'basicServiceCode' => $order['basicServiceCode'], //from data
+                        'additionalServiceCode' => $order['additionalServiceCode'], //from data
+                    ],
+                    'freeText' => [], //from data
+                    'numberOfPackages' => [
+                        'value' => $order['numberOfPackages'],
+                    ],
+                    'totalGrossWeight' => [
+                        'value' => $order['grossWeight'], //from data
+                        'unit' => 'KGM',
+                    ],
+                    'parties' => [
+                        'consignor' => [
+                            'issuerCode' => $this->getIssuerCode($shopAddress['shop_country']),
+                            'partyIdentification' => [
+                                'partyId' => $shopAddress['shop_party_id'],
+                                'partyIdType' => '160',
+                            ],
+                            'party' => [
+                                'nameIdentification' => [
+                                    'name' => $shopAddress['shop_name'],
+                                ],
+                                'address' => [
+                                    'streets' => [$shopAddress['shop_street']],
+                                    'postalCode' => $shopAddress['shop_postcode'],
+                                    'city' => $shopAddress['shop_city'],
+                                    'countryCode' => $shopAddress['shop_country'],
+                                ],
+                            ],
+                        ],
+                        'consignee' => [
+                            'issuerCode' => $this->getIssuerCode($country),
+                            'party' => [
+                                'nameIdentification' => [
+                                    'name' => "{$customerAddress->firstname} {$customerAddress->lastname}",
+                                ],
+                                'address' => [
+                                    'streets' => ["{$customerAddress->address1} {$customerAddress->address2}"],
+                                    'postalCode' => $customerAddress->postcode,
+                                    'city' => $customerAddress->city,
+                                    'countryCode' => $country,
+                                ],
+                                'contact' => [
+                                    'contactName' => "{$customerAddress->firstname} {$customerAddress->lastname}",
+                                    'emailAddress' => $customerEmail,
+                                    'smsNo' => $customerAddress->phone,
+                                ],
+                            ],
+                        ],
+                        'deliveryParty' => [
+                            'partyIdentification' => [
+                                'partyId' => $pickupAddress['servicePointId'],
+                                'partyIdType' => '156',
+                            ],
+                            'party' => [
+                                'nameIdentification' => [
+                                    'name' => $pickupAddress['name'],
+                                ],
+                                'address' => [
+                                    'streets' => [
+                                        "{$pickupAddress['visitingAddress']['streetName']} {$pickupAddress['visitingAddress']['streetNumber']}",
+                                    ],
+                                    'postalCode' => $pickupAddress['visitingAddress']['postalCode'],
+                                    'city' => $pickupAddress['visitingAddress']['city'],
+                                    'countryCode' => $pickupAddress['visitingAddress']['countryCode'],
+                                ],
+                            ],
+                        ],
+                    ],
+                    'goodsItem' => [
+                        [
+                            'packageTypeCode' => 'PC',
+                            'items' => [
+                                [
+                                    'itemIdentification' => [
+                                        'itemId' => $order['id'],
+                                        'itemIdType' => 'SSCC', //SSCC for Nordic and DPD to other countries
+                                    ],
+                                    'grossWeight' => [
+                                        'value' => $order['grossWeight'],
+                                        'unit' => 'KGM',
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        return $body;
     }
 }

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "90c95739b81d9923868d9f62f621a24e",
+    "content-hash": "1888a144b53e7aa443dd46b59e830865",
     "packages": [
         {
             "name": "monolog/monolog",
@@ -1974,6 +1974,10 @@
                 "MIT"
             ],
             "description": "PrestaShop coding standards",
+            "support": {
+                "issues": "https://github.com/PrestaShop/php-dev-tools/issues",
+                "source": "https://github.com/PrestaShop/php-dev-tools/tree/v4.2.1"
+            },
             "time": "2021-12-01T11:02:58+00:00"
         },
         {
@@ -3626,5 +3630,5 @@
         "php": ">=7.2.0"
     },
     "platform-dev": [],
-    "plugin-api-version": "2.0.0"
+    "plugin-api-version": "2.2.0"
 }

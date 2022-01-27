@@ -4,14 +4,14 @@ use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\ORMException;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
+use PrestaShop\PrestaShop\Core\Grid\Action\Bulk\Type\SubmitBulkAction;
+use PrestaShop\PrestaShop\Core\Grid\Definition\GridDefinition;
+use PrestaShopBundle\Controller\Admin\Sell\Order\ActionsBarButton;
+use PrestaShopBundle\Controller\Admin\Sell\Order\ActionsBarButtonsCollection;
 use Psr\Log\AbstractLogger;
 use Symfony\Bundle\FrameworkBundle\Routing\Router;
 use Vilkas\Postnord\Client\PostnordClient;
 use Vilkas\Postnord\Entity\VgPostnordCartData;
-use PrestaShop\PrestaShop\Core\Grid\Action\Bulk\Type\SubmitBulkAction;
-use PrestaShop\PrestaShop\Core\Grid\Definition\GridDefinition;
-use PrestaShopBundle\Controller\Admin\Sell\Order\ActionsBarButtonsCollection;
-use PrestaShopBundle\Controller\Admin\Sell\Order\ActionsBarButton;
 
 if (!defined('_PS_VERSION_')) {
     exit;
@@ -39,8 +39,8 @@ class Vg_postnord extends CarrierModule
 
         parent::__construct();
 
-        $this->displayName = $this->trans("Postnord", [], "Modules.Vgpostnord.Admin");
-        $this->description = $this->trans("Postnord shipping for your Prestashop", [], "Modules.Vgpostnord.Admin");
+        $this->displayName = $this->trans('Postnord', [], 'Modules.Vgpostnord.Admin');
+        $this->description = $this->trans('Postnord shipping for your Prestashop', [], 'Modules.Vgpostnord.Admin');
 
         $this->ps_versions_compliancy = ['min' => '1.7.7', 'max' => _PS_VERSION_];
 
@@ -63,6 +63,7 @@ class Vg_postnord extends CarrierModule
         Configuration::updateValue('VG_POSTNORD_APIKEY', '');
         Configuration::updateValue('VG_POSTNORD_ISSUER_COUNTRY', '');
         Configuration::updateValue('VG_POSTNORD_CARRIER_SETTINGS', '[]');
+        Configuration::updateValue('VG_POSTNORD_SHOP_ADDRESS', '[]');
 
         return parent::install()
             && $this->installSQL()
@@ -77,8 +78,7 @@ class Vg_postnord extends CarrierModule
             // add "generate label" button to order buttons
             && $this->registerHook('actionGetAdminOrderButtons')
             // add "generate label" to orders bulk actions
-            && $this->registerHook('actionOrderGridDefinitionModifier')
-            ;
+            && $this->registerHook('actionOrderGridDefinitionModifier');
     }
 
     public function uninstall(): bool
@@ -88,6 +88,8 @@ class Vg_postnord extends CarrierModule
         Configuration::deleteByName('VG_POSTNORD_APIKEY');
         Configuration::deleteByName('VG_POSTNORD_ISSUER_COUNTRY');
         Configuration::deleteByName('VG_POSTNORD_CARRIER_SETTINGS');
+        Configuration::deleteByName('VG_POSTNORD_CARRIER_SETTINGS');
+        Configuration::deleteByName('VG_POSTNORD_SHOP_ADDRESS');
 
         return parent::uninstall()
             && $this->uninstallSQL()
@@ -101,7 +103,7 @@ class Vg_postnord extends CarrierModule
      */
     private function installSQL(): bool
     {
-        $queries = include dirname(__FILE__).'/sql/install.php';
+        $queries = include dirname(__FILE__) . '/sql/install.php';
         if (is_array($queries)) {
             return $this->performInstallQueries($queries);
         } else {
@@ -116,7 +118,7 @@ class Vg_postnord extends CarrierModule
      */
     private function uninstallSQL(): bool
     {
-        $queries = include dirname(__FILE__).'/sql/uninstall.php';
+        $queries = include dirname(__FILE__) . '/sql/uninstall.php';
         if (is_array($queries)) {
             return $this->performInstallQueries($queries);
         } else {
@@ -144,8 +146,8 @@ class Vg_postnord extends CarrierModule
 
     public static function getLogger(): Logger
     {
-        $logger = new Logger("vg_postnord");
-        $logger->pushHandler(new StreamHandler(_PS_ROOT_DIR_ . "/var/logs/postnord.log"));
+        $logger = new Logger('vg_postnord');
+        $logger->pushHandler(new StreamHandler(_PS_ROOT_DIR_ . '/var/logs/postnord.log'));
 
         return $logger;
     }
@@ -162,11 +164,11 @@ class Vg_postnord extends CarrierModule
         if ((Tools::isSubmit('submitVg_postnordModule')) == true) {
             if ($this->postProcess()) {
                 $message = $this->displayConfirmation(
-                    $this->trans("Settings saved successfully.", [], "Modules.Vgpostnord.Admin")
+                    $this->trans('Settings saved successfully.', [], 'Modules.Vgpostnord.Admin')
                 );
             } else {
                 $message = $this->displayError(
-                    $this->trans("Could not save settings.", [], "Modules.Vgpostnord.Admin")
+                    $this->trans('Could not save settings.', [], 'Modules.Vgpostnord.Admin')
                 );
             }
         }
@@ -212,12 +214,13 @@ class Vg_postnord extends CarrierModule
         return [
             'general' => $this->getConfigForm(),
             'carriers' => $this->getCarrierConfigForm(),
+            'address' => $this->getAddressConfigForm(),
         ];
     }
 
     protected function getAllFormValues(): array
     {
-        return array_merge($this->getConfigFormValues(), $this->getCarrierConfigFormValues());
+        return array_merge($this->getConfigFormValues(), $this->getCarrierConfigFormValues(), $this->getAddressConfigFormValues());
     }
 
     /**
@@ -228,33 +231,33 @@ class Vg_postnord extends CarrierModule
         return [
             'form' => [
                 'legend' => [
-                'title' => $this->trans("Settings", [], "Modules.Vgpostnord.Admin"),
-                'icon' => 'icon-cogs',
+                    'title' => $this->trans('Settings', [], 'Modules.Vgpostnord.Admin'),
+                    'icon' => 'icon-cogs',
                 ],
                 'input' => [
                     [
                         'type' => 'switch',
                         'name' => 'VG_POSTNORD_DEBUG_MODE',
-                        'label' => $this->trans("Debug mode", [], "Modules.Vgpostnord.Admin"),
-                        'desc' => $this->trans("Write more debug logs", [], "Modules.Vgpostnord.Admin"),
+                        'label' => $this->trans('Debug mode', [], 'Modules.Vgpostnord.Admin'),
+                        'desc' => $this->trans('Write more debug logs', [], 'Modules.Vgpostnord.Admin'),
                         'is_bool' => true,
                         'values' => [
                             [
                                 'id' => 'active_on',
                                 'value' => true,
-                                'label' => $this->trans("Enabled", [], "Modules.Vgpostnord.Admin"),
+                                'label' => $this->trans('Enabled', [], 'Modules.Vgpostnord.Admin'),
                             ],
                             [
                                 'id' => 'active_off',
                                 'value' => false,
-                                'label' => $this->trans("Disabled", [], "Modules.Vgpostnord.Admin"),
+                                'label' => $this->trans('Disabled', [], 'Modules.Vgpostnord.Admin'),
                             ],
                         ],
                     ],
                     [
                         'type' => 'select',
                         'name' => 'VG_POSTNORD_ISSUER_COUNTRY',
-                        'label' => $this->trans("Postnord issuer Country", [], "Modules.Vgpostnord.Admin"),
+                        'label' => $this->trans('Postnord issuer Country', [], 'Modules.Vgpostnord.Admin'),
                         'options' => [
                             'query' => [
                                 ['id' => 'FI', 'name' => 'FI'],
@@ -267,23 +270,23 @@ class Vg_postnord extends CarrierModule
                             'name' => 'name',
                             'default' => null,
                         ],
-                        'desc' => $this->trans("Get this information from Postnord.", [], "Modules.Vgpostnord.Admin"),
+                        'desc' => $this->trans('Get this information from Postnord.', [], 'Modules.Vgpostnord.Admin'),
                     ],
                     [
                         'type' => 'text',
                         'name' => 'VG_POSTNORD_HOST',
-                        'label' => $this->trans("Postnord hostname", [], "Modules.Vgpostnord.Admin"),
-                        'desc' => $this->trans("Get this information from Postnord. Usually something like: atapi2.postnord.com", [], "Modules.Vgpostnord.Admin"),
+                        'label' => $this->trans('Postnord hostname', [], 'Modules.Vgpostnord.Admin'),
+                        'desc' => $this->trans('Get this information from Postnord. Usually something like: atapi2.postnord.com', [], 'Modules.Vgpostnord.Admin'),
                     ],
                     [
                         'type' => 'text',
                         'name' => 'VG_POSTNORD_APIKEY',
-                        'label' => $this->trans("Postnord apikey", [], "Modules.Vgpostnord.Admin"),
-                        'desc' => $this->trans("Get this information from Postnord. Something like abc123123123123abc123", [], "Modules.Vgpostnord.Admin"),
+                        'label' => $this->trans('Postnord apikey', [], 'Modules.Vgpostnord.Admin'),
+                        'desc' => $this->trans('Get this information from Postnord. Something like abc123123123123abc123', [], 'Modules.Vgpostnord.Admin'),
                     ],
                 ],
                 'submit' => [
-                    'title' => $this->trans("Save", [], "Modules.Vgpostnord.Admin"),
+                    'title' => $this->trans('Save', [], 'Modules.Vgpostnord.Admin'),
                 ],
             ],
         ];
@@ -300,6 +303,96 @@ class Vg_postnord extends CarrierModule
             'VG_POSTNORD_APIKEY' => Configuration::get('VG_POSTNORD_APIKEY'),
             'VG_POSTNORD_ISSUER_COUNTRY' => Configuration::get('VG_POSTNORD_ISSUER_COUNTRY'),
         ];
+    }
+
+    /**
+     * Create a form to store shop address
+     * address will be stored in VG_POSTNORD_SHOP_ADDRESS as json
+     */
+    protected function getAddressConfigForm(): array
+    {
+        return [
+            'form' => [
+                'legend' => [
+                    'title' => $this->trans('Shop Address Setting', [], 'Modules.Vgpostnord.Admin'),
+                    'icon' => 'icon-cogs',
+                ],
+                'input' => [
+                    [
+                        'type' => 'text',
+                        'name' => 'shop_name',
+                        'label' => $this->trans('Shop name', [], 'Modules.Vgpostnord.Admin'),
+                        'desc' => $this->trans('Sender name', [], 'Modules.Vgpostnord.Admin'),
+                    ],
+                    [
+                        'type' => 'text',
+                        'name' => 'shop_party_id',
+                        'label' => $this->trans('Shop party ID', [], 'Modules.Vgpostnord.Admin'),
+                        'desc' => $this->trans('Get this information from Postnord', [], 'Modules.Vgpostnord.Admin'),
+                    ],
+                    [
+                        'type' => 'text',
+                        'name' => 'shop_street',
+                        'label' => $this->trans('Shop street address', [], 'Modules.Vgpostnord.Admin'),
+                        'desc' => $this->trans('Sender street address', [], 'Modules.Vgpostnord.Admin'),
+                    ],
+                    [
+                        'type' => 'text',
+                        'name' => 'shop_postcode',
+                        'label' => $this->trans('Shop postal code', [], 'Modules.Vgpostnord.Admin'),
+                        'desc' => $this->trans('Sender postal code', [], 'Modules.Vgpostnord.Admin'),
+                    ],
+                    [
+                        'type' => 'text',
+                        'name' => 'shop_city',
+                        'label' => $this->trans('Shop city', [], 'Modules.Vgpostnord.Admin'),
+                        'desc' => $this->trans('Sender city', [], 'Modules.Vgpostnord.Admin'),
+                    ],
+                    [
+                        'type' => 'select',
+                        'name' => 'shop_country',
+                        'label' => $this->trans('Shop country', [], 'Modules.Vgpostnord.Admin'),
+                        'options' => [
+                            'query' => [
+                                ['id' => 'FI', 'name' => 'Finland'],
+                                ['id' => 'AX', 'name' => 'Åland'],
+                                ['id' => 'SE', 'name' => 'Sweden'],
+                                ['id' => 'DK', 'name' => 'Denmark'],
+                                ['id' => 'NO', 'name' => 'Norway'],
+                            ],
+                            'id' => 'id',
+                            'name' => 'name',
+                            'default' => null,
+                        ],
+                        'desc' => $this->trans('Sender country', [], 'Modules.Vgpostnord.Admin'),
+                    ],
+                ],
+                'submit' => [
+                    'title' => $this->trans('Save', [], 'Modules.Vgpostnord.Admin'),
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * parse VG_POSTNORD_SHOP_ADDRESS to config form values
+     */
+    public function getAddressConfigFormValues(): array
+    {
+        $address = json_decode(Configuration::get('VG_POSTNORD_SHOP_ADDRESS', true), true);
+
+        if (empty($address)) {
+            return [
+                'shop_name' => '',
+                'shop_party_id' => '',
+                'shop_street' => '',
+                'shop_postcode' => '',
+                'shop_city' => '',
+                'shop_country' => '',
+            ];
+        }
+
+        return $address;
     }
 
     /**
@@ -322,7 +415,7 @@ class Vg_postnord extends CarrierModule
                     'icon' => 'icon-cogs',
                 ],
                 'submit' => [
-                    'title' => $this->trans("Save", [], "Modules.Vgpostnord.Admin"),
+                    'title' => $this->trans('Save', [], 'Modules.Vgpostnord.Admin'),
                 ],
             ],
         ];
@@ -334,6 +427,7 @@ class Vg_postnord extends CarrierModule
         // if settings are not yet complete, show message instead of the form
         if (!$host || !$apikey) {
             $form['form']['warning'] = $this->trans('Please complete Host and Apikey settings to configure Carriers.', [], 'Modules.Vgpostnord.Admin');
+
             return $form;
         }
 
@@ -360,7 +454,6 @@ class Vg_postnord extends CarrierModule
 
             // and add them to the dropdown list
             foreach ($BasicServiceCodes as $BasicServiceCode) {
-
                 $name = sprintf('%s, %s (%s => %s)', $BasicServiceCode['serviceCode'], $BasicServiceCode['serviceName'], $BasicServiceCode['allowedConsigneeCountry'], $BasicServiceCode['allowedConsignorCountry']);
 
                 $ServiceCodes[] = [
@@ -371,6 +464,7 @@ class Vg_postnord extends CarrierModule
         } catch (Exception $e) {
             $form['form']['error'] = $this->trans('Failed fetching data from Postnord, check Host and Apikey', [], 'Modules.Vgpostnord.Admin');
             $form['form']['description'] = $e->getMessage();
+
             return $form;
         }
 
@@ -384,8 +478,8 @@ class Vg_postnord extends CarrierModule
             // just a label
             $carrier_selections[] = [
                 'type' => 'free',
-                'name' => 'id_carrier_reference_'.$carrier['id_reference'],
-                'label' => '<b>' . $carrier['name'] .'</b>',
+                'name' => 'id_carrier_reference_' . $carrier['id_reference'],
+                'label' => '<b>' . $carrier['name'] . '</b>',
             ];
 
             // which service code to use
@@ -397,18 +491,18 @@ class Vg_postnord extends CarrierModule
                     'name' => 'serviceName',
                     'default' => null,
                 ],
-                'name' => 'id_carrier_reference_'.$carrier['id_reference']. '_service_code_consigneecountry',
-                'label' => $this->trans('Service code', [] , 'Modules.Vgpostnord.Admin'),
+                'name' => 'id_carrier_reference_' . $carrier['id_reference'] . '_service_code_consigneecountry',
+                'label' => $this->trans('Service code', [], 'Modules.Vgpostnord.Admin'),
                 'class' => 'fixed-width-xxl',
-                'desc' => $this->trans("Service code for this carrier", [], "Modules.Vgpostnord.Admin"),
+                'desc' => $this->trans('Service code for this carrier', [], 'Modules.Vgpostnord.Admin'),
             ];
 
             // which service codes to fetch pickup locations for
             $carrier_selections[] = [
                 'type' => 'text',
-                'name' => 'id_carrier_reference_'.$carrier['id_reference']. '_service_codes',
-                'label' => $this->trans('Service codes for pickup', [] , 'Modules.Vgpostnord.Admin'),
-                'desc' => $this->trans("Comma separated list of service codes to use to filter pickuppoints. See possible values below. Leave empty for no filtering.", [], "Modules.Vgpostnord.Admin"),
+                'name' => 'id_carrier_reference_' . $carrier['id_reference'] . '_service_codes',
+                'label' => $this->trans('Service codes for pickup', [], 'Modules.Vgpostnord.Admin'),
+                'desc' => $this->trans('Comma separated list of service codes to use to filter pickuppoints. See possible values below. Leave empty for no filtering.', [], 'Modules.Vgpostnord.Admin'),
             ];
         }
 
@@ -429,15 +523,15 @@ class Vg_postnord extends CarrierModule
         $carriers = Carrier::getCarriers((int) $this->context->language->id, true, false, false, null, Carrier::ALL_CARRIERS);
         $carrierValues = [];
 
-        $carrierSettings = json_decode(Configuration::get('VG_POSTNORD_CARRIER_SETTINGS'), true);
+        $carrierSettings = $this->getCarrierConfigurations();
 
         foreach ($carriers as $carrier) {
             // just for the label (free text). always empty data
-            $carrierValues['id_carrier_reference_'.$carrier['id_reference']] = '';
+            $carrierValues['id_carrier_reference_' . $carrier['id_reference']] = '';
 
             $keys = ['service_code_consigneecountry', 'service_codes'];
             foreach ($keys as $key) {
-                $carrierValues['id_carrier_reference_'.$carrier['id_reference'].'_'.$key] = $carrierSettings[$carrier['id_reference']][$key] ?? '';
+                $carrierValues['id_carrier_reference_' . $carrier['id_reference'] . '_' . $key] = $carrierSettings[$carrier['id_reference']][$key] ?? '';
             }
         }
 
@@ -451,6 +545,7 @@ class Vg_postnord extends CarrierModule
     public function getCarrierConfigurations(): array
     {
         $carrierSettings = json_decode(Configuration::get('VG_POSTNORD_CARRIER_SETTINGS'), true);
+
         return $carrierSettings;
     }
 
@@ -475,6 +570,15 @@ class Vg_postnord extends CarrierModule
             $result &= Configuration::updateValue($key, Tools::getValue($key));
         }
 
+        // address config into json
+        $address_form_values = $this->getAddressConfigFormValues();
+        $address_config = [];
+        foreach (array_keys($address_form_values) as $key) {
+            $address_config[$key] = Tools::getValue($key);
+        }
+
+        $result &= Configuration::updateValue('VG_POSTNORD_SHOP_ADDRESS', json_encode($address_config));
+
         // carrier settings into one json
         $carrier_form_values = $this->getCarrierConfigFormValues();
         $carrier_config = [];
@@ -487,15 +591,14 @@ class Vg_postnord extends CarrierModule
             if ($newkey == $idx) {
                 continue;
             }
-            $newkey = str_replace($idx.'_', '', $newkey);
+            $newkey = str_replace($idx . '_', '', $newkey);
 
             $carrier_config[$idx][$newkey] = Tools::getValue($key);
-
         }
 
-        // set the carriers that are marked to use pickuip to is_module so that it can do displayCarrierExtraContent
+        // set the carriers that are marked to use pickup to is_module so that it can do displayCarrierExtraContent
         foreach ($carrier_config as $id_carrier_reference => $oneconfig) {
-            if($oneconfig['service_code_consigneecountry']) {
+            if ($oneconfig['service_code_consigneecountry']) {
                 $this->setCarrierToPostNord($id_carrier_reference, true);
             } else {
                 $this->setCarrierToPostNord($id_carrier_reference, false);
@@ -511,25 +614,26 @@ class Vg_postnord extends CarrierModule
     /**
      * Set carrier to `is_module` = 1 to get displayCarrierExtraContent to trigger
      */
-    public function setCarrierToPostNord(int $id_carrier_reference, bool $status): bool {
+    public function setCarrierToPostNord(int $id_carrier_reference, bool $status): bool
+    {
         $db = \Db::getInstance();
-        if($status) {
+        if ($status) {
             return $db->Execute(
-                'UPDATE `'._DB_PREFIX_.'carrier`
+                'UPDATE `' . _DB_PREFIX_ . 'carrier`
                 SET
                 `external_module_name` = "vg_postnord",
                 `is_module` = 1,
                 `need_range` = 1
-                WHERE `id_reference` = '.(int) $id_carrier_reference
+                WHERE `id_reference` = ' . (int) $id_carrier_reference
             );
         } else {
             return $db->Execute(
-                'UPDATE `'._DB_PREFIX_.'carrier`
+                'UPDATE `' . _DB_PREFIX_ . 'carrier`
                 SET `external_module_name` = "",
                 `is_module` = 0,
                 `need_range` = 0
-                WHERE `id_reference` = '.(int) $id_carrier_reference
-                .' AND external_module_name="vg_postnord"'
+                WHERE `id_reference` = ' . (int) $id_carrier_reference
+                    . ' AND external_module_name="vg_postnord"'
             );
         }
     }
@@ -591,6 +695,7 @@ class Vg_postnord extends CarrierModule
         // just pass back the original shipping_cost
         return $shipping_cost;
     }
+
     public function getOrderShippingCostExternal($params): bool
     {
         return false;
@@ -601,15 +706,16 @@ class Vg_postnord extends CarrierModule
      */
     public function hookDisplayAdminOrderMain(array $params): ?string
     {
-        $id_order = (int) $params["id_order"];
+        $id_order = (int) $params['id_order'];
         try {
             $order = new Order($id_order);
         } catch (PrestaShopException $e) {
-            $this->logger->error("Error loading Product", [
-                "exception" => $e->getMessage(),
-                "hook"      => "displayAdminOrderMain",
-                "id_order"  => $id_order
+            $this->logger->error('Error loading Product', [
+                'exception' => $e->getMessage(),
+                'hook' => 'displayAdminOrderMain',
+                'id_order' => $id_order,
             ]);
+
             return null;
         }
 
@@ -620,16 +726,18 @@ class Vg_postnord extends CarrierModule
 
         try {
             /** @var Twig\Environment $twig */
-            $twig = $this->get("twig");
-            return $twig->render("@Modules/vg_postnord/views/templates/admin/order-actions.html.twig", [
-                "id_order" => $id_order
+            $twig = $this->get('twig');
+
+            return $twig->render('@Modules/vg_postnord/views/templates/admin/order-actions.html.twig', [
+                'id_order' => $id_order,
             ]);
         } catch (Exception $e) {
-            $this->logger->error("Could not render Twig template", [
-                "exception" => $e->getMessage(),
-                "hook"      => "displayAdminOrderMain",
-                "id_order"  => $id_order
+            $this->logger->error('Could not render Twig template', [
+                'exception' => $e->getMessage(),
+                'hook' => 'displayAdminOrderMain',
+                'id_order' => $id_order,
             ]);
+
             return null;
         }
     }
@@ -639,29 +747,30 @@ class Vg_postnord extends CarrierModule
      */
     public function hookDisplayOrderPreview(array $params): ?string
     {
-        $id_order = (int) $params["order_id"];
-        $cartData = $this->_getCartDataByOrderId($id_order, "displayOrderPreview");
+        $id_order = (int) $params['order_id'];
+        $cartData = $this->_getCartDataByOrderId($id_order, 'displayOrderPreview');
         if (!$cartData) {
             return null;
         }
 
         try {
             /** @var Twig\Environment $twig */
-            $twig = $this->get("twig");
+            $twig = $this->get('twig');
 
             /** @var Router $router */
-            $router = $this->get("router");
+            $router = $this->get('router');
 
-            return $twig->render("@Modules/vg_postnord/views/templates/admin/order-preview.html.twig", [
-                "generate_label_url" => $router->generate("admin_vg_postnord_ajax_generate_label"),
-                "id_cart_data"       => $cartData->getId()
+            return $twig->render('@Modules/vg_postnord/views/templates/admin/order-preview.html.twig', [
+                'generate_label_url' => $router->generate('admin_vg_postnord_ajax_generate_label'),
+                'id_cart_data' => $cartData->getId(),
             ]);
         } catch (Exception $e) {
-            $this->logger->error("Could not render Twig template", [
-                "exception"    => $e->getMessage(),
-                "hook"         => "displayOrderPreview",
-                "id_cart_data" => $cartData->getId()
+            $this->logger->error('Could not render Twig template', [
+                'exception' => $e->getMessage(),
+                'hook' => 'displayOrderPreview',
+                'id_cart_data' => $cartData->getId(),
             ]);
+
             return null;
         }
     }
@@ -671,36 +780,37 @@ class Vg_postnord extends CarrierModule
      */
     public function hookActionGetAdminOrderButtons(array $params)
     {
-        $id_order = (int) $params["id_order"];
-        $cartData = $this->_getCartDataByOrderId($id_order, "actionGetAdminOrderButtons");
+        $id_order = (int) $params['id_order'];
+        $cartData = $this->_getCartDataByOrderId($id_order, 'actionGetAdminOrderButtons');
         if (!$cartData) {
             return null;
         }
 
         /** @var ActionsBarButtonsCollection $collection */
-        $collection = $params["actions_bar_buttons_collection"];
+        $collection = $params['actions_bar_buttons_collection'];
 
         try {
             /** @var Router $router */
-            $router = $this->get("router");
+            $router = $this->get('router');
 
             $collection->add(
                 new ActionsBarButton(
-                    "btn-primary btn-generate-label",
+                    'btn-primary btn-generate-label',
                     [
-                        "name"              => "vg-postnord-generate-label-button",
-                        "data-id-cart-data" => $cartData->getId(),
-                        "data-url"          => $router->generate("admin_vg_postnord_ajax_generate_label")
+                        'name' => 'vg-postnord-generate-label-button',
+                        'data-id-cart-data' => $cartData->getId(),
+                        'data-url' => $router->generate('admin_vg_postnord_ajax_generate_label'),
                     ],
-                    $this->trans("Generate shipping label", [], "Modules.Vgpostnord.Admin")
+                    $this->trans('Generate shipping label', [], 'Modules.Vgpostnord.Admin')
                 )
             );
         } catch (Exception $e) {
-            $this->logger->error("Error adding ActionsBarButton", [
-                "exception"    => $e->getMessage(),
-                "hook"         => "actionGetAdminOrderButtons",
-                "id_cart_data" => $cartData->getId()
+            $this->logger->error('Error adding ActionsBarButton', [
+                'exception' => $e->getMessage(),
+                'hook' => 'actionGetAdminOrderButtons',
+                'id_cart_data' => $cartData->getId(),
             ]);
+
             return null;
         }
     }
@@ -711,12 +821,12 @@ class Vg_postnord extends CarrierModule
     public function hookActionOrderGridDefinitionModifier(array $params)
     {
         /** @var GridDefinition $gridDefinition */
-        $gridDefinition = $params["definition"];
+        $gridDefinition = $params['definition'];
         $gridDefinition->getBulkActions()->add(
-            (new SubmitBulkAction("bulk_generate_shipping_label"))
-                ->setName($this->trans("Generate shipping label", [], "Modules.Vgpostnord.Admin"))
+            (new SubmitBulkAction('bulk_generate_shipping_label'))
+                ->setName($this->trans('Generate shipping label', [], 'Modules.Vgpostnord.Admin'))
                 ->setOptions([
-                    "submit_route" => "admin_vg_postnord_bulk_generate_label"
+                    'submit_route' => 'admin_vg_postnord_bulk_generate_label',
                 ])
         );
     }
@@ -727,10 +837,10 @@ class Vg_postnord extends CarrierModule
     public function hookActionValidateOrder(array $params)
     {
         /** @var Cart $cart */
-        $cart = $params["cart"];
+        $cart = $params['cart'];
 
         /** @var Order $order */
-        $order = $params["order"];
+        $order = $params['order'];
 
         $carrier = new Carrier($order->id_carrier);
         if ($carrier->external_module_name !== $this->name) {
@@ -742,22 +852,24 @@ class Vg_postnord extends CarrierModule
             $entityManager = $this->get('doctrine.orm.entity_manager');
             $repository = $entityManager->getRepository(VgPostnordCartData::class);
         } catch (Exception $e) {
-            $this->logger->error("Error getting entity manager or repository", [
-                "exception" => $e->getMessage(),
-                "hook"      => "actionValidateOrder",
-                "id_cart"   => $cart->id,
-                "id_order"  => $order->id
+            $this->logger->error('Error getting entity manager or repository', [
+                'exception' => $e->getMessage(),
+                'hook' => 'actionValidateOrder',
+                'id_cart' => $cart->id,
+                'id_order' => $order->id,
             ]);
+
             return;
         }
 
-        $cartData = $repository->findOneBy(["id_cart" => $cart->id]);
+        $cartData = $repository->findOneBy(['id_cart' => $cart->id]);
         if (!$cartData) {
-            $this->logger->error("Could not find Postnord cart data", [
-                "hook"     => "actionValidateOrder",
-                "id_cart"  => $cart->id,
-                "id_order" => $order->id
+            $this->logger->error('Could not find Postnord cart data', [
+                'hook' => 'actionValidateOrder',
+                'id_cart' => $cart->id,
+                'id_order' => $order->id,
             ]);
+
             return;
         }
 
@@ -766,11 +878,11 @@ class Vg_postnord extends CarrierModule
             $entityManager->persist($cartData);
             $entityManager->flush();
         } catch (ORMException $e) {
-            $this->logger->error("Error setting id_order of cart data", [
-                "exception" => $e->getMessage(),
-                "hook"      => "actionValidateOrder",
-                "id_cart"   => $cart->id,
-                "id_order"  => $order->id
+            $this->logger->error('Error setting id_order of cart data', [
+                'exception' => $e->getMessage(),
+                'hook' => 'actionValidateOrder',
+                'id_cart' => $cart->id,
+                'id_order' => $order->id,
             ]);
         }
     }
@@ -780,8 +892,8 @@ class Vg_postnord extends CarrierModule
      *
      * Handles all the checks and logging, caller just needs to check if they got the data or null.
      *
-     * @param int    $id_order Order ID
-     * @param string $hook     Hook name where this is being used (used for logging purposes)
+     * @param int $id_order Order ID
+     * @param string $hook Hook name where this is being used (used for logging purposes)
      *
      * @return VgPostnordCartData|null
      */
@@ -790,11 +902,12 @@ class Vg_postnord extends CarrierModule
         try {
             $order = new Order($id_order);
         } catch (PrestaShopException $e) {
-            $this->logger->error("Error loading Product", [
-                "exception" => $e->getMessage(),
-                "hook"      => $hook,
-                "id_order"  => $id_order
+            $this->logger->error('Error loading Product', [
+                'exception' => $e->getMessage(),
+                'hook' => $hook,
+                'id_order' => $id_order,
             ]);
+
             return null;
         }
 
@@ -805,24 +918,26 @@ class Vg_postnord extends CarrierModule
 
         try {
             /** @var EntityManager $entityManager */
-            $entityManager = $this->get("doctrine.orm.entity_manager");
+            $entityManager = $this->get('doctrine.orm.entity_manager');
             $repository = $entityManager->getRepository(VgPostnordCartData::class);
         } catch (Exception $e) {
-            $this->logger->error("Error getting entity manager or repository", [
-                "exception" => $e->getMessage(),
-                "hook"      => $hook,
-                "id_order"  => $id_order
+            $this->logger->error('Error getting entity manager or repository', [
+                'exception' => $e->getMessage(),
+                'hook' => $hook,
+                'id_order' => $id_order,
             ]);
+
             return null;
         }
 
-        $cartData = $repository->findOneBy(["id_cart" => $order->id_cart]);
+        $cartData = $repository->findOneBy(['id_cart' => $order->id_cart]);
         if (!$cartData) {
-            $this->logger->error("Could not find Postnord cart data", [
-                "hook"     => $hook,
-                "id_order" => $order->id,
-                "id_cart"  => $order->id_cart
+            $this->logger->error('Could not find Postnord cart data', [
+                'hook' => $hook,
+                'id_order' => $order->id,
+                'id_cart' => $order->id_cart,
             ]);
+
             return null;
         }
 
