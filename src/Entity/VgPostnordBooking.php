@@ -52,6 +52,13 @@ class VgPostnordBooking
      */
     private $label_data;
 
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="servicepointid", type="string", nullable=true)
+     */
+    private $servicepointid;
+
     // TODO: wonder if we need to store itemId (as id_label_external or something)
 
     /**
@@ -150,6 +157,26 @@ class VgPostnordBooking
     public function setLabelData(string $label_data): self
     {
         $this->label_data = $label_data;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getServicepointid(): string
+    {
+        return $this->servicepointid;
+    }
+
+    /**
+     * @param string $servicepointid
+     *
+     * @return $this
+     */
+    public function setServicepointid(string $servicepointid): self
+    {
+        $this->servicepointid = $servicepointid;
 
         return $this;
     }
