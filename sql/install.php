@@ -14,7 +14,7 @@ $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'vg_postnord_cart_data` 
 $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'vg_postnord_booking` (
     `id_booking`          INT          NOT NULL AUTO_INCREMENT,
     `id_cart_data`        INT          NOT NULL,
-    `id_booking_external` VARCHAR(255) NOT NULL,
+    `id_booking_external` VARCHAR(255) DEFAULT NULL,
     `tracking_url`        VARCHAR(255) DEFAULT NULL,
     `label_data`          LONGTEXT     DEFAULT NULL,
     `servicepointid`      VARCHAR(255) DEFAULT NULL,

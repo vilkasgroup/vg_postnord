@@ -32,7 +32,7 @@ class VgPostnordBooking
     /**
      * @var string
      *
-     * @ORM\Column(name="id_booking_external", type="string", nullable=false)
+     * @ORM\Column(name="id_booking_external", type="string", nullable=true)
      */
     private $id_booking_external;
 
