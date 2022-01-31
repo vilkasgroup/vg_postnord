@@ -160,17 +160,17 @@ class PostnordClient
             $content = $e->getResponse()->getContent(false);
             $this->logger->error(
                 'API request response other than 200',
-                ['status' => $status, 'content' => $content, 'exception' => $e->getMessage()]
+                ['status' => $status, 'content' => $content, 'exception' => $e]
             );
             throw new Exception($content);
         } catch (TransportExceptionInterface $e) {
             // TODO: make this better
-            $this->logger->error('Network error occurred', ['exception' => $e->getMessage()]);
+            $this->logger->error('Network error occurred', ['exception' => $e]);
             throw $e;
         } catch (Exception $e) {
             // TODO: make this better
             // something bad happened
-            $this->logger->error('Something bad happened', ['exception' => $e->getMessage()]);
+            $this->logger->error('Something bad happened', ['exception' => $e]);
             throw $e;
         }
 
@@ -407,7 +407,7 @@ class PostnordClient
             }
         } catch (Exception $e) {
             // TODO: Log error
-            $this->logger->error('Error create booking' . $e->getMessage());
+            $this->logger->error('Error create booking', ["exception" => $e]);
             $error = json_decode($e->getMessage(), true);
             throw new Exception($error['message']);
         }
