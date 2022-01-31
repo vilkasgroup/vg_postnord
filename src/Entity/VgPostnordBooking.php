@@ -22,10 +22,17 @@ class VgPostnordBooking
     private $id;
 
     /**
+     * @var int
+     *
+     * @ORM\Column(name="id_order", type="integer", nullable=false)
+     */
+    private $id_order;
+
+    /**
      * @var VgPostnordCartData
      *
      * @ORM\ManyToOne(targetEntity="VgPostnordCartData")
-     * @ORM\JoinColumn(name="id_cart_data", referencedColumnName="id_cart_data", nullable=false)
+     * @ORM\JoinColumn(name="id_cart_data", referencedColumnName="id_cart_data", nullable=true)
      */
     private $cart_data;
 
@@ -59,7 +66,12 @@ class VgPostnordBooking
      */
     private $servicepointid;
 
-    // TODO: wonder if we need to store itemId (as id_label_external or something)
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="id_label_external", type="string", nullable=true)
+     */
+    private $id_label_external;
 
     /**
      * @return int
@@ -77,6 +89,26 @@ class VgPostnordBooking
     public function setId(int $id): self
     {
         $this->id = $id;
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getIdOrder(): int
+    {
+        return $this->id_order;
+    }
+
+    /**
+     * @param int $id_order
+     *
+     * @return $this
+     */
+    public function setIdOrder(int $id_order): self
+    {
+        $this->id_order = $id_order;
 
         return $this;
     }
@@ -177,6 +209,26 @@ class VgPostnordBooking
     public function setServicepointid(string $servicepointid): self
     {
         $this->servicepointid = $servicepointid;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getIdLabelExternal(): string
+    {
+        return $this->id_label_external;
+    }
+
+    /**
+     * @param string $id_label_external
+     *
+     * @return $this
+     */
+    public function setIdLabelExternal(string $id_label_external): self
+    {
+        $this->id_label_external = $id_label_external;
 
         return $this;
     }
