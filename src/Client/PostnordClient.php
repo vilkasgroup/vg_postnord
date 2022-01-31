@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Vilkas\Postnord\Client;
 
 use Exception;
+use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 use Psr\Log\AbstractLogger;
@@ -64,8 +65,12 @@ class PostnordClient
         $this->httpClient = HttpClient::create();
 
         if (defined('_PS_VERSION_') && defined('_PS_ROOT_DIR_')) {
+            $formatter = new LineFormatter(null, null, true, true);
+            $handler = new StreamHandler(_PS_ROOT_DIR_ . '/var/logs/postnord-client.log');
+            $handler->setFormatter($formatter);
+
             $this->logger = new Logger('vg_postnord_client');
-            $this->logger->pushHandler(new StreamHandler(_PS_ROOT_DIR_ . '/var/logs/postnord-client.log'));
+            $this->logger->pushHandler($handler);
         } else {
             $this->logger = new NullLogger();
         }
