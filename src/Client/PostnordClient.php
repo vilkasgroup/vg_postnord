@@ -583,7 +583,7 @@ class PostnordClient
         ];
 
         if (!empty($pickupAddress)) {
-            $body['shipment']['deliveryParty'] = [
+            $body['shipment'][0]['parties']['deliveryParty'] = [
                 'partyIdentification' => [
                     'partyId' => $pickupAddress['servicePointId'],
                     'partyIdType' => '156',
