@@ -394,7 +394,7 @@ class PostnordClient
         );
 
         try {
-            $this->logger->debug('Create booking with:\n' . print_r($options, true));
+            $this->logger->debug('Create booking with:' . PHP_EOL . json_encode($options, JSON_PRETTY_PRINT));
             if (empty($labelInfo)) {
                 $response = $this->doRequest('POST', '/rest/shipment/v3/edi', $options);
             } else {
@@ -406,9 +406,9 @@ class PostnordClient
                 // remove base64 pdf
                 $responseWithoutBase64 = $response;
                 unset($responseWithoutBase64['labelPrintout'][0]['printout']['data']);
-                $this->logger->debug('Booking created with data:\n' . print_r($responseWithoutBase64, true));
+                $this->logger->debug('Booking created with data:' . PHP_EOL . json_encode($responseWithoutBase64, JSON_PRETTY_PRINT));
             } else {
-                $this->logger->debug('Booking created with data:\n' . print_r($response, true));
+                $this->logger->debug('Booking created with data:' . PHP_EOL . json_encode($response, JSON_PRETTY_PRINT));
             }
         } catch (Exception $e) {
             // TODO: Log error
@@ -433,7 +433,7 @@ class PostnordClient
         $options['query'] = $parameters;
         $options['json'] = [['id' => $labelId]];
         try {
-            $this->logger->debug('Get label with:\n' . print_r($options, true));
+            $this->logger->debug('Get label with:' . PHP_EOL . json_encode($options, JSON_PRETTY_PRINT));
             $response = $this->doRequest('POST', '/rest/shipment/v3/labels/ids/pdf', $options);
             if (isset(
                 $response['labelPrintout'][0]['printout']['data']
@@ -441,7 +441,7 @@ class PostnordClient
                 // remove base64 pdf before logging
                 $responseWithoutBase64 = $response;
                 unset($responseWithoutBase64['labelPrintout'][0]['printout']['data']);
-                $this->logger->debug('Booking created with data:\n' . print_r($responseWithoutBase64, true));
+                $this->logger->debug('Booking created with data:' . PHP_EOL . json_encode($responseWithoutBase64, JSON_PRETTY_PRINT));
             }
         } catch (Exception $e) {
             // TODO: Log error
