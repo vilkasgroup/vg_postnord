@@ -360,13 +360,13 @@ class PostnordClient
      * can return ZPL as well, it's not that different
      * Check the testCreateBooking for the correct data format.
      *
-     * @param string @customerEmail email of customer
+     * @param string $customerEmail email of customer
      * @param object $customerAddress Prestashop address object (customer address)
      * @param array $order information about an order
-     * @param array $pickupAddress information about an pickup point, come from PostNord
-     * @param array $shopAddress Merchant address, in the setting
+     * @param array $shopAddress Merchant address, in module settings
      * @param string $country customer's country
      * @param array $labelInfo label printout format (Paper size, number, etc.) from PostNord
+     * @param array $pickupAddress information about a pickup point, comes from PostNord
      *
      * @return array PostNord booking confirmation with/without PDF label
      *
@@ -376,10 +376,10 @@ class PostnordClient
         string $customerEmail,
         object $customerAddress,
         array $order,
-        array $pickupAddress,
         array $shopAddress,
         string $country = 'FI',
-        array $labelInfo = []
+        array $labelInfo = [],
+        array $pickupAddress = []
     ): array {
         $defaults = [];
         $parameters = $this->mergeOptions($defaults, $labelInfo);
@@ -388,9 +388,9 @@ class PostnordClient
             $customerEmail,
             $customerAddress,
             $order,
-            $pickupAddress,
             $shopAddress,
-            $country
+            $country,
+            $pickupAddress
         );
 
         try {
@@ -421,7 +421,7 @@ class PostnordClient
     }
 
     /**
-     * @param string @labelId id of the label (not the id of the booking)
+     * @param string $labelId id of the label (not the id of the booking)
      * @param array $labelInfo label printout format (Paper size, number, etc.) from PostNord
      *
      * @return array PDF label from PostNord
@@ -474,12 +474,12 @@ class PostnordClient
      * generate request body for booking
      * params is the same as createBooking.
      *
+     * @param string $customerEmail
      * @param object $customerAddress Prestashop address object (customer address)
      * @param array $order information about an order
-     * @param array $pickupAddress information about an pickup point, come from PostNord
      * @param array $shopAddress Merchant address, in the setting
      * @param string $country customer's country
-     * @param array $labelInfo label printout format (Paper size, number, etc.) from PostNord
+     * @param array $pickupAddress information about a pickup point, comes from PostNord
      *
      * @return array request body to create booking
      */
@@ -487,9 +487,9 @@ class PostnordClient
         string $customerEmail,
         object $customerAddress,
         array $order,
-        array $pickupAddress,
         array $shopAddress,
-        string $country = 'FI'
+        string $country = 'FI',
+        array $pickupAddress = []
     ): array {
         $datetime = date(DATE_ISO8601);
 
@@ -560,25 +560,6 @@ class PostnordClient
                                 ],
                             ],
                         ],
-                        'deliveryParty' => [
-                            'partyIdentification' => [
-                                'partyId' => $pickupAddress['servicePointId'],
-                                'partyIdType' => '156',
-                            ],
-                            'party' => [
-                                'nameIdentification' => [
-                                    'name' => $pickupAddress['name'],
-                                ],
-                                'address' => [
-                                    'streets' => [
-                                        "{$pickupAddress['visitingAddress']['streetName']} {$pickupAddress['visitingAddress']['streetNumber']}",
-                                    ],
-                                    'postalCode' => $pickupAddress['visitingAddress']['postalCode'],
-                                    'city' => $pickupAddress['visitingAddress']['city'],
-                                    'countryCode' => $pickupAddress['visitingAddress']['countryCode'],
-                                ],
-                            ],
-                        ],
                     ],
                     'goodsItem' => [
                         [
@@ -600,6 +581,28 @@ class PostnordClient
                 ],
             ],
         ];
+
+        if (!empty($pickupAddress)) {
+            $body['shipment']['deliveryParty'] = [
+                'partyIdentification' => [
+                    'partyId' => $pickupAddress['servicePointId'],
+                    'partyIdType' => '156',
+                ],
+                'party' => [
+                    'nameIdentification' => [
+                        'name' => $pickupAddress['name'],
+                    ],
+                    'address' => [
+                        'streets' => [
+                            "{$pickupAddress['visitingAddress']['streetName']} {$pickupAddress['visitingAddress']['streetNumber']}",
+                        ],
+                        'postalCode' => $pickupAddress['visitingAddress']['postalCode'],
+                        'city' => $pickupAddress['visitingAddress']['city'],
+                        'countryCode' => $pickupAddress['visitingAddress']['countryCode'],
+                    ],
+                ],
+            ];
+        }
 
         return $body;
     }
