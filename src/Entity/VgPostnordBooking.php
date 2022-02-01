@@ -58,6 +58,13 @@ class VgPostnordBooking
      * @ORM\Column(name="servicepointid", type="string", nullable=true)
      */
     private $servicepointid;
+    
+	/**
+     * @var string
+     *
+     * @ORM\Column(name="additional_services", type="string", nullable=true)
+     */
+    private $additional_services;
 
     // TODO: wonder if we need to store itemId (as id_label_external or something)
 
@@ -177,6 +184,30 @@ class VgPostnordBooking
     public function setServicepointid(string $servicepointid): self
     {
         $this->servicepointid = $servicepointid;
+
+        return $this;
+    }
+
+    /**
+     * Get the value of additional_services
+     *
+     * @return  string
+     */ 
+    public function getAdditional_services(): string
+    {
+        return $this->additional_services;
+    }
+
+    /**
+     * Set the value of additional_services
+     *
+     * @param  string  $additional_services
+     *
+     * @return  self
+     */ 
+    public function setAdditional_services(string $additional_services): self
+    {
+        $this->additional_services = $additional_services;
 
         return $this;
     }

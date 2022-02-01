@@ -44,6 +44,15 @@ class Vg_postnord extends CarrierModule
 
         $this->ps_versions_compliancy = ['min' => '1.7.7', 'max' => _PS_VERSION_];
 
+        $this->tabs = [
+            [
+                'name' => $this->trans('Postnord Shipments', [], 'Modules.Vgpostnord.Admin'),
+                'parent_class_name' => 'AdminParentOrders',
+                'class_name' => 'AdminPostnordBooking',
+                'visible' => true,
+            ]
+        ];
+
         $this->logger = static::getLogger();
     }
 
@@ -92,8 +101,7 @@ class Vg_postnord extends CarrierModule
         Configuration::deleteByName('VG_POSTNORD_SHOP_ADDRESS');
 
         return parent::uninstall()
-            && $this->uninstallSQL()
-            ;
+            && $this->uninstallSQL();
     }
 
     /**
