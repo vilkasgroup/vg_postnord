@@ -15,3 +15,9 @@ admin_vg_postnord_ajax_generate_label:
   methods: [POST]
   defaults:
     _controller: 'Vilkas\Postnord\Controller\Admin\VgPostnordBookingController::ajaxGenerateLabelAction'
+
+admin_vg_postnord_index_action:
+  path: vg_postnord/index_action
+  methods: [GET]
+  defaults:
+    _controller: 'Vilkas\Postnord\Controller\Admin\VgPostnordBookingController::indexAction'
