@@ -1,17 +1,17 @@
 admin_vg_postnord_create_booking:
   path: vg_postnord/create_booking
-  methods: [POST]
+  methods: [GET,POST]
   defaults:
     _controller: 'Vilkas\Postnord\Controller\Admin\VgPostnordBookingController::createBookingAction'
 
-admin_vg_postnord_bulk_generate_label:
-  path: vg_postnord/bulk_generate_booking
-  methods: [POST]
+admin_vg_postnord_fetch_label:
+  path: vg_postnord/fetch_label
+  methods: [GET,POST]
   defaults:
-    _controller: 'Vilkas\Postnord\Controller\Admin\VgPostnordBookingController::bulkGenerateLabelAction'
+    _controller: 'Vilkas\Postnord\Controller\Admin\VgPostnordBookingController::sendBookingAction'
 
-admin_vg_postnord_ajax_generate_label:
-  path: vg_postnord/ajax_generate_label
+admin_vg_postnord_bulk_fetch_label:
+  path: vg_postnord/bulk_fetch_label
   methods: [POST]
   defaults:
-    _controller: 'Vilkas\Postnord\Controller\Admin\VgPostnordBookingController::ajaxGenerateLabelAction'
+    _controller: 'Vilkas\Postnord\Controller\Admin\VgPostnordBookingController::bulkFetchLabelAction'
