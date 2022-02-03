@@ -1,4 +1,7 @@
 services:
+  _defaults:
+    public: true
+
   vilkas.postnord.repository.vgpostnordcartdata:
     class: 'Vilkas\Postnord\Repository\VgPostnordCartDataRepository'
     factory: ["@doctrine.orm.default_entity_manager", getRepository]
@@ -10,3 +13,8 @@ services:
     factory: ["@doctrine.orm.default_entity_manager", getRepository]
     arguments:
       - Vilkas\Postnord\Entity\VgPostnordBooking
+
+  vilkas.postnord.service.vgpostnordbookingservice:
+    class: 'Vilkas\Postnord\Service\VgPostnordBookingService'
+    arguments:
+      - '@doctrine.orm.default_entity_manager'
