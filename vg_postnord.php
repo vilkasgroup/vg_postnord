@@ -760,7 +760,7 @@ class Vg_postnord extends CarrierModule
     }
 
     /**
-     * Add "Generate shipping label" button to order preview
+     * Add "Fetch label" button to order preview
      */
     public function hookDisplayOrderPreview(array $params): ?string
     {
@@ -793,7 +793,7 @@ class Vg_postnord extends CarrierModule
     }
 
     /**
-     * Add "Generate shipping label" button to order page buttons
+     * Add "Fetch label" button to order page buttons
      */
     public function hookActionGetAdminOrderButtons(array $params)
     {
@@ -818,7 +818,7 @@ class Vg_postnord extends CarrierModule
                         'data-id-cart-data' => $cartData->getId(),
                         'data-url' => $router->generate('admin_vg_postnord_ajax_generate_label'),
                     ],
-                    $this->trans('Generate shipping label', [], 'Modules.Vgpostnord.Admin')
+                    $this->trans('Fetch label', [], 'Modules.Vgpostnord.Admin')
                 )
             );
         } catch (Exception $e) {
@@ -833,17 +833,17 @@ class Vg_postnord extends CarrierModule
     }
 
     /**
-     * Add "Generate shipping label" bulk action button to Order grid
+     * Add "Fetch label" bulk action button to Order grid
      */
     public function hookActionOrderGridDefinitionModifier(array $params)
     {
         /** @var GridDefinition $gridDefinition */
         $gridDefinition = $params['definition'];
         $gridDefinition->getBulkActions()->add(
-            (new SubmitBulkAction('bulk_generate_shipping_label'))
-                ->setName($this->trans('Generate shipping label', [], 'Modules.Vgpostnord.Admin'))
+            (new SubmitBulkAction('bulk_fetch_label'))
+                ->setName($this->trans('Fetch label', [], 'Modules.Vgpostnord.Admin'))
                 ->setOptions([
-                    'submit_route' => 'admin_vg_postnord_bulk_generate_label',
+                    'submit_route' => 'admin_vg_postnord_bulk_fetch_label',
                 ])
         );
     }
