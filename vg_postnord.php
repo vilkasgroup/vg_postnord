@@ -648,7 +648,7 @@ class Vg_postnord extends CarrierModule
             $this->context->controller->addCSS($this->_path . 'views/css/back.css');
         }
         if (Tools::getValue('controller') == 'AdminOrders') {
-            $this->context->controller->addJS($this->_path . 'views/js/generate-label.js');
+            $this->context->controller->addCSS($this->_path . 'views/css/back.css');
         }
     }
 
