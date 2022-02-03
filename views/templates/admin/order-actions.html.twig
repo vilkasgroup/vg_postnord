@@ -21,27 +21,51 @@
   </div>
   <div class="card-body">
     <div class="vg-postnord-order-shipment-info">
-      Some info here :)
+      <div class="vg-postnord-shipment-pickup-info">
+        Information about pickup point
+      </div>
+      <div class="vg-postnord-booking-list">
+        <table>
+          <tr>
+            <th>{{ 'ID'|trans({}, 'Modules.Vgpostnord.Admin') }}</th>
+            <th>{{ 'Finalized'|trans({}, 'Modules.Vgpostnord.Admin') }}</th>
+            <th>{{ 'Label'|trans({}, 'Modules.Vgpostnord.Admin') }}</th>
+          </tr>
+          {% if bookings|length is same as(0) %}
+            <tr>
+              <td colspan="3">{{ 'No bookings'|trans({}, 'Modules.Vgpostnord.Admin') }}</td>
+            </tr>
+          {% endif %}
+          {% for booking in bookings|reverse %}
+            {% if loop.index0 is same as(1) %}
+              <tr>
+                <td colspan="3">{{ 'Past bookings'|trans({}, 'Modules.Vgpostnord.Admin') }}</td>
+              </tr>
+            {% endif %}
+            <tr>
+              <td>{{ booking.id }}</td>
+              <td>{{ booking.finalized ? booking.finalized|date('d-m-Y H:i:m') : 'Not sent'|trans({}, 'Modules.Vgpostnord.Admin') }}</td>
+              {% if booking.idLabelExternal or (not booking.finalized and loop.index0 is same as(0)) %}
+                <td><a href="{{ path('admin_vg_postnord_fetch_label', {'id_booking': booking.id}) }}"
+                       target="_blank">{{ booking.idLabelExternal ? booking.idLabelExternal : 'Fetch label'|trans({}, 'Modules.Vgpostnord.Admin') }}</a>
+                </td>
+              {% else %}
+                <td>{{ 'No label'|trans({}, 'Modules.Vgpostnord.Admin') }}</td>
+              {% endif %}
+            </tr>
+          {% endfor %}
+        </table>
+      </div>
     </div>
     <div class="vg-postnord-action-buttons">
-      <div>
-        <form id="vg-postnord-create-booking-form" method="POST" action="{{ path('admin_vg_postnord_create_booking') }}">
-          <input type="hidden" name="id_order" value="{{ id_order }}">
-          <input type="hidden" name="generate_label" value="0">
-        </form>
-        <button type="submit" form="vg-postnord-create-booking-form" class="btn btn-primary">
-          {{ 'Create booking'|trans({}, 'Modules.Vgpostnord.Admin') }}
-        </button>
-      </div>
-      <div>
-        <form id="vg-postnord-create-booking-with-label-form" method="POST" action="{{ path('admin_vg_postnord_create_booking') }}">
-          <input type="hidden" name="id_order" value="{{ id_order }}">
-          <input type="hidden" name="generate_label" value="1">
-        </form>
-        <button type="submit" form="vg-postnord-create-booking-with-label-form" class="btn btn-primary">
-          {{ 'Create booking and generate label'|trans({}, 'Modules.Vgpostnord.Admin') }}
-        </button>
-      </div>
+      <button type="button" class="btn btn-primary" name="vg-postnord-create-booking-button"
+              onclick="location.href='{{ path('admin_vg_postnord_create_booking', {'id_order': id_order, 'generate_label': false}) }}';">
+        {{ 'Create booking'|trans({}, 'Modules.Vgpostnord.Admin') }}
+      </button>
+      <button type="button" class="btn btn-primary" name="vg-postnord-create-booking-button"
+              onclick="window.open('{{ path('admin_vg_postnord_create_booking', {'id_order': id_order, 'generate_label': true}) }}', '_blank')">
+        {{ 'Create booking and generate label'|trans({}, 'Modules.Vgpostnord.Admin') }}
+      </button>
     </div>
   </div>
 </div>
