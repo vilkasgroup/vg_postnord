@@ -11,6 +11,7 @@ use PrestaShopBundle\Controller\Admin\Sell\Order\ActionsBarButtonsCollection;
 use Psr\Log\AbstractLogger;
 use Symfony\Bundle\FrameworkBundle\Routing\Router;
 use Vilkas\Postnord\Client\PostnordClient;
+use Vilkas\Postnord\Entity\VgPostnordBooking;
 use Vilkas\Postnord\Entity\VgPostnordCartData;
 
 if (!defined('_PS_VERSION_')) {
@@ -776,10 +777,13 @@ class Vg_postnord extends CarrierModule
 
             /** @var Router $router */
             $router = $this->get('router');
+            $route = $router->generate('admin_vg_postnord_create_booking', [
+                'id_order' => $id_order,
+                'generate_label' => true
+            ]);
 
             return $twig->render('@Modules/vg_postnord/views/templates/admin/order-preview.html.twig', [
-                'generate_label_url' => $router->generate('admin_vg_postnord_ajax_generate_label'),
-                'id_cart_data' => $cartData->getId(),
+                'generate_label_url' => $route
             ]);
         } catch (Exception $e) {
             $this->logger->error('Could not render Twig template', [
@@ -809,14 +813,17 @@ class Vg_postnord extends CarrierModule
         try {
             /** @var Router $router */
             $router = $this->get('router');
+            $route = $router->generate('admin_vg_postnord_create_booking', [
+                'id_order' => $id_order,
+                'generate_label' => true
+            ]);
 
             $collection->add(
                 new ActionsBarButton(
                     'btn-primary btn-generate-label',
                     [
                         'name' => 'vg-postnord-generate-label-button',
-                        'data-id-cart-data' => $cartData->getId(),
-                        'data-url' => $router->generate('admin_vg_postnord_ajax_generate_label'),
+                        'onclick' => "window.open('$route', '_blank')"
                     ],
                     $this->trans('Fetch label', [], 'Modules.Vgpostnord.Admin')
                 )
