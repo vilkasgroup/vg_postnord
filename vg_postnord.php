@@ -766,8 +766,7 @@ class Vg_postnord extends CarrierModule
     public function hookDisplayOrderPreview(array $params): ?string
     {
         $id_order = (int) $params['order_id'];
-        $cartData = $this->_getCartDataByOrderId($id_order, 'displayOrderPreview');
-        if (!$cartData) {
+        if (!$this->isPostNordOrder($id_order)) {
             return null;
         }
 
@@ -789,7 +788,7 @@ class Vg_postnord extends CarrierModule
             $this->logger->error('Could not render Twig template', [
                 'exception' => $e->getMessage(),
                 'hook' => 'displayOrderPreview',
-                'id_cart_data' => $cartData->getId(),
+                'id_order' => $id_order,
             ]);
 
             return null;
@@ -802,8 +801,7 @@ class Vg_postnord extends CarrierModule
     public function hookActionGetAdminOrderButtons(array $params)
     {
         $id_order = (int) $params['id_order'];
-        $cartData = $this->_getCartDataByOrderId($id_order, 'actionGetAdminOrderButtons');
-        if (!$cartData) {
+        if (!$this->isPostNordOrder($id_order)) {
             return null;
         }
 
@@ -832,7 +830,7 @@ class Vg_postnord extends CarrierModule
             $this->logger->error('Error adding ActionsBarButton', [
                 'exception' => $e->getMessage(),
                 'hook' => 'actionGetAdminOrderButtons',
-                'id_cart_data' => $cartData->getId(),
+                'id_order' => $id_order,
             ]);
 
             return null;
@@ -912,59 +910,26 @@ class Vg_postnord extends CarrierModule
     }
 
     /**
-     * Get VgPostNordCartData by Order ID
-     *
-     * Handles all the checks and logging, caller just needs to check if they got the data or null.
+     * Whether a given order is (likely) a PostNord order
      *
      * @param int $id_order Order ID
-     * @param string $hook Hook name where this is being used (used for logging purposes)
      *
-     * @return VgPostnordCartData|null
+     * @return bool
      */
-    private function _getCartDataByOrderId(int $id_order, string $hook): ?VgPostnordCartData
+    private function isPostNordOrder(int $id_order): bool
     {
         try {
             $order = new Order($id_order);
         } catch (PrestaShopException $e) {
             $this->logger->error('Error loading Product', [
                 'exception' => $e->getMessage(),
-                'hook' => $hook,
                 'id_order' => $id_order,
             ]);
 
-            return null;
+            return false;
         }
 
         $carrier = new Carrier($order->id_carrier);
-        if ($carrier->external_module_name !== $this->name) {
-            return null; // probably not a PostNord order
-        }
-
-        try {
-            /** @var EntityManager $entityManager */
-            $entityManager = $this->get('doctrine.orm.entity_manager');
-            $repository = $entityManager->getRepository(VgPostnordCartData::class);
-        } catch (Exception $e) {
-            $this->logger->error('Error getting entity manager or repository', [
-                'exception' => $e->getMessage(),
-                'hook' => $hook,
-                'id_order' => $id_order,
-            ]);
-
-            return null;
-        }
-
-        $cartData = $repository->findOneBy(['id_cart' => $order->id_cart]);
-        if (!$cartData) {
-            $this->logger->error('Could not find Postnord cart data', [
-                'hook' => $hook,
-                'id_order' => $order->id,
-                'id_cart' => $order->id_cart,
-            ]);
-
-            return null;
-        }
-
-        return $cartData;
+        return $carrier->external_module_name === $this->name;
     }
 }
