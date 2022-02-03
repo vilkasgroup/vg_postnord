@@ -2,10 +2,11 @@
 
 namespace Vilkas\Postnord\Controller\Admin;
 
+use Doctrine\ORM\EntityManager;
 use PrestaShopBundle\Controller\Admin\FrameworkBundleAdminController;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Vilkas\Postnord\Entity\VgPostnordBooking;
 
 class VgPostnordBookingController extends FrameworkBundleAdminController
 {
@@ -14,18 +15,113 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
         parent::__construct();
     }
 
+    // TODO: logging, I guess
+
+    /**
+     * Create a new booking, and fetch label if specified (generate_label = true)
+     */
     public function createBookingAction(Request $request): Response
     {
-        return $this->redirectToRoute("admin_orders_index"); // TODO :)
+        $id_order = $request->get("id_order");
+        if (!$id_order) {
+            $message = $this->trans("Missing id_order in request. Something is wrong.", "Modules.Vgpostnord.Admin");
+            $this->addFlash("error", $message);
+            return $this->redirectToRoute("admin_orders_index");
+        }
+        $generate_label = $request->get("generate_label");
+
+        $bookingService = $this->get("vilkas.postnord.service.vgpostnordbookingservice");
+        $booking = $bookingService->createBlankBooking((int) $id_order);
+        // TODO: the above function can probably throw something
+
+        if (!$generate_label) {
+            $message = $this->trans("New booking created successfully", "Modules.Vgpostnord.Admin");
+            $this->addFlash("success", $message);
+            return $this->redirectToRoute("admin_orders_view", ["orderId" => $id_order]);
+        }
+
+        try {
+            $booking = $bookingService->sendBookingAndGenerateLabel($booking);
+        } catch (\Throwable $e) {
+            $this->addFlash("error", $e->getMessage());
+            return $this->redirectToRoute("admin_orders_view", ["orderId" => $id_order]);
+        }
+
+        return $this->_getPDFLabelResponse($booking);
     }
 
-    public function bulkGenerateLabelAction(Request $request): Response
+    /**
+     * Fetch label for an existing (local) booking
+     */
+    public function sendBookingAction(Request $request): Response
+    {
+        $id_booking = $request->get("id_booking");
+        if (!$id_booking) {
+            $message = $this->trans("Missing id_booking in request. Something is wrong.",  "Modules.Vgpostnord.Admin");
+            $this->addFlash("error", $message);
+            return $this->redirectToRoute("admin_orders_index");
+        }
+
+        /** @var EntityManager $entityManager */
+        $entityManager = $this->container->get('doctrine.orm.entity_manager');
+        $repository = $entityManager->getRepository(VgPostnordBooking::class);
+
+        $booking = $repository->findOneBy(["id" => $id_booking]);
+        if (!$booking) {
+            $message = $this->trans("Could not find booking with id $id_booking", "Modules.Vgpostnord.Admin");
+            $this->addFlash("error", $message);
+            return $this->redirectToRoute("admin_orders_index");
+        }
+
+        if ($booking->getFinalized()) {
+            return $this->_getPDFLabelResponse($booking);
+        }
+
+        $bookingService = $this->get("vilkas.postnord.service.vgpostnordbookingservice");
+
+        try {
+            $booking = $bookingService->sendBookingAndGenerateLabel($booking);
+        } catch (\Throwable $e) {
+            $this->addFlash("error", $e->getMessage());
+            return $this->redirectToRoute("admin_orders_view", ["orderId" => $booking->getIdOrder()]);
+        }
+
+        return $this->_getPDFLabelResponse($booking);
+    }
+
+    public function bulkFetchLabelAction(Request $request): Response
     {
         return $this->redirectToRoute("admin_orders_index"); // TODO :)
     }
 
-    public function ajaxGenerateLabelAction(Request $request): JsonResponse
+    /**
+     * Generate filename for label PDF
+     */
+    private function _getFileName(VgPostnordBooking $booking): string
     {
-        return $this->returnErrorJsonResponse(["YEP"], 200); // TODO :)
+        return  "label_" . $booking->getIdOrder() . "_" . $booking->getId() . ".pdf";
+    }
+
+    /**
+     * Generate raw PFD label data response with related headers
+     */
+    private function _getPDFLabelResponse(VgPostnordBooking $booking): Response
+    {
+        if (!$booking->getLabelData()) {
+            $message = $this->trans("Booking is missing label data. Something is wrong.", "Modules.Vgpostnord.Admin");
+            $this->addFlash("error", $message);
+            $this->redirectToRoute("admin_orders_view", ["orderId" => $booking->getIdOrder()]);
+        }
+
+        $filename = $this->_getFileName($booking);
+
+        return new Response(
+            base64_decode($booking->getLabelData()),
+            200,
+            [
+                "Content-Type"        => "application/pdf",
+                "Content-Disposition" => "inline;filename=$filename"
+            ]
+        );
     }
 }
