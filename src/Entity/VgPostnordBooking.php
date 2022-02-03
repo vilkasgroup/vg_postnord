@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Vilkas\Postnord\Entity;
 
+use DateTime;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -74,6 +75,13 @@ class VgPostnordBooking
     private $id_label_external;
 
     /**
+     * @var DateTime
+     *
+     * @ORM\Column(name="finalized", type="datetime")
+     */
+    private $finalized;
+
+    /**
      * @return int
      */
     public function getId(): int
@@ -114,9 +122,9 @@ class VgPostnordBooking
     }
 
     /**
-     * @return VgPostnordCartData
+     * @return VgPostnordCartData|null
      */
-    public function getCartData(): VgPostnordCartData
+    public function getCartData(): ?VgPostnordCartData
     {
         return $this->cart_data;
     }
@@ -134,9 +142,9 @@ class VgPostnordBooking
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getIdBookingExternal(): string
+    public function getIdBookingExternal(): ?string
     {
         return $this->id_booking_external;
     }
@@ -154,9 +162,9 @@ class VgPostnordBooking
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getTrackingUrl(): string
+    public function getTrackingUrl(): ?string
     {
         return $this->tracking_url;
     }
@@ -174,9 +182,9 @@ class VgPostnordBooking
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getLabelData(): string
+    public function getLabelData(): ?string
     {
         return $this->label_data;
     }
@@ -194,9 +202,9 @@ class VgPostnordBooking
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getServicepointid(): string
+    public function getServicepointid(): ?string
     {
         return $this->servicepointid;
     }
@@ -214,9 +222,9 @@ class VgPostnordBooking
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getIdLabelExternal(): string
+    public function getIdLabelExternal(): ?string
     {
         return $this->id_label_external;
     }
@@ -229,6 +237,26 @@ class VgPostnordBooking
     public function setIdLabelExternal(string $id_label_external): self
     {
         $this->id_label_external = $id_label_external;
+
+        return $this;
+    }
+
+    /**
+     * @return DateTime|null
+     */
+    public function getFinalized(): ?DateTime
+    {
+        return $this->finalized;
+    }
+
+    /**
+     * @param DateTime $finalized
+     *
+     * @return $this
+     */
+    public function setFinalized(DateTime $finalized): self
+    {
+        $this->finalized = $finalized;
 
         return $this;
     }
