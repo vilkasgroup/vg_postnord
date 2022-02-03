@@ -725,11 +725,28 @@ class Vg_postnord extends CarrierModule
         }
 
         try {
+            /** @var EntityManager $entityManager */
+            $entityManager = $this->get('doctrine.orm.entity_manager');
+            $repository = $entityManager->getRepository(VgPostnordBooking::class);
+        } catch (Exception $e) {
+            $this->logger->error('Error getting entity manager or repository', [
+                'exception' => $e,
+                'hook' => 'displayAdminOrderMain',
+                'id_order' => $id_order
+            ]);
+
+            return null;
+        }
+
+        $bookings = $repository->findBy(["id_order" => $id_order]);
+
+        try {
             /** @var Twig\Environment $twig */
             $twig = $this->get('twig');
 
             return $twig->render('@Modules/vg_postnord/views/templates/admin/order-actions.html.twig', [
                 'id_order' => $id_order,
+                'bookings' => $bookings
             ]);
         } catch (Exception $e) {
             $this->logger->error('Could not render Twig template', [
