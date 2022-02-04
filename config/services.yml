@@ -52,3 +52,12 @@ services:
     arguments:
       - 'Vilkas\Postnord\Form\VgPostnordBookingType'
       - '@vilkas.postnord.form.identifiable_object.data_provider.vg_postnord_booking_form_data_provider'
+
+  vilkas.postnord.form.identifiable_object.data_handler.vg_postnord_booking_form_data_handler:
+    class: 'Vilkas\Postnord\Form\VgPostnordBookingFormDataHandler'
+
+  vilkas.postnord.form.identifiable_object.handler.vg_postnord_booking_form_handler:
+    class: 'PrestaShop\PrestaShop\Core\Form\IdentifiableObject\Handler\FormHandler'
+    factory: 'prestashop.core.form.identifiable_object.handler.form_handler_factory:create'
+    arguments:
+      - '@vilkas.postnord.form.identifiable_object.data_handler.vg_postnord_booking_form_data_handler'

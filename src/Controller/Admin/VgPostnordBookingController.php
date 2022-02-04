@@ -35,10 +35,21 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
         $bookingFormBuilder = $this->get('vilkas.postnord.form.identifiable_object.builder.vg_postnord_booking_form_builder');
         $bookingForm = $bookingFormBuilder->getFormFor((int) $bookingId);
         $bookingForm->handleRequest($request);
+
+        $bookingFormHandler = $this->get('vilkas.postnord.form.identifiable_object.handler.vg_postnord_booking_form_handler');
+        $result = $bookingFormHandler->handleFor($bookingId, $bookingForm);
+
+        if (null !== $result->getIdentifiableObjectId()) {
+            $this->addFlash('success', $this->trans('Successful creation.', 'Admin.Notifications.Success'));
+
+            return $this->redirectToRoute('admin_vg_postnord_index_action');
+        }
+
+
         return $this->render('@Modules/vg_postnord/views/templates/admin/edit-booking.html.twig', [
             'vgPostnordBookingEditForm' => $bookingForm->createView(),
         ]);
-        }
+    }
 
     public function createBookingAction(Request $request): Response
     {
