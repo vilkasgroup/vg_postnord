@@ -42,4 +42,13 @@ services:
         - '@vilkas.postnord.grid.vg_postnord_booking_data_factory'              # our data factory
         - '@prestashop.core.grid.filter.form_factory'                            # core service needed by grid factory
         - '@prestashop.core.hook.dispatcher'                                     # core service needed by grid factory
+  
+  vilkas.postnord.form.identifiable_object.data_provider.vg_postnord_booking_form_data_provider:
+    class: 'Vilkas\Postnord\Form\VgPostnordBookingFormDataProvider'
 
+  vilkas.postnord.form.identifiable_object.builder.vg_postnord_booking_form_builder:
+    class: 'PrestaShop\PrestaShop\Core\Form\IdentifiableObject\Builder\FormBuilder'
+    factory: 'prestashop.core.form.builder.form_builder_factory:create'
+    arguments:
+      - 'Vilkas\Postnord\Form\VgPostnordBookingType'
+      - '@vilkas.postnord.form.identifiable_object.data_provider.vg_postnord_booking_form_data_provider'

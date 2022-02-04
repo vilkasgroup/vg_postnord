@@ -11,6 +11,7 @@ use Symfony\Component\HttpFoundation\Response;
 use PrestaShop\PrestaShop\Core\Grid\Search\SearchCriteria;
 use PrestaShopBundle\Controller\Admin\FrameworkBundleAdminController;
 use Vilkas\Postnord\Grid\Filter\VgPostnordBookingQueryFilter;
+use Vilkas\Postnord\Form\Data\Provider\VgPostnordBookingFormDataProvider;
 
 class VgPostnordBookingController extends FrameworkBundleAdminController
 {
@@ -28,6 +29,16 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
             'vgPostnordBookingsGrid' => $this->presentGrid($grid)
         ]);
     }
+
+    public function editBookingAction(Request $request, $bookingId): Response
+    {
+        $bookingFormBuilder = $this->get('vilkas.postnord.form.identifiable_object.builder.vg_postnord_booking_form_builder');
+        $bookingForm = $bookingFormBuilder->getFormFor((int) $bookingId);
+        $bookingForm->handleRequest($request);
+        return $this->render('@Modules/vg_postnord/views/templates/admin/edit-booking.html.twig', [
+            'vgPostnordBookingEditForm' => $bookingForm->createView(),
+        ]);
+        }
 
     public function createBookingAction(Request $request): Response
     {

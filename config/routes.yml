@@ -21,3 +21,12 @@ admin_vg_postnord_index_action:
   methods: [GET]
   defaults:
     _controller: 'Vilkas\Postnord\Controller\Admin\VgPostnordBookingController::indexAction'
+
+admin_vg_postnord_edit_action:
+  path: /vg_postnord/{bookingId}/edit
+  methods: [GET,POST]
+  defaults:
+    _controller: 'Vilkas\Postnord\Controller\Admin\VgPostnordBookingController::editBookingAction'
+    _legacy_controller: 'AdminVGPostnordBookingController'
+  requirements:
+    bookingId: \d+
