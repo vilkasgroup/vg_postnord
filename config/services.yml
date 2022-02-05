@@ -53,6 +53,8 @@ services:
   
   vilkas.postnord.form.identifiable_object.data_provider.vg_postnord_booking_form_data_provider:
     class: 'Vilkas\Postnord\Form\VgPostnordBookingFormDataProvider'
+    arguments:
+      - '@vilkas.postnord.repository.vgpostnordbooking'
 
   vilkas.postnord.form.identifiable_object.builder.vg_postnord_booking_form_builder:
     class: 'PrestaShop\PrestaShop\Core\Form\IdentifiableObject\Builder\FormBuilder'
@@ -64,7 +66,8 @@ services:
   vilkas.postnord.form.identifiable_object.data_handler.vg_postnord_booking_form_data_handler:
     class: 'Vilkas\Postnord\Form\VgPostnordBookingFormDataHandler'
     arguments:
-      - '@prestashop.core.command_bus'
+      - '@vilkas.postnord.repository.vgpostnordbooking'
+      - '@doctrine.orm.default_entity_manager'
 
   vilkas.postnord.form.identifiable_object.handler.vg_postnord_booking_form_handler:
     class: 'PrestaShop\PrestaShop\Core\Form\IdentifiableObject\Handler\FormHandler'

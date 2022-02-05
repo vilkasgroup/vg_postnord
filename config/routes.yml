@@ -16,11 +16,12 @@ admin_vg_postnord_bulk_fetch_label:
   defaults:
     _controller: 'Vilkas\Postnord\Controller\Admin\VgPostnordBookingController::bulkFetchLabelAction'
 
-admin_vg_postnord_index_action:
-  path: vg_postnord/index_action
+admin_vg_postnord_list_action:
+  path: vg_postnord/list_action
   methods: [GET]
   defaults:
-    _controller: 'Vilkas\Postnord\Controller\Admin\VgPostnordBookingController::indexAction'
+    _controller: 'Vilkas\Postnord\Controller\Admin\VgPostnordBookingController::listAction'
+    _legacy_controller: VgPostnordBookingController
 
 admin_vg_postnord_edit_action:
   path: /vg_postnord/{bookingId}/edit

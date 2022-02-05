@@ -33,15 +33,15 @@ class VgPostnordBookingType extends CommonAbstractType
     {
         $builder
             ->add('tracking_url', TextType::class, [
-                'label' => 'tracking URL',
+                'label' => 'Tracking URL',
                 ])
             ->add('additional_services', MaterialChoiceTableType::class, [
                 'label' => 'Additional Services',
                 'help' => 'Additional Services',
                 'choices' => [
-                    'Test 1' => 1,
-                    'Test 2' => 2,
-                    'Test 3' => 3
+                    'Test 1' => 'A1',
+                    'Test 2' => 'A2',
+                    'Test 3' => 'A3'
                 ],
             ]);
     }

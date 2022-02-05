@@ -18,5 +18,4 @@
         <li><strong>61</strong> - Servicepoint (Europe)</li>
     </ul>
     </p>
-	<a href="{$gridlink}">Grid</a>
 </div>

@@ -10,10 +10,18 @@ use Symfony\Component\HttpFoundation\Response;
 
 use PrestaShop\PrestaShop\Core\Grid\Search\SearchCriteria;
 use PrestaShopBundle\Controller\Admin\FrameworkBundleAdminController;
+use PrestaShopBundle\Security\Annotation\AdminSecurity;
+use PrestaShopBundle\Security\Annotation\ModuleActivated;
 
 use Vilkas\Postnord\Entity\VgPostnordBooking;
 use Vilkas\Postnord\Grid\Filter\VgPostnordBookingQueryFilter;
 use Vilkas\Postnord\Form\Data\Provider\VgPostnordBookingFormDataProvider;
+
+/**
+ * Class VgPostnordBookingController.
+ *
+ * @ModuleActivated(moduleName="vg_postnord", redirectRoute="admin_module_manage")
+ */
 
 class VgPostnordBookingController extends FrameworkBundleAdminController
 {
@@ -22,8 +30,17 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
         parent::__construct();
     }
 
-    public function indexAction(VgPostnordBookingQueryFilter $filters): Response
+    /**
+     * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))", message="Access denied.")
+     *
+     * @param VgPostnordBookingQueryFilter $filters)
+     *
+     * @return Response
+     */
+    public function listAction(VgPostnordBookingQueryFilter $filters): Response
     {
+
+        var_dump('hello');
         $gridFactory = $this->get('vilkas.postnord.grid.vg_postnord_booking_grid_factory');
         $grid = $gridFactory->getGrid($filters);
 
@@ -39,12 +56,12 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
         $bookingForm->handleRequest($request);
 
         $bookingFormHandler = $this->get('vilkas.postnord.form.identifiable_object.handler.vg_postnord_booking_form_handler');
-        $result = $bookingFormHandler->handleFor($bookingId, $bookingForm);
+        $result = $bookingFormHandler->handleFor((int) $bookingId, $bookingForm);
 
-        if (null !== $result->getIdentifiableObjectId()) {
+        if ($result->isSubmitted() && $result->isValid()) {
             $this->addFlash('success', $this->trans('Successful modification.', 'Admin.Notifications.Success'));
 
-            return $this->redirectToRoute('admin_vg_postnord_index_action');
+            return $this->redirectToRoute('admin_vg_postnord_list_action');
         }
 
 

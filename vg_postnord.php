@@ -49,7 +49,8 @@ class Vg_postnord extends CarrierModule
             [
                 'name' => $this->trans('Postnord Shipments', [], 'Modules.Vgpostnord.Admin'),
                 'parent_class_name' => 'AdminParentOrders',
-                'class_name' => 'VgPostnordBooking',
+                'route_name' => 'admin_vg_postnord_list_action',
+                'class_name' => 'VgPostnordBookingController',
                 'visible' => true,
             ]
         ];
@@ -182,10 +183,9 @@ class Vg_postnord extends CarrierModule
             }
         }
 
-		$router=$this->get('router');
+        $router = $this->get('router');
 
         $this->context->smarty->assign('module_dir', $this->_path);
-		$this->context->smarty->assign('gridlink', $router->generate('admin_vg_postnord_index_action'));
         $output = $this->context->smarty->fetch($this->local_path . 'views/templates/admin/configure.tpl');
         $footer = $this->context->smarty->fetch($this->local_path . 'views/templates/admin/configure_footer.tpl');
 

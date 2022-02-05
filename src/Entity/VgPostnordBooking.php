@@ -12,7 +12,7 @@ use ObjectModel;
  * @ORM\Table()
  * @ORM\Entity(repositoryClass="Vilkas\Postnord\Repository\VgPostnordBookingRepository")
  */
-class VgPostnordBooking extends ObjectModel
+class VgPostnordBooking
 {
 
     /**
@@ -275,7 +275,7 @@ class VgPostnordBooking extends ObjectModel
      *
      * @return  string
      */
-    public function getAdditional_services(): string
+    public function getAdditionalServices(): string
     {
         return $this->additional_services;
     }
@@ -287,10 +287,47 @@ class VgPostnordBooking extends ObjectModel
      *
      * @return  $this
      */
-    public function setAdditional_services(string $additional_services): self
+    public function setAdditionalServices(string $additional_services): self
     {
         $this->additional_services = $additional_services;
 
         return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function toArray()
+    {
+        return [
+            'id_booking' => $this->getId(),
+            'id_order' => $this->getIdOrder(),
+            'cart_data' => $this->getCartData(),
+            'id_booking_external' => $this->getIdBookingExternal(),
+            'tracking_url' => $this->getTrackingUrl(),
+            'label_data' => $this->getLabelData(),
+            'servicepointid' => $this->getServicepointid(),
+            'id_label_external' => $this->getIdLabelExternal(),
+            'finalized' => $this->getFinalized(),
+            'additional_services' =>explode(', ', $this->getAdditionalServices()),
+        ];
+    }
+
+    /**
+     * Only left the necessary one. Not used ones are commented out for now.
+     * 
+     * @param $data 
+     */
+    public function fromArray($data)
+    {
+        // $this->setIdOrder($data['id_order']);
+        // $this->setCartData($data['cart_data']);
+        // $this->setIdBookingExternal($data['id_booking_external']);
+        // $this->setLabelData($data['label_data']);
+        // $this->setServicepointid($data['servicepointid']);
+        // $this->setIdLabelExternal($data['id_label_external']);
+        // $this->setFinalized($data['finalized']);
+        $this->setTrackingUrl($data['tracking_url']);
+        $this->setAdditionalServices(implode(', ', $data['additional_services']));
     }
 }

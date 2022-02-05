@@ -6,31 +6,36 @@ namespace Vilkas\Postnord\Form;
 
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityRepository;
-use Doctrine\ORM\Query\Expr\Func;
-use PrestaShop\PrestaShop\Core\CommandBus\CommandBusInterface;
+
 use PrestaShop\PrestaShop\Core\Form\IdentifiableObject\DataHandler\FormDataHandlerInterface;
+
 use Vilkas\Postnord\Entity\VgPostnordBooking;
 
 final class VgPostnordBookingFormDataHandler implements FormDataHandlerInterface
 {
     private $vgPostnordBookingRepository;
-    private $entityMananger;
-
+    private $entityManager;
+    
     public function __construct(
         EntityRepository $vgPostnordBookingRepository,
         EntityManager $entityManager
-    )
-    {
-        $this->entityMananger = $entityManager;
+        ) {
         $this->vgPostnordBookingRepository = $vgPostnordBookingRepository;
+        $this->entityManager = $entityManager;
     }
 
+    /**
+     * TODO: Make sure to uncommented the necessary field.
+     */
     public function create(array $data)
     {
         $booking = new VgPostnordBooking();
-        $booking->save();
+        $booking->fromArray($data);
 
-        return $booking->id;
+        $this->entityManager->persist($booking);
+        $this->entityManager->flush();
+
+        return $booking->getId();
     }
 
     /**
@@ -40,11 +45,12 @@ final class VgPostnordBookingFormDataHandler implements FormDataHandlerInterface
      */
     public function update($id, array $data)
     {
-        $booking = new VgPostnordBooking((int) $id);
-        $booking->tracking_url = $data['tracking_url'];
-        
+        $booking = $this->vgPostnordBookingRepository->findOneById((int) $id);
 
-        // $editBookingCommand = (new )
-        $booking->update();
+        $booking->fromArray($data);
+
+        $this->entityManager->flush();
+
+        return $booking->getId();
     }
 }

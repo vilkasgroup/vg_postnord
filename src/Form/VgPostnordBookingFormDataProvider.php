@@ -4,37 +4,29 @@ declare(strict_types=1);
 
 namespace Vilkas\Postnord\Form;
 
+use Doctrine\ORM\EntityRepository;
 use PrestaShop\PrestaShop\Core\Form\IdentifiableObject\DataProvider\FormDataProviderInterface;
 use PrestaShopObjectNotFoundException;
-
-use Vilkas\Postnord\Entity\VgPostnordBooking;
+use Vilkas\Postnord\Repository\VgPostnordBookingRepository;
 
 final class VgPostnordBookingFormDataProvider implements FormDataProviderInterface
 {
-    // EntityRepository $repository
-    public function __construct()
+    private $repository;
+
+    public function __construct(VgPostnordBookingRepository $repository)
     {
-        // $this->repository = $repository;
+        $this->repository = $repository;
+
     }
 
     public function getData($bookingId)
     {
-        // $entityManager = $this->container->get('doctrine.orm.entity_manager');
-        // $VgPostnordBookingRepository = $entityManager->getRepository(VgPostnordBooking::class);
-
-        // $booking = $VgPostnordBookingRepository->findByBookingId($bookingId);
-
-        $booking = new VgPostnordBooking($bookingId);
-
+        $booking = $this->repository->findOneBy(['id'=>$bookingId]);
         if (empty($booking->getId())) {
             throw new PrestaShopObjectNotFoundException('Object not found');
         }
 
-        return [
-            'id_booking' => $booking->getId(),
-            'tracking_url'=>$booking->getTrackingUrl(),
-            'additional_services'=>[1]
-        ];
+        return $booking->toArray();
     }
 
     /**
