@@ -40,7 +40,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
         $result = $bookingFormHandler->handleFor($bookingId, $bookingForm);
 
         if (null !== $result->getIdentifiableObjectId()) {
-            $this->addFlash('success', $this->trans('Successful creation.', 'Admin.Notifications.Success'));
+            $this->addFlash('success', $this->trans('Successful modification.', 'Admin.Notifications.Success'));
 
             return $this->redirectToRoute('admin_vg_postnord_index_action');
         }
