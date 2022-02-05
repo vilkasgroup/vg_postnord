@@ -1,4 +1,7 @@
 services:
+  _defaults:
+    public: true
+
   vilkas.postnord.repository.vgpostnordcartdata:
     class: 'Vilkas\Postnord\Repository\VgPostnordCartDataRepository'
     factory: ["@doctrine.orm.default_entity_manager", getRepository]
@@ -10,6 +13,11 @@ services:
     factory: ["@doctrine.orm.default_entity_manager", getRepository]
     arguments:
       - Vilkas\Postnord\Entity\VgPostnordBooking
+
+  vilkas.postnord.service.vgpostnordbookingservice:
+    class: 'Vilkas\Postnord\Service\VgPostnordBookingService'
+    arguments:
+      - '@doctrine.orm.default_entity_manager'
 
  # define the grid definition factory
   vilkas.postnord.grid.definition.factory.vg_postnord_booking_grid_definition_factory:
@@ -38,10 +46,10 @@ services:
   vilkas.postnord.grid.vg_postnord_booking_grid_factory:
     class: 'PrestaShop\PrestaShop\Core\Grid\GridFactory'
     arguments:
-        - '@vilkas.postnord.grid.definition.factory.vg_postnord_booking_grid_definition_factory' # our definition factory
-        - '@vilkas.postnord.grid.vg_postnord_booking_data_factory'              # our data factory
-        - '@prestashop.core.grid.filter.form_factory'                            # core service needed by grid factory
-        - '@prestashop.core.hook.dispatcher'                                     # core service needed by grid factory
+      - '@vilkas.postnord.grid.definition.factory.vg_postnord_booking_grid_definition_factory' # our definition factory
+      - '@vilkas.postnord.grid.vg_postnord_booking_data_factory'              # our data factory
+      - '@prestashop.core.grid.filter.form_factory'                            # core service needed by grid factory
+      - '@prestashop.core.hook.dispatcher'                                     # core service needed by grid factory
   
   vilkas.postnord.form.identifiable_object.data_provider.vg_postnord_booking_form_data_provider:
     class: 'Vilkas\Postnord\Form\VgPostnordBookingFormDataProvider'
@@ -63,3 +71,5 @@ services:
     factory: 'prestashop.core.form.identifiable_object.handler.form_handler_factory:create'
     arguments:
       - '@vilkas.postnord.form.identifiable_object.data_handler.vg_postnord_booking_form_data_handler'
+
+

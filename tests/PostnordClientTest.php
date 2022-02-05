@@ -166,7 +166,7 @@ class PostnordClientTest extends TestCase
         // $labelInfo = [
         // 'paperSize' => 'LABEL'
         // ];
-        $results = $this->client->createBooking($email, $address, $order, $pickupAddress, $shopAddress, $country);
+        $results = $this->client->createBooking($email, $address, $order, $shopAddress, $country, [], $pickupAddress);
         // var_dump($results);
         $this->assertArrayHasKey('bookingId', $results);
         $this->assertArrayHasKey('value', $results['idInformation'][0]['ids'][0]);
@@ -223,10 +223,10 @@ class PostnordClientTest extends TestCase
             $email,
             $address,
             $order,
-            $pickupAddress,
             $shopAddress,
             $country,
-            $labelInfo
+            $labelInfo,
+            $pickupAddress
         );
         // var_dump($results);
         $this->assertArrayHasKey('labelPrintout', $results);

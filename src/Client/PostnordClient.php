@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Vilkas\Postnord\Client;
 
 use Exception;
+use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 use Psr\Log\AbstractLogger;
@@ -64,8 +65,12 @@ class PostnordClient
         $this->httpClient = HttpClient::create();
 
         if (defined('_PS_VERSION_') && defined('_PS_ROOT_DIR_')) {
+            $formatter = new LineFormatter(null, null, true, true);
+            $handler = new StreamHandler(_PS_ROOT_DIR_ . '/var/logs/postnord-client.log');
+            $handler->setFormatter($formatter);
+
             $this->logger = new Logger('vg_postnord_client');
-            $this->logger->pushHandler(new StreamHandler(_PS_ROOT_DIR_ . '/var/logs/postnord-client.log'));
+            $this->logger->pushHandler($handler);
         } else {
             $this->logger = new NullLogger();
         }
@@ -160,17 +165,17 @@ class PostnordClient
             $content = $e->getResponse()->getContent(false);
             $this->logger->error(
                 'API request response other than 200',
-                ['status' => $status, 'content' => $content, 'exception' => $e->getMessage()]
+                ['status' => $status, 'content' => $content, 'exception' => $e]
             );
             throw new Exception($content);
         } catch (TransportExceptionInterface $e) {
             // TODO: make this better
-            $this->logger->error('Network error occurred', ['exception' => $e->getMessage()]);
+            $this->logger->error('Network error occurred', ['exception' => $e]);
             throw $e;
         } catch (Exception $e) {
             // TODO: make this better
             // something bad happened
-            $this->logger->error('Something bad happened', ['exception' => $e->getMessage()]);
+            $this->logger->error('Something bad happened', ['exception' => $e]);
             throw $e;
         }
 
@@ -355,13 +360,13 @@ class PostnordClient
      * can return ZPL as well, it's not that different
      * Check the testCreateBooking for the correct data format.
      *
-     * @param string @customerEmail email of customer
+     * @param string $customerEmail email of customer
      * @param object $customerAddress Prestashop address object (customer address)
      * @param array $order information about an order
-     * @param array $pickupAddress information about an pickup point, come from PostNord
-     * @param array $shopAddress Merchant address, in the setting
+     * @param array $shopAddress Merchant address, in module settings
      * @param string $country customer's country
      * @param array $labelInfo label printout format (Paper size, number, etc.) from PostNord
+     * @param array $pickupAddress information about a pickup point, comes from PostNord
      *
      * @return array PostNord booking confirmation with/without PDF label
      *
@@ -371,10 +376,10 @@ class PostnordClient
         string $customerEmail,
         object $customerAddress,
         array $order,
-        array $pickupAddress,
         array $shopAddress,
         string $country = 'FI',
-        array $labelInfo = []
+        array $labelInfo = [],
+        array $pickupAddress = []
     ): array {
         $defaults = [];
         $parameters = $this->mergeOptions($defaults, $labelInfo);
@@ -383,13 +388,13 @@ class PostnordClient
             $customerEmail,
             $customerAddress,
             $order,
-            $pickupAddress,
             $shopAddress,
-            $country
+            $country,
+            $pickupAddress
         );
 
         try {
-            $this->logger->debug('Create booking with:\n' . print_r($options, true));
+            $this->logger->debug('Create booking with:' . PHP_EOL . json_encode($options, JSON_PRETTY_PRINT));
             if (empty($labelInfo)) {
                 $response = $this->doRequest('POST', '/rest/shipment/v3/edi', $options);
             } else {
@@ -401,13 +406,13 @@ class PostnordClient
                 // remove base64 pdf
                 $responseWithoutBase64 = $response;
                 unset($responseWithoutBase64['labelPrintout'][0]['printout']['data']);
-                $this->logger->debug('Booking created with data:\n' . print_r($responseWithoutBase64, true));
+                $this->logger->debug('Booking created with data:' . PHP_EOL . json_encode($responseWithoutBase64, JSON_PRETTY_PRINT));
             } else {
-                $this->logger->debug('Booking created with data:\n' . print_r($response, true));
+                $this->logger->debug('Booking created with data:' . PHP_EOL . json_encode($response, JSON_PRETTY_PRINT));
             }
         } catch (Exception $e) {
             // TODO: Log error
-            $this->logger->error('Error create booking' . $e->getMessage());
+            $this->logger->error('Error create booking', ["exception" => $e]);
             $error = json_decode($e->getMessage(), true);
             throw new Exception($error['message']);
         }
@@ -416,7 +421,7 @@ class PostnordClient
     }
 
     /**
-     * @param string @labelId id of the label (not the id of the booking)
+     * @param string $labelId id of the label (not the id of the booking)
      * @param array $labelInfo label printout format (Paper size, number, etc.) from PostNord
      *
      * @return array PDF label from PostNord
@@ -428,7 +433,7 @@ class PostnordClient
         $options['query'] = $parameters;
         $options['json'] = [['id' => $labelId]];
         try {
-            $this->logger->debug('Get label with:\n' . print_r($options, true));
+            $this->logger->debug('Get label with:' . PHP_EOL . json_encode($options, JSON_PRETTY_PRINT));
             $response = $this->doRequest('POST', '/rest/shipment/v3/labels/ids/pdf', $options);
             if (isset(
                 $response['labelPrintout'][0]['printout']['data']
@@ -436,7 +441,7 @@ class PostnordClient
                 // remove base64 pdf before logging
                 $responseWithoutBase64 = $response;
                 unset($responseWithoutBase64['labelPrintout'][0]['printout']['data']);
-                $this->logger->debug('Booking created with data:\n' . print_r($responseWithoutBase64, true));
+                $this->logger->debug('Booking created with data:' . PHP_EOL . json_encode($responseWithoutBase64, JSON_PRETTY_PRINT));
             }
         } catch (Exception $e) {
             // TODO: Log error
@@ -469,12 +474,12 @@ class PostnordClient
      * generate request body for booking
      * params is the same as createBooking.
      *
+     * @param string $customerEmail
      * @param object $customerAddress Prestashop address object (customer address)
      * @param array $order information about an order
-     * @param array $pickupAddress information about an pickup point, come from PostNord
      * @param array $shopAddress Merchant address, in the setting
      * @param string $country customer's country
-     * @param array $labelInfo label printout format (Paper size, number, etc.) from PostNord
+     * @param array $pickupAddress information about a pickup point, comes from PostNord
      *
      * @return array request body to create booking
      */
@@ -482,9 +487,9 @@ class PostnordClient
         string $customerEmail,
         object $customerAddress,
         array $order,
-        array $pickupAddress,
         array $shopAddress,
-        string $country = 'FI'
+        string $country = 'FI',
+        array $pickupAddress = []
     ): array {
         $datetime = date(DATE_ISO8601);
 
@@ -555,25 +560,6 @@ class PostnordClient
                                 ],
                             ],
                         ],
-                        'deliveryParty' => [
-                            'partyIdentification' => [
-                                'partyId' => $pickupAddress['servicePointId'],
-                                'partyIdType' => '156',
-                            ],
-                            'party' => [
-                                'nameIdentification' => [
-                                    'name' => $pickupAddress['name'],
-                                ],
-                                'address' => [
-                                    'streets' => [
-                                        "{$pickupAddress['visitingAddress']['streetName']} {$pickupAddress['visitingAddress']['streetNumber']}",
-                                    ],
-                                    'postalCode' => $pickupAddress['visitingAddress']['postalCode'],
-                                    'city' => $pickupAddress['visitingAddress']['city'],
-                                    'countryCode' => $pickupAddress['visitingAddress']['countryCode'],
-                                ],
-                            ],
-                        ],
                     ],
                     'goodsItem' => [
                         [
@@ -595,6 +581,28 @@ class PostnordClient
                 ],
             ],
         ];
+
+        if (!empty($pickupAddress)) {
+            $body['shipment'][0]['parties']['deliveryParty'] = [
+                'partyIdentification' => [
+                    'partyId' => $pickupAddress['servicePointId'],
+                    'partyIdType' => '156',
+                ],
+                'party' => [
+                    'nameIdentification' => [
+                        'name' => $pickupAddress['name'],
+                    ],
+                    'address' => [
+                        'streets' => [
+                            "{$pickupAddress['visitingAddress']['streetName']} {$pickupAddress['visitingAddress']['streetNumber']}",
+                        ],
+                        'postalCode' => $pickupAddress['visitingAddress']['postalCode'],
+                        'city' => $pickupAddress['visitingAddress']['city'],
+                        'countryCode' => $pickupAddress['visitingAddress']['countryCode'],
+                    ],
+                ],
+            ];
+        }
 
         return $body;
     }
