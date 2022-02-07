@@ -99,7 +99,6 @@ class Vg_postnord extends CarrierModule
         Configuration::deleteByName('VG_POSTNORD_APIKEY');
         Configuration::deleteByName('VG_POSTNORD_ISSUER_COUNTRY');
         Configuration::deleteByName('VG_POSTNORD_CARRIER_SETTINGS');
-        Configuration::deleteByName('VG_POSTNORD_CARRIER_SETTINGS');
         Configuration::deleteByName('VG_POSTNORD_SHOP_ADDRESS');
 
         return parent::uninstall()
