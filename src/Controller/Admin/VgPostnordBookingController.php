@@ -40,7 +40,6 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
     public function listAction(VgPostnordBookingQueryFilter $filters): Response
     {
 
-        var_dump('hello');
         $gridFactory = $this->get('vilkas.postnord.grid.vg_postnord_booking_grid_factory');
         $grid = $gridFactory->getGrid($filters);
 

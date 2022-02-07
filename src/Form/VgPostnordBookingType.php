@@ -4,25 +4,33 @@ declare(strict_types=1);
 
 namespace Vilkas\Postnord\Form;
 
+use PrestaShop\PrestaShop\Adapter\Entity\Configuration;
+use PrestaShop\PrestaShop\Adapter\Entity\Context;
+use PrestaShop\PrestaShop\Adapter\Entity\Db;
+use PrestaShop\PrestaShop\Adapter\Entity\DbQuery;
+use PrestaShop\PrestaShop\Adapter\Entity\Tools;
 use PrestaShopBundle\Form\Admin\Type\CommonAbstractType;
 use PrestaShopBundle\Form\Admin\Type\Material\MaterialChoiceTableType;
 use PrestaShopBundle\Form\Admin\Type\TranslatorAwareType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\Form\FormEvent;
+use Symfony\Component\Form\FormEvents;
 use Symfony\Component\Translation\TranslatorInterface;
+use Vilkas\Postnord\Client\PostnordClient;
 
 class VgPostnordBookingType extends CommonAbstractType
 {
-
+    private $dbQuery;
     /**
      * @param TranslatorInterface $translator
      * @param array $locales
      */
-    // public function __construct(TranslatorInterface $translator, array $locales)
-    // {
-
-    //     parent::__construct($translator, $locales);
-    // }
+    public function __construct()
+    {
+        $this->dbQuery = new DbQuery();
+        //     parent::__construct($translator, $locales);TranslatorInterface $translator, array $locales
+    }
     // $this->trans('Tracking URL', 'Modules.Vgpostnord.Admin')
     // $this->trans('Additional Services', 'Modules.Vgpostnord.Admin')
     // $this->trans('Enable additional services for the shipment', 'Modules.Vgpostnord.Admin')
@@ -31,10 +39,39 @@ class VgPostnordBookingType extends CommonAbstractType
      */
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
+        $host = Configuration::get('VG_POSTNORD_HOST');
+        $apikey = Configuration::get('VG_POSTNORD_APIKEY');
+        $issuerCountry = Configuration::get('VG_POSTNORD_ISSUER_COUNTRY');
+        $carrierSetting = json_decode(Configuration::get('VG_POSTNORD_CARRIER_SETTINGS'), true);
+        $client = new PostnordClient($host, $apikey);
+        $idOrder = $options['data']['id_order'];
+        $this->dbQuery->select('id_carrier')
+            ->from('orders', 'o')
+            ->where("o.id_order = {$idOrder}");
+        $idCarrier = (int) (Db::getInstance()->executeS($this->dbQuery))[0]['id_carrier'];
+        $carrierSetting = explode('_', $carrierSetting[$idCarrier]["service_code_consigneecountry"]);
+        $validCombination = ($client->getValidCombinationsOfServiceCodes())['data'];
+        $validIssuerCountryCombination = array_filter($validCombination, function ($element) use (&$issuerCountry) {
+            return $element['issuerCountryCode'] === $issuerCountry ? $element : null;
+        });
+        $finalCombination = array_reduce(
+            reset($validIssuerCountryCombination)['adnlServiceCodeCombDetails'],
+            function ($carry, $element) use (&$carrierSetting) {
+                if (
+                    $element['serviceCode'] === $carrierSetting[0]
+                    && $element['allowedConsigneeCountry'] === $carrierSetting[1]
+                ) {
+                    array_push($carry, $element);
+                }
+                return $carry;
+            },
+            []
+        );
+        // var_dump($finalCombination);
         $builder
             ->add('tracking_url', TextType::class, [
                 'label' => 'Tracking URL',
-                ])
+            ])
             ->add('additional_services', MaterialChoiceTableType::class, [
                 'label' => 'Additional Services',
                 'help' => 'Additional Services',
