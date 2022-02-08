@@ -7,6 +7,8 @@ use PrestaShopBundle\Controller\Admin\FrameworkBundleAdminController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Vilkas\Postnord\Entity\VgPostnordBooking;
+use iio\libmergepdf\Merger;
+use iio\libmergepdf\Driver\TcpdiDriver;
 
 class VgPostnordBookingController extends FrameworkBundleAdminController
 {
@@ -89,9 +91,53 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
         return $this->_getPDFLabelResponse($booking);
     }
 
+    /**
+     * Create bookings and fetch labels for orders in bulk
+     */
     public function bulkFetchLabelAction(Request $request): Response
     {
-        return $this->redirectToRoute("admin_orders_index"); // TODO :)
+        $ids = $request->request->get("order_orders_bulk");
+        $bookingService = $this->get("vilkas.postnord.service.vgpostnordbookingservice");
+
+        $data = [];
+
+        foreach ($ids as $id_order) {
+            try {
+                $booking = $bookingService->createBlankBooking((int) $id_order);
+                $booking = $bookingService->sendBookingAndGenerateLabel($booking);
+            } catch (\Throwable $e) {
+                $this->addFlash("error", $e->getMessage());
+                continue;
+            }
+
+            $label_data = $booking->getLabelData();
+            if ($label_data) {
+                $data[] = base64_decode($label_data);
+            }
+        }
+
+        if (!count($data)) {
+            $message = $this->trans("No label data", "Modules.Vgpostnord.Admin");
+            $this->addFlash("error", $message);
+            return $this->redirectToRoute("admin_orders_index");
+        }
+
+        $merger = new Merger(new TcpdiDriver());
+        foreach ($data as $raw_label) {
+            $merger->addRaw($raw_label);
+        }
+        $merged_raw_labels = $merger->merge();
+
+        $filename = "labels_" . time() . ".pdf";
+
+        return new Response(
+            $merged_raw_labels,
+            200,
+            [
+                "Content-Type"        => "application/pdf",
+                "Content-Disposition" => "inline;filename=$filename"
+            ]
+        );
     }
 
     /**
