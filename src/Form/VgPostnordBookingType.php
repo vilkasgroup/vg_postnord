@@ -39,13 +39,13 @@ class VgPostnordBookingType extends CommonAbstractType
      */
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
-        
+
         $additionalServices = $this->getAdditionalServices($options);
 
         $builder
-            ->add('tracking_url', TextType::class, [
-                'label' => 'Tracking URL',
-            ])
+            // ->add('tracking_url', TextType::class, [
+            //     'label' => 'Tracking URL',
+            // ])
             ->add('additional_services', MaterialChoiceTableType::class, [
                 'label' => 'Additional Services',
                 'help' => 'Additional Services',
