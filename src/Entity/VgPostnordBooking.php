@@ -6,7 +6,6 @@ namespace Vilkas\Postnord\Entity;
 
 use DateTime;
 use Doctrine\ORM\Mapping as ORM;
-use ObjectModel;
 
 /**
  * @ORM\Table()
