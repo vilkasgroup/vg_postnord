@@ -74,13 +74,6 @@ class VgPostnordBooking extends AbstractDoctrineQueryBuilder
     {
         return $this->connection->createQueryBuilder()
             ->from("{$this->dbPrefix}vg_postnord_booking", 'vpb')
-            // Not sure if it's necessary
-            // ->join(
-            //     'vpb',
-            //     "{$this->dbPrefix}vg_postnord_cart_data",
-            //     'vpc',
-            //     'vpb.id_cart_data = vpc.id_cart_data'
-            // )
         ;
     }
 }

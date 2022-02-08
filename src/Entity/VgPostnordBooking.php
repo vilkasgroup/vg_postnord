@@ -87,7 +87,7 @@ class VgPostnordBooking
      *
      * @ORM\Column(name="additional_services", type="string", nullable=true)
      */
-    private ?string $additional_services;
+    private $additional_services;
 
     /**
      * @return int
@@ -272,9 +272,9 @@ class VgPostnordBooking
     /**
      * Get the value of additional_services
      *
-     * @return  string
+     * @return  string|null
      */
-    public function getAdditionalServices(): string
+    public function getAdditionalServices(): ?string
     {
         return $this->additional_services;
     }
@@ -308,7 +308,7 @@ class VgPostnordBooking
             'servicepointid' => $this->getServicepointid(),
             'id_label_external' => $this->getIdLabelExternal(),
             'finalized' => $this->getFinalized(),
-            'additional_services' =>explode(', ', $this->getAdditionalServices()),
+            'additional_services' => empty($this->getAdditionalServices()) ? [] : explode(', ', $this->getAdditionalServices()),
         ];
     }
 

@@ -20,7 +20,7 @@ use Vilkas\Postnord\Client\PostnordClient;
 class VgPostnordBookingType extends TranslatorAwareType
 {
     private $dbQuery;
-    
+
     /**
      * @param TranslatorInterface $translator
      * @param array $locales
@@ -44,8 +44,8 @@ class VgPostnordBookingType extends TranslatorAwareType
             //     'label' => $this->trans('Tracking URL', 'Modules.Vgpostnord.Admin'),
             // ])
             ->add('additional_services', MaterialChoiceTableType::class, [
-                'label' => $this->trans('Additional Services', 'Modules.Vgpostnord.Admin'),
-                'help' => $this->trans('Enable additional services for the shipment', 'Modules.Vgpostnord.Admin'),
+                'label' => $this->trans('untranslated', 'Modules.Vgpostnord.Admin'),
+                'help' => $this->trans('untranslated', 'Modules.Vgpostnord.Admin'),
                 'choices' => $additionalServices,
             ]);
     }
@@ -57,7 +57,7 @@ class VgPostnordBookingType extends TranslatorAwareType
         $issuerCountry = Configuration::get('VG_POSTNORD_ISSUER_COUNTRY');
         $carrierSetting = json_decode(Configuration::get('VG_POSTNORD_CARRIER_SETTINGS'), true);
         $client = new PostnordClient($host, $apikey);
-        $idOrder = $options['data']['id_order'];
+        $idOrder = (int) $options['data']['id_order'];
 
         // get correct carrier setting for this order to extract from VG_POSTNORD_CARRIER_SETTINGS
         $this->dbQuery->select('id_carrier')
@@ -82,9 +82,7 @@ class VgPostnordBookingType extends TranslatorAwareType
                     && $element['allowedConsigneeCountry'] === $carrierSetting[1]
                     && !$element['mandatory']
                 ) {
-                    array_push($carry, [
-                        $element["adnlServiceName"] => $element["adnlServiceCode"]
-                    ]);
+                    $carry[] = [$element["adnlServiceName"] => $element["adnlServiceCode"]];
                 }
                 return $carry;
             },

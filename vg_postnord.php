@@ -185,8 +185,6 @@ class Vg_postnord extends CarrierModule
             }
         }
 
-        $router = $this->get('router');
-
         $this->context->smarty->assign('module_dir', $this->_path);
         $output = $this->context->smarty->fetch($this->local_path . 'views/templates/admin/configure.tpl');
         $footer = $this->context->smarty->fetch($this->local_path . 'views/templates/admin/configure_footer.tpl');

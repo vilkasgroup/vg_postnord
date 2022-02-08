@@ -22,7 +22,7 @@ final class VgPostnordBookingFormDataProvider implements FormDataProviderInterfa
     public function getData($bookingId)
     {
         $booking = $this->repository->findOneBy(['id'=>$bookingId]);
-        if (empty($booking->getId())) {
+        if (empty($booking)) {
             throw new PrestaShopObjectNotFoundException('Object not found');
         }
 
@@ -37,7 +37,7 @@ final class VgPostnordBookingFormDataProvider implements FormDataProviderInterfa
     public function getDefaultData()
     {
         return [
-            'id_booking' => 1,
+            // 'id_booking' => null,
             'tracking_url'=>'',
             'additional_services'=>''
         ];
