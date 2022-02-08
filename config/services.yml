@@ -56,6 +56,15 @@ services:
     arguments:
       - '@vilkas.postnord.repository.vgpostnordbooking'
 
+  vilkas.postnord.form.type.vg_postnord_booking_type:
+    class: 'Vilkas\Postnord\Form\VgPostnordBookingType'
+    parent: 'form.type.translatable.aware'
+    public: true
+    arguments:
+        - '@=service("prestashop.adapter.multistore_feature").isUsed()'
+    tags:
+        - { name: form.type }
+
   vilkas.postnord.form.identifiable_object.builder.vg_postnord_booking_form_builder:
     class: 'PrestaShop\PrestaShop\Core\Form\IdentifiableObject\Builder\FormBuilder'
     factory: 'prestashop.core.form.builder.form_builder_factory:create'

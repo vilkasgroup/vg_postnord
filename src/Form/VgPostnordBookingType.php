@@ -17,21 +17,20 @@ use PrestaShopBundle\Form\Admin\Type\TranslatorAwareType;
 
 use Vilkas\Postnord\Client\PostnordClient;
 
-class VgPostnordBookingType extends CommonAbstractType
+class VgPostnordBookingType extends TranslatorAwareType
 {
     private $dbQuery;
+    
     /**
      * @param TranslatorInterface $translator
      * @param array $locales
      */
-    public function __construct()
+    public function __construct(TranslatorInterface $translator, array $locales)
     {
         $this->dbQuery = new DbQuery();
-        //     parent::__construct($translator, $locales);TranslatorInterface $translator, array $locales
+        parent::__construct($translator, $locales);
     }
-    // $this->trans('Tracking URL', 'Modules.Vgpostnord.Admin')
-    // $this->trans('Additional Services', 'Modules.Vgpostnord.Admin')
-    // $this->trans('Enable additional services for the shipment', 'Modules.Vgpostnord.Admin')
+
     /**
      * {@inheritdoc}
      */
@@ -42,11 +41,11 @@ class VgPostnordBookingType extends CommonAbstractType
 
         $builder
             // ->add('tracking_url', TextType::class, [
-            //     'label' => 'Tracking URL',
+            //     'label' => $this->trans('Tracking URL', 'Modules.Vgpostnord.Admin'),
             // ])
             ->add('additional_services', MaterialChoiceTableType::class, [
-                'label' => 'Additional Services',
-                'help' => 'Additional Services',
+                'label' => $this->trans('Additional Services', 'Modules.Vgpostnord.Admin'),
+                'help' => $this->trans('Enable additional services for the shipment', 'Modules.Vgpostnord.Admin'),
                 'choices' => $additionalServices,
             ]);
     }
@@ -93,8 +92,7 @@ class VgPostnordBookingType extends CommonAbstractType
         );
 
         // Just to make it look nicer, I guess
-        usort($finalCombination, function($a, $b)
-        {
+        usort($finalCombination, function ($a, $b) {
             if ($a == $b) {
                 return 0;
             }
