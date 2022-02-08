@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Vilkas\Postnord\Form;
 
-use Doctrine\ORM\EntityRepository;
 use PrestaShop\PrestaShop\Core\Form\IdentifiableObject\DataProvider\FormDataProviderInterface;
 use PrestaShopObjectNotFoundException;
+
 use Vilkas\Postnord\Repository\VgPostnordBookingRepository;
 
 final class VgPostnordBookingFormDataProvider implements FormDataProviderInterface
