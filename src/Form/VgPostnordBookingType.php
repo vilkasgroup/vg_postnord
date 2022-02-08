@@ -67,6 +67,8 @@ class VgPostnordBookingType extends CommonAbstractType
             ->from('orders', 'o')
             ->where("o.id_order = {$idOrder}");
         $idCarrier = (int) (Db::getInstance()->executeS($this->dbQuery))[0]['id_carrier'];
+
+        // split carrierSetting into ['servicecode', 'consigneeCountry']
         $carrierSetting = explode('_', $carrierSetting[$idCarrier]["service_code_consigneecountry"]);
 
         // Get valid combination from postnord and filter with issuer country, service code and consignee country
