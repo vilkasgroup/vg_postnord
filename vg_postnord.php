@@ -1,15 +1,18 @@
 <?php
 
+use Symfony\Bundle\FrameworkBundle\Routing\Router;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\ORMException;
+
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
+use Psr\Log\AbstractLogger;
+
 use PrestaShop\PrestaShop\Core\Grid\Action\Bulk\Type\SubmitBulkAction;
 use PrestaShop\PrestaShop\Core\Grid\Definition\GridDefinition;
 use PrestaShopBundle\Controller\Admin\Sell\Order\ActionsBarButton;
 use PrestaShopBundle\Controller\Admin\Sell\Order\ActionsBarButtonsCollection;
-use Psr\Log\AbstractLogger;
-use Symfony\Bundle\FrameworkBundle\Routing\Router;
+
 use Vilkas\Postnord\Client\PostnordClient;
 use Vilkas\Postnord\Entity\VgPostnordBooking;
 use Vilkas\Postnord\Entity\VgPostnordCartData;
@@ -44,6 +47,16 @@ class Vg_postnord extends CarrierModule
         $this->description = $this->trans('Postnord shipping for your Prestashop', [], 'Modules.Vgpostnord.Admin');
 
         $this->ps_versions_compliancy = ['min' => '1.7.7', 'max' => _PS_VERSION_];
+
+        $this->tabs = [
+            [
+                'name' => $this->trans('Postnord Shipments', [], 'Modules.Vgpostnord.Admin'),
+                'parent_class_name' => 'AdminParentOrders',
+                'route_name' => 'admin_vg_postnord_list_action',
+                'class_name' => 'VgPostnordBookingController',
+                'visible' => true,
+            ]
+        ];
 
         $this->logger = static::getLogger();
     }
@@ -89,12 +102,10 @@ class Vg_postnord extends CarrierModule
         Configuration::deleteByName('VG_POSTNORD_APIKEY');
         Configuration::deleteByName('VG_POSTNORD_ISSUER_COUNTRY');
         Configuration::deleteByName('VG_POSTNORD_CARRIER_SETTINGS');
-        Configuration::deleteByName('VG_POSTNORD_CARRIER_SETTINGS');
         Configuration::deleteByName('VG_POSTNORD_SHOP_ADDRESS');
 
         return parent::uninstall()
-            && $this->uninstallSQL()
-            ;
+            && $this->uninstallSQL();
     }
 
     /**
@@ -175,7 +186,6 @@ class Vg_postnord extends CarrierModule
         }
 
         $this->context->smarty->assign('module_dir', $this->_path);
-
         $output = $this->context->smarty->fetch($this->local_path . 'views/templates/admin/configure.tpl');
         $footer = $this->context->smarty->fetch($this->local_path . 'views/templates/admin/configure_footer.tpl');
 

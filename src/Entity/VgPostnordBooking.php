@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Vilkas\Postnord\Entity;
 
@@ -13,6 +13,7 @@ use Doctrine\ORM\Mapping as ORM;
  */
 class VgPostnordBooking
 {
+
     /**
      * @var int
      *
@@ -80,6 +81,13 @@ class VgPostnordBooking
      * @ORM\Column(name="finalized", type="datetime")
      */
     private $finalized;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="additional_services", type="string", nullable=true)
+     */
+    private $additional_services;
 
     /**
      * @return int
@@ -174,7 +182,7 @@ class VgPostnordBooking
      *
      * @return $this
      */
-    public function setTrackingUrl(string $tracking_url): self
+    public function setTrackingUrl(?string $tracking_url): self
     {
         $this->tracking_url = $tracking_url;
 
@@ -259,5 +267,66 @@ class VgPostnordBooking
         $this->finalized = $finalized;
 
         return $this;
+    }
+
+    /**
+     * Get the value of additional_services
+     *
+     * @return  string|null
+     */
+    public function getAdditionalServices(): ?string
+    {
+        return $this->additional_services;
+    }
+
+    /**
+     * Set the value of additional_services
+     *
+     * @param  string  $additional_services
+     *
+     * @return  $this
+     */
+    public function setAdditionalServices(string $additional_services): self
+    {
+        $this->additional_services = $additional_services;
+
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function toArray()
+    {
+        return [
+            'id_booking' => $this->getId(),
+            'id_order' => $this->getIdOrder(),
+            'cart_data' => $this->getCartData(),
+            'id_booking_external' => $this->getIdBookingExternal(),
+            'tracking_url' => $this->getTrackingUrl(),
+            'label_data' => $this->getLabelData(),
+            'servicepointid' => $this->getServicepointid(),
+            'id_label_external' => $this->getIdLabelExternal(),
+            'finalized' => $this->getFinalized(),
+            'additional_services' => empty($this->getAdditionalServices()) ? [] : explode(', ', $this->getAdditionalServices()),
+        ];
+    }
+
+    /**
+     * Only left the necessary one. Not used ones are commented out for now.
+     * 
+     * @param $data 
+     */
+    public function fromArray($data)
+    {
+        // $this->setIdOrder($data['id_order']);
+        // $this->setCartData($data['cart_data']);
+        // $this->setIdBookingExternal($data['id_booking_external']);
+        // $this->setLabelData($data['label_data']);
+        // $this->setServicepointid($data['servicepointid']);
+        // $this->setIdLabelExternal($data['id_label_external']);
+        // $this->setFinalized($data['finalized']);
+        // $this->setTrackingUrl($data['tracking_url']);
+        $this->setAdditionalServices(implode(', ', $data['additional_services']));
     }
 }

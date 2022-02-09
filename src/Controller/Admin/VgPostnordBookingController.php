@@ -1,20 +1,76 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Vilkas\Postnord\Controller\Admin;
 
 use Doctrine\ORM\EntityManager;
-use PrestaShopBundle\Controller\Admin\FrameworkBundleAdminController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Vilkas\Postnord\Entity\VgPostnordBooking;
+
+use PrestaShop\PrestaShop\Core\Grid\Search\SearchCriteria;
+use PrestaShopBundle\Controller\Admin\FrameworkBundleAdminController;
+use PrestaShopBundle\Security\Annotation\AdminSecurity;
+use PrestaShopBundle\Security\Annotation\ModuleActivated;
+
 use iio\libmergepdf\Merger;
 use iio\libmergepdf\Driver\TcpdiDriver;
+
+use Vilkas\Postnord\Entity\VgPostnordBooking;
+use Vilkas\Postnord\Grid\Filter\VgPostnordBookingQueryFilter;
+use Vilkas\Postnord\Form\Data\Provider\VgPostnordBookingFormDataProvider;
+
+/**
+ * Class VgPostnordBookingController.
+ *
+ * @ModuleActivated(moduleName="vg_postnord", redirectRoute="admin_module_manage")
+ */
+
 
 class VgPostnordBookingController extends FrameworkBundleAdminController
 {
     public function __construct()
     {
         parent::__construct();
+    }
+
+    /**
+     * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))", message="Access denied.")
+     *
+     * @param VgPostnordBookingQueryFilter $filters)
+     *
+     * @return Response
+     */
+    public function listAction(VgPostnordBookingQueryFilter $filters): Response
+    {
+
+        $gridFactory = $this->get('vilkas.postnord.grid.vg_postnord_booking_grid_factory');
+        $grid = $gridFactory->getGrid($filters);
+
+        return $this->render('@Modules/vg_postnord/views/templates/admin/booking-list.html.twig', [
+            'vgPostnordBookingsGrid' => $this->presentGrid($grid)
+        ]);
+    }
+
+    public function editBookingAction(Request $request, $bookingId): Response
+    {
+        $bookingFormBuilder = $this->get('vilkas.postnord.form.identifiable_object.builder.vg_postnord_booking_form_builder');
+        $bookingForm = $bookingFormBuilder->getFormFor((int) $bookingId);
+        $bookingForm->handleRequest($request);
+
+        $bookingFormHandler = $this->get('vilkas.postnord.form.identifiable_object.handler.vg_postnord_booking_form_handler');
+        $result = $bookingFormHandler->handleFor((int) $bookingId, $bookingForm);
+
+        if ($result->isSubmitted() && $result->isValid()) {
+            $this->addFlash('success', $this->trans('Successful modification.', 'Admin.Notifications.Success'));
+
+            return $this->redirectToRoute('admin_vg_postnord_list_action');
+        }
+
+
+        return $this->render('@Modules/vg_postnord/views/templates/admin/edit-booking.html.twig', [
+            'vgPostnordBookingEditForm' => $bookingForm->createView(),
+        ]);
     }
 
     // TODO: logging, I guess

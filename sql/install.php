@@ -19,6 +19,7 @@ $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'vg_postnord_booking` (
     `tracking_url`        VARCHAR(255) DEFAULT NULL,
     `label_data`          LONGTEXT     DEFAULT NULL,
     `servicepointid`      VARCHAR(255) DEFAULT NULL,
+    `additional_services` VARCHAR(255) DEFAULT NULL,
     `id_label_external`   VARCHAR(255) DEFAULT NULL,
     `finalized`           DATETIME     DEFAULT NULL,
     PRIMARY KEY (`id_booking`),
