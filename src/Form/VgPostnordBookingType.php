@@ -33,17 +33,18 @@ class VgPostnordBookingType extends TranslatorAwareType
      * {@inheritdoc}
      */
     public function buildForm(FormBuilderInterface $builder, array $options)
-    {        
+    {
         // To disable editing when finalized. 
         // I couldn't find a way to disable the edit button 
         // So let settle with disabled form with this instead.
         $builder->setDisabled(!empty($options['data']['finalized']));
 
         $builder
-            ->add('tracking_url', TextType::class, [
-                'label' => $this->trans('Tracking URL', 'Modules.Vgpostnord.Admin'),
-                'disabled' => empty($options['data']['tracking_url'])
-            ])
+            // Not used yet
+            // ->add('tracking_url', TextType::class, [
+            //     'label' => $this->trans('Tracking URL', 'Modules.Vgpostnord.Admin'),
+            //     'disabled' => empty($options['data']['tracking_url'])
+            // ])
             ->add('additional_services', MaterialChoiceTableType::class, [
                 'label' => $this->trans('Additional Services', 'Modules.Vgpostnord.Admin'),
                 'help' => $this->trans('Enable additional services for the shipment', 'Modules.Vgpostnord.Admin'),
