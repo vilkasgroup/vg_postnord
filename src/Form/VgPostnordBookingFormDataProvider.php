@@ -37,7 +37,7 @@ final class VgPostnordBookingFormDataProvider implements FormDataProviderInterfa
     public function getDefaultData()
     {
         return [
-            // 'id_booking' => null,
+            'id_booking' => null,
             'tracking_url'=>'',
             'additional_services'=>''
         ];
