@@ -319,14 +319,14 @@ class VgPostnordBooking
      */
     public function fromArray($data)
     {
-        // empty($data['id_order']) && $this->setIdOrder($data['id_order']);
-        // empty($data['cart_data']) && $this->setCartData($data['cart_data']);
-        // empty($data['id_booking_external']) && $this->setIdBookingExternal($data['id_booking_external']);
-        // empty($data['label_data']) && $this->setLabelData($data['label_data']);
-        // empty($data['servicepointid']) && $this->setServicepointid($data['servicepointid']);
-        // empty($data['id_label_external']) && $this->setIdLabelExternal($data['id_label_external']);
-        // empty($data['finalized']) && $this->setFinalized($data['finalized']);
-        empty($data['tracking_url']) && $this->setTrackingUrl($data['tracking_url']);
-        empty($data['additional_services']) && $this->setAdditionalServices(implode(', ', $data['additional_services']));
+        // !empty($data['id_order']) && $this->setIdOrder($data['id_order']);
+        // !empty($data['cart_data']) && $this->setCartData($data['cart_data']);
+        // !empty($data['id_booking_external']) && $this->setIdBookingExternal($data['id_booking_external']);
+        // !empty($data['label_data']) && $this->setLabelData($data['label_data']);
+        // !empty($data['servicepointid']) && $this->setServicepointid($data['servicepointid']);
+        // !empty($data['id_label_external']) && $this->setIdLabelExternal($data['id_label_external']);
+        // !empty($data['finalized']) && $this->setFinalized($data['finalized']);
+        !empty($data['tracking_url']) && $this->setTrackingUrl($data['tracking_url']);
+        !empty($data['additional_services']) && $this->setAdditionalServices(implode(', ', $data['additional_services']));
     }
 }
