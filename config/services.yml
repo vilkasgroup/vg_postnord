@@ -40,7 +40,7 @@ services:
       - '@vilkas.postnord.grid.query.vg_postnord_booking_query_builder' # service id of our query builder
       - '@prestashop.core.hook.dispatcher' # every doctrine query builder needs the hook dispatcher
       - '@prestashop.core.grid.query.doctrine_query_parser' # parser to get the raw SQL query
-      - 'vgpostnordbooking' # this should match your grid id
+      - 'vgpostnordbooking' # this should match grid id
 
   # define the grid factory
   vilkas.postnord.grid.vg_postnord_booking_grid_factory:

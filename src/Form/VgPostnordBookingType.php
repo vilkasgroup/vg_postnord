@@ -11,10 +11,8 @@ use Symfony\Component\Translation\TranslatorInterface;
 use PrestaShop\PrestaShop\Adapter\Entity\Configuration;
 use PrestaShop\PrestaShop\Adapter\Entity\Db;
 use PrestaShop\PrestaShop\Adapter\Entity\DbQuery;
-use PrestaShopBundle\Form\Admin\Type\CommonAbstractType;
 use PrestaShopBundle\Form\Admin\Type\Material\MaterialChoiceTableType;
 use PrestaShopBundle\Form\Admin\Type\TranslatorAwareType;
-
 use Vilkas\Postnord\Client\PostnordClient;
 
 class VgPostnordBookingType extends TranslatorAwareType
@@ -44,8 +42,8 @@ class VgPostnordBookingType extends TranslatorAwareType
             //     'label' => $this->trans('Tracking URL', 'Modules.Vgpostnord.Admin'),
             // ])
             ->add('additional_services', MaterialChoiceTableType::class, [
-                'label' => $this->trans('untranslated', 'Modules.Vgpostnord.Admin'),
-                'help' => $this->trans('untranslated', 'Modules.Vgpostnord.Admin'),
+                'label' => $this->trans('Additional Services', 'Modules.Vgpostnord.Admin'),
+                'help' => $this->trans('Enable additional services for the shipment', 'Modules.Vgpostnord.Admin'),
                 'choices' => $additionalServices,
             ]);
     }
