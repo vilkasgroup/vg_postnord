@@ -4,5 +4,3 @@ config.xml
 .php_cs.cache
 .php-cs-fixer.cache
 node_modules/
-js/
-js1/
