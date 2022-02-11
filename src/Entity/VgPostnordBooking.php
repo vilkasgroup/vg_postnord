@@ -323,7 +323,7 @@ class VgPostnordBooking
         // $this->setCartData($data['cart_data']);
         // $this->setIdBookingExternal($data['id_booking_external']);
         // $this->setLabelData($data['label_data']);
-        // $this->setServicepointid($data['servicepointid']);
+        $this->setServicepointid($data['servicepointid']);
         // $this->setIdLabelExternal($data['id_label_external']);
         // $this->setFinalized($data['finalized']);
         // $this->setTrackingUrl($data['tracking_url']);

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Vilkas\Postnord\Controller\Admin;
 
+use Context;
 use Doctrine\ORM\EntityManager;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -15,7 +16,12 @@ use PrestaShopBundle\Security\Annotation\ModuleActivated;
 
 use iio\libmergepdf\Merger;
 use iio\libmergepdf\Driver\TcpdiDriver;
-
+use PrestaShop\PrestaShop\Adapter\Entity\Address;
+use PrestaShop\PrestaShop\Adapter\Entity\Configuration;
+use PrestaShop\PrestaShop\Adapter\Entity\Country;
+use PrestaShop\PrestaShop\Adapter\Entity\Db;
+use PrestaShop\PrestaShop\Adapter\Entity\DbQuery;
+use Vilkas\Postnord\Client\PostnordClient;
 use Vilkas\Postnord\Entity\VgPostnordBooking;
 use Vilkas\Postnord\Grid\Filter\VgPostnordBookingQueryFilter;
 use Vilkas\Postnord\Form\Data\Provider\VgPostnordBookingFormDataProvider;
@@ -46,7 +52,6 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
 
         $gridFactory = $this->get('vilkas.postnord.grid.vg_postnord_booking_grid_factory');
         $grid = $gridFactory->getGrid($filters);
-
         return $this->render('@Modules/vg_postnord/views/templates/admin/booking-list.html.twig', [
             'vgPostnordBookingsGrid' => $this->presentGrid($grid)
         ]);
@@ -67,12 +72,78 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
             return $this->redirectToRoute('admin_vg_postnord_list_action');
         }
 
+        $link = Context::getContext()->link;
+
+        // Generate url with Symfony route (first argument is the legacy controller, even though it should be ignored)
+        // $symfonyUrl = $link->getAdminLink('AdminProducts', true, array('route' => 'admin_product_catalog'));
+
+        // Generate url with Symfony route and arguments
+        // $symfonyUrl = $link->getModuleLink('vg_postnord', 'CartPickupPoint', [], true);
+
+        $symfonyUrl = $this->get('router')->generate('admin_vg_postnord_ajax_service_point_action');
 
         return $this->render('@Modules/vg_postnord/views/templates/admin/edit-booking.html.twig', [
             'vgPostnordBookingEditForm' => $bookingForm->createView(),
+            'link' => $symfonyUrl
         ]);
     }
+    /**
+     * @AdminSecurity("is_granted(['read', 'create', 'update', 'delete'], request.get('_legacy_controller'))", message="Access denied.")
+     *
+     * @param Request $request
+     *
+     * @return RedirectResponse|Response
+     *
+     * @throws \Exception
+     */
+    public function ajaxServicePointAction(Request $request): Response
+    {
+        $client = new PostnordClient(
+            Configuration::get('VG_POSTNORD_HOST'),
+            Configuration::get('VG_POSTNORD_APIKEY')
+        );
+        $carrierSetting = json_decode(Configuration::get('VG_POSTNORD_CARRIER_SETTINGS'), true);
+        $idOrder = (int) $request->request->get('idOrder');
 
+        // $dbQuery = new DbQuery();
+
+        // // Get correct carrier setting for this order to extract from VG_POSTNORD_CARRIER_SETTINGS
+        // $dbQuery->select('id_carrier, id_address_delivery')
+        //     ->from('orders', 'a')
+        //     ->where("a.id_order = {$idOrder}");
+        // $idCarrier = (int) (Db::getInstance()->executeS($dbQuery))[0]['id_carrier'];
+
+        // $idAddress = (int) (Db::getInstance()->executeS($dbQuery))[0]['id_address_delivery'];
+
+        // $address = new Address($idAddress);
+
+        // $postalCode = $address->postcode;
+
+        // $countryIsoCode = Country::getIsoById($address->id_country);
+
+        // $params = [
+        //     'countryCode' => $countryIsoCode,
+        //     'agreementCountry' => $countryIsoCode,
+        //     //'city' => $address->city,
+        //     'postalCode' => $postalCode,
+        //     //'streetName' => $address->address1,
+        //     //'streetNumber' => '19',
+        //     'numberOfServicePoints' => 100, // TODO: this should probably be a setting?
+        //     'typeId' => $carrierSetting[$idCarrier]['service_codes'] // "type of the service point" or service code, see module configuration page
+        // ];
+        // $servicePoints = $this->client->getServicePointsByAddress($params)['servicePoints'];
+        // $servicePoints = array_reduce($servicePoints, function ($carry, $element) {
+        //     $carry["{$element['name']}. 
+        //     {$element['visitingAddress']['streetName']}
+        //     {$element['visitingAddress']['streetNumber']},
+        //     {$element['visitingAddress']['postalCode']}
+        //     {$element['visitingAddress']['city']}
+        //     "] = $element['servicePointId'];
+        //     return $carry;
+        // }, []);
+        // return [$servicePoints, $postalCode];
+        return new Response($idOrder, 200);
+    }
     // TODO: logging, I guess
 
     /**

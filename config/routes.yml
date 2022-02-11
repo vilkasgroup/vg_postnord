@@ -31,3 +31,10 @@ admin_vg_postnord_edit_action:
     _legacy_controller: "AdminVGPostnordBookingController"
   requirements:
     bookingId: \d+
+
+admin_vg_postnord_ajax_service_point_action:
+  path: vg_postnordajax_service_point
+  methods: [POST]
+  defaults:
+    _controller: 'Vilkas\Postnord\Controller\Admin\VgPostnordBookingController::ajaxServicePointAction'
+    _legacy_controller: VgPostnordBookingController
