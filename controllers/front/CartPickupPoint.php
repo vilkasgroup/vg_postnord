@@ -64,9 +64,9 @@ class Vg_postnordCartPickupPointModuleFrontController extends ModuleFrontControl
         $id_carrier = $Cart->id_carrier;
         $Carrier = new Carrier($id_carrier);
         $id_carrier_reference = $Carrier->id_reference;
-        $carrierSettings = $this->module->getCarrierConfigurations();
+        $carrierSettings = $this->module->getCarrierConfiguration($id_carrier_reference);
 
-        return $carrierSettings[$id_carrier_reference];
+        return $carrierSettings;
     }
 
     /**
@@ -86,13 +86,13 @@ class Vg_postnordCartPickupPointModuleFrontController extends ModuleFrontControl
         $typeId = $carrierSettings['service_codes'];
 
         $id_country = $Address->id_country;
-        $Country = new Country($id_country);
-
         $postalCode = Tools::getValue('zipcode');
 
+        $countryIsoCode = Country::getIsoById($id_country);
+
         $params = [
-            'countryCode' => $Country->iso_code,
-            'agreementCountry' => $Country->iso_code,
+            'countryCode' => $countryIsoCode,
+            'agreementCountry' => $countryIsoCode,
             //'city' => $Address->city,
             'postalCode' => $postalCode,
             //'streetName' => $Address->address1,
