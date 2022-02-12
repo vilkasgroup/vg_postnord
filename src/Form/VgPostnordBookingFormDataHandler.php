@@ -6,6 +6,7 @@ namespace Vilkas\Postnord\Form;
 
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityRepository;
+use Doctrine\ORM\ORMException;
 
 use PrestaShop\PrestaShop\Core\Form\IdentifiableObject\DataHandler\FormDataHandlerInterface;
 
@@ -15,7 +16,7 @@ final class VgPostnordBookingFormDataHandler implements FormDataHandlerInterface
 {
     private $vgPostnordBookingRepository;
     private $entityManager;
-    
+
     public function __construct(
         EntityRepository $vgPostnordBookingRepository,
         EntityManager $entityManager
@@ -41,11 +42,15 @@ final class VgPostnordBookingFormDataHandler implements FormDataHandlerInterface
     /**
      * {@inheritdoc}
      *
-     * @throws ContactException
+     * @throws ContactException|ORMException
      */
-    public function update($id, array $data)
+    public function update($id, array $data): int
     {
+        /** @var VgPostnordBooking $booking */
         $booking = $this->vgPostnordBookingRepository->findOneById((int) $id);
+
+        // merge mandatory service codes from hidden inputs with additional services
+        $data["additional_services"] = array_unique(array_merge($data["additional_services"], $data["mandatory_service_codes"]));
 
         $booking->fromArray($data);
 
