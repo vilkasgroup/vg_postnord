@@ -7,6 +7,7 @@ use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 use Vilkas\Postnord\Client\PostnordClient;
 use Vilkas\Postnord\Entity\VgPostnordBooking;
 use Vilkas\Postnord\Entity\VgPostnordCartData;
+use Exception;
 use Cart;
 use Customer;
 use Address;
@@ -39,23 +40,50 @@ class VgPostnordBookingService
      *
      * Grabs service point from cart data if it exists
      *
-     * TODO: wonder what happens if cart data doesn't exist :D (home deliveries, I guess)
+     * @throws Exception|ExceptionInterface
      */
     public function createBlankBooking(int $id_order): VgPostnordBooking
     {
-        $cartRepository = $this->entityManager->getRepository(VgPostnordCartData::class);
+        $cartDataRepository = $this->entityManager->getRepository(VgPostnordCartData::class);
+        $bookingRepository  = $this->entityManager->getRepository(VgPostnordBooking::class);
 
         $booking = new VgPostnordBooking();
+        $order   = new Order($id_order);
+
+        // grab mandatory additional services from carrier settings
+        $carrier_settings = json_decode(Configuration::get("VG_POSTNORD_CARRIER_SETTINGS"), true);
+        if (array_key_exists($order->id_carrier, $carrier_settings)
+            && array_key_exists("mandatory_service_codes", $carrier_settings[$order->id_carrier])) {
+            $mandatory_services = implode(",", $carrier_settings[$order->id_carrier]["mandatory_service_codes"]);
+        } else {
+            $mandatory_services = null;
+        }
+
 
         /** @var VgPostnordCartData $cartData */
-        $cartData = $cartRepository->findOneBy(["id_order" => $id_order]);
+        $cartData = $cartDataRepository->findOneBy(["id_order" => $id_order]);
         if ($cartData) {
             $booking
                 ->setCartData($cartData)
-                ->setServicepointid($cartData->getServicePointId());
+                ->setServicepointid($cartData->getServicePointId())
+                ->setServicePointData($cartData->getServicePointData())
+            ;
+        } else {
+            // if cart data doesn't exist, copy service point & data from previous shipment (if exists)
+            /** @var VgPostnordBooking $previousBooking */
+            $previousBooking = $bookingRepository->findOneBy(["id_order" => $id_order]);
+            if ($previousBooking) {
+                $booking
+                    ->setServicepointid($previousBooking->getServicePointId())
+                    ->setServicePointData($previousBooking->getServicePointData())
+                ;
+            }
         }
 
-        $booking->setIdOrder($id_order);
+        $booking
+            ->setIdOrder($id_order)
+            ->setAdditionalServices($mandatory_services)
+        ;
 
         $this->entityManager->persist($booking);
         $this->entityManager->flush();
