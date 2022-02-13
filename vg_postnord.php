@@ -782,7 +782,8 @@ class Vg_postnord extends CarrierModule
         try {
             /** @var EntityManager $entityManager */
             $entityManager = $this->get('doctrine.orm.entity_manager');
-            $repository = $entityManager->getRepository(VgPostnordBooking::class);
+            $cartDataRepository = $entityManager->getRepository(VgPostnordCartData::class);
+            $bookingRepository  = $entityManager->getRepository(VgPostnordBooking::class);
         } catch (Exception $e) {
             $this->logger->error('Error getting entity manager or repository', [
                 'exception' => $e,
@@ -793,15 +794,27 @@ class Vg_postnord extends CarrierModule
             return null;
         }
 
-        $bookings = $repository->findBy(["id_order" => $id_order]);
+        $cartData = $cartDataRepository->findOneBy(['id_order' => $id_order]);
+        $bookings = $bookingRepository->findBy(['id_order' => $id_order], ['id' => 'DESC']);
+
+        // get service point data from cart data or the latest booking
+        $service_point_data = null;
+        if ($cartData) {
+            $service_point_data = json_decode($cartData->getServicePointData(), true);
+        } else {
+            if (count($bookings)) {
+                $service_point_data = json_decode($bookings[0]->getServicePointData(), true);
+            }
+        }
 
         try {
             /** @var Twig\Environment $twig */
             $twig = $this->get('twig');
 
             return $twig->render('@Modules/vg_postnord/views/templates/admin/order-actions.html.twig', [
-                'id_order' => $id_order,
-                'bookings' => $bookings
+                'id_order'      => $id_order,
+                'bookings'      => $bookings,
+                'service_point' => $service_point_data
             ]);
         } catch (Exception $e) {
             $this->logger->error('Could not render Twig template', [
