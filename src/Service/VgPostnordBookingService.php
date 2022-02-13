@@ -112,17 +112,29 @@ class VgPostnordBookingService
         $carrier_settings = json_decode(Configuration::get("VG_POSTNORD_CARRIER_SETTINGS"), true);
         $service_code     = explode("_", $carrier_settings[$carrier->id]["service_code_consigneecountry"])[0];
 
+        $additional_service_codes = explode(",", $booking->getAdditionalServices() ?? []);
+
         // TODO: id and grossWeight probably belong in a separate array
         $order_data = [
-            "id"                    => "0", // TODO: I'm not sure what we should pass here, should we generate something based on id_order?
+            "id"                    => "0", // should we generate this or let PostNord handle?
             "basicServiceCode"      => $service_code,
-            "additionalServiceCode" => [],  // TODO: from booking
+            "additionalServiceCode" => $additional_service_codes,
             "numberOfPackages"      => 1,   // TODO: from booking, probably need parcel "generator" similar to pakettikauppa
             "grossWeight"           => 1    // TODO: same as above
         ];
 
-        $shop_address   = json_decode(Configuration::get("VG_POSTNORD_SHOP_ADDRESS"), true);
-        $pickup_address = []; // I'm not sure when this would be needed
+        $shop_address  = json_decode(Configuration::get("VG_POSTNORD_SHOP_ADDRESS"), true);
+        $service_point = json_decode($booking->getServicePointData(), true);
+
+        $pickup_address = [];
+        // add service point data if related additional service is found
+        if (in_array("A7", $additional_service_codes)) {
+            $pickup_address = [
+                "servicePointId" => $booking->getServicepointid(),
+                "name" => $service_point["name"],
+                "visitingAddress" => $service_point["visitingAddress"]
+            ];
+        }
 
         $label_info = [
             "paperSize" => "LABEL"
