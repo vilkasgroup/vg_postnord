@@ -720,6 +720,12 @@ class Vg_postnord extends CarrierModule
      */
     public function hookDisplayCarrierExtraContent($params)
     {
+        // don't show pickup point selection if "optional service point" isn't a mandatory additional service
+        $carrier_config = $this->getCarrierConfiguration((int) $params["carrier"]["id_reference"]);
+        if (!in_array("A7", $carrier_config["mandatory_service_codes"])) {
+            return null;
+        }
+
         // prefill with the zipcode user has already given
         $id_address = $params['cart']->id_address_delivery;
         $address = new Address($id_address);
