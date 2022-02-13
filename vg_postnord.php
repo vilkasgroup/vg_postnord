@@ -607,14 +607,52 @@ class Vg_postnord extends CarrierModule
             $carrier_config[$idx][$newkey] = Tools::getValue($key);
         }
 
-        // set the carriers that are marked to use pickup to is_module so that it can do displayCarrierExtraContent
-        foreach ($carrier_config as $id_carrier_reference => $oneconfig) {
+        try {
+            $client = new PostnordClient(
+                Configuration::get("VG_POSTNORD_HOST"),
+                Configuration::get("VG_POSTNORD_APIKEY")
+            );
+            $valid_combinations = $client->getValidCombinationsOfServiceCodes()["data"];
+        } catch (Exception $e) {
+            $msg = $this->trans("Error fetching service code combinations: %error%", ["%error%" => $e->getMessage()], "Modules.Vgpostnord.Admin");
+            $this->context->controller->errors[] = $msg;
+            return false;
+        }
+
+        foreach ($carrier_config as $id_carrier_reference => &$oneconfig) {
+            // set the carriers that are marked to use pickup to is_module so that it can do displayCarrierExtraContent
             if ($oneconfig['service_code_consigneecountry']) {
                 $this->setCarrierToPostNord($id_carrier_reference, true);
             } else {
                 $this->setCarrierToPostNord($id_carrier_reference, false);
             }
+
+            // TODO: swear there's a better way to do whatever the following lines do
+
+            if ($oneconfig["service_code_consigneecountry"] === "0") {
+                $oneconfig["mandatory_service_codes"] = [];
+                continue;
+            }
+
+            $split = explode("_", $oneconfig["service_code_consigneecountry"]);
+            [$service_code, $consignee_country] = $split;
+
+            // find combinations related to issuer country
+            $valid_country_combinations = array_filter($valid_combinations, function ($element) use ($consignee_country) {
+                return $element['issuerCountryCode'] === $consignee_country ? $element : null;
+            });
+            // find mandatory services for service code and consignee country
+            $valid_country_combinations = reset($valid_country_combinations)["adnlServiceCodeCombDetails"];
+            $mandatory_combinations = array_filter($valid_country_combinations, function ($element) use ($service_code, $consignee_country) {
+                return $element["mandatory"] === true
+                    && $element["serviceCode"] === $service_code
+                    && $element["allowedConsigneeCountry"] === $consignee_country;
+            });
+            // grab 'adnlServiceCode' from every matching service
+            $mandatory_service_codes = array_column($mandatory_combinations, "adnlServiceCode");
+            $oneconfig["mandatory_service_codes"] = $mandatory_service_codes;
         }
+        unset($oneconfig);
 
         // and save the carrier config
         $result &= Configuration::updateValue('VG_POSTNORD_CARRIER_SETTINGS', json_encode($carrier_config));
