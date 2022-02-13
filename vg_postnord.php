@@ -905,12 +905,39 @@ class Vg_postnord extends CarrierModule
             return;
         }
 
+        // fetch and save service point data to cart data if cart data has a service point id
+        if ($cartData->getServicePointId()) {
+            try {
+                $address = new Address($order->id_address_delivery);
+                $country = new Country($address->id_country);
+
+                $params = [
+                    "countryCode" => $country->iso_code,
+                    "ids" => $cartData->getServicePointId()
+                ];
+                $client = new PostnordClient(
+                    Configuration::get("VG_POSTNORD_HOST"),
+                    Configuration::get("VG_POSTNORD_APIKEY")
+                );
+
+                $service_point = $client->getServicePointById($params);
+                $cartData->setServicePointData(json_encode($service_point));
+            } catch (Throwable $e) {
+                $this->logger->error('Error getting service point data', [
+                    'hook' => 'actionValidateOrder',
+                    'exception' => $e,
+                    'id_order' => $order->id,
+                    'id_cart' => $cart->id
+                ]);
+            }
+        }
+
         $cartData->setIdOrder($order->id);
         try {
             $entityManager->persist($cartData);
             $entityManager->flush();
         } catch (ORMException $e) {
-            $this->logger->error('Error setting id_order of cart data', [
+            $this->logger->error('Error updating cart data', [
                 'exception' => $e->getMessage(),
                 'hook' => 'actionValidateOrder',
                 'id_cart' => $cart->id,
