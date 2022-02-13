@@ -964,6 +964,15 @@ class Vg_postnord extends CarrierModule
             return;
         }
 
+        // clear service point from cart data if "optional service point" isn't mandatory
+        // reason: service point id might be saved to cart data even if selected carrier doesn't support them,
+        //         since it is saved as soon as the service point is clicked, even if the user ends up choosing
+        //         another carrier later
+        $carrier_config = $this->getCarrierConfiguration($carrier->id_reference);
+        if (!in_array("A7", $carrier_config["mandatory_service_codes"])) {
+            $cartData->setServicePointId(null);
+        }
+
         // fetch and save service point data to cart data if cart data has a service point id
         if ($cartData->getServicePointId()) {
             try {
