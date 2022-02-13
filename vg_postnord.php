@@ -87,12 +87,16 @@ class Vg_postnord extends CarrierModule
             && $this->registerHook('displayAdminOrderMain')
             && $this->registerHook('actionValidateOrder')
 
-            // add "generate label" button to order preview
+            // add "fetch label" button to order preview
             && $this->registerHook('displayOrderPreview')
-            // add "generate label" button to order buttons
+            // add "fetch label" button to order buttons
             && $this->registerHook('actionGetAdminOrderButtons')
-            // add "generate label" to orders bulk actions
-            && $this->registerHook('actionOrderGridDefinitionModifier');
+            // add "fetch label" button to order bulk actions
+            && $this->registerHook('actionOrderGridDefinitionModifier')
+
+            // add service point information to order confirmation email
+            && $this->registerHook('sendMailAlterTemplateVars')
+            ;
     }
 
     public function uninstall(): bool
@@ -888,7 +892,7 @@ class Vg_postnord extends CarrierModule
                         'name' => 'vg-postnord-generate-label-button',
                         'onclick' => "window.open('$route', '_blank')"
                     ],
-                    $this->trans('Fetch label', [], 'Modules.Vgpostnord.Admin')
+                    $this->trans('Create booking and fetch label', [], 'Modules.Vgpostnord.Admin')
                 )
             );
         } catch (Exception $e) {
