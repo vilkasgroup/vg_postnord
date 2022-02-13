@@ -225,11 +225,11 @@ class VgPostnordBooking
     }
 
     /**
-     * @param string $servicepointid
+     * @param string|null $servicepointid
      *
      * @return $this
      */
-    public function setServicepointid(string $servicepointid): self
+    public function setServicepointid(?string $servicepointid): self
     {
         $this->servicepointid = $servicepointid;
 

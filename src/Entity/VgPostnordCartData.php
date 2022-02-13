@@ -109,19 +109,19 @@ class VgPostnordCartData
 
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getServicePointId(): string
+    public function getServicePointId(): ?string
     {
         return $this->servicepointid;
     }
 
     /**
-     * @param string $servicepointid
+     * @param string|null $servicepointid
      *
      * @return $this
      */
-    public function setServicePointId(string $servicepointid): self
+    public function setServicePointId(?string $servicepointid): self
     {
         $this->servicepointid = $servicepointid;
         return $this;
