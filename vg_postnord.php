@@ -555,9 +555,7 @@ class Vg_postnord extends CarrierModule
      */
     public function getCarrierConfigurations(): array
     {
-        $carrierSettings = json_decode(Configuration::get('VG_POSTNORD_CARRIER_SETTINGS'), true);
-
-        return $carrierSettings;
+        return json_decode(Configuration::get('VG_POSTNORD_CARRIER_SETTINGS'), true);
     }
 
     /**
