@@ -4,11 +4,16 @@ declare(strict_types=1);
 
 namespace Vilkas\Postnord\Form;
 
+use Exception;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Translation\TranslatorInterface;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\ButtonType;
 use Symfony\Component\Form\Extension\Core\Type\FormType;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Form\Extension\Core\Type\HiddenType;
+use Symfony\Component\Form\FormEvent;
+use Symfony\Component\Form\FormEvents;
 
 use PrestaShop\PrestaShop\Adapter\Entity\Address;
 use PrestaShop\PrestaShop\Adapter\Entity\Configuration;
@@ -17,10 +22,7 @@ use PrestaShop\PrestaShop\Adapter\Entity\Db;
 use PrestaShop\PrestaShop\Adapter\Entity\DbQuery;
 use PrestaShopBundle\Form\Admin\Type\Material\MaterialChoiceTableType;
 use PrestaShopBundle\Form\Admin\Type\TranslatorAwareType;
-use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
-use Symfony\Component\Form\Extension\Core\Type\HiddenType;
-use Symfony\Component\Form\FormEvent;
-use Symfony\Component\Form\FormEvents;
+
 use Vilkas\Postnord\Client\PostnordClient;
 
 class VgPostnordBookingType extends TranslatorAwareType
@@ -183,16 +185,27 @@ class VgPostnordBookingType extends TranslatorAwareType
             'numberOfServicePoints' => 100, // TODO: this should probably be a setting?
             'typeId' => $carrierSetting[$idCarrier]['service_codes'] // "type of the service point" or service code, see module configuration page
         ];
-        $servicePoints = $this->client->getServicePointsByAddress($params)['servicePoints'];
-        $servicePoints = array_reduce($servicePoints, function ($carry, $element) {
-            $carry["{$element['name']}. 
-            {$element['visitingAddress']['streetName']}
-            {$element['visitingAddress']['streetNumber']},
-            {$element['visitingAddress']['postalCode']}
-            {$element['visitingAddress']['city']}
-            "] = $element['servicePointId'];
-            return $carry;
-        }, []);
-        return [$servicePoints, $postalCode];
+        try {
+            $response = $this->client->getServicePointsByAddress($params);
+            if (!empty($response['servicePoints'])) {
+                $servicePoints = array_reduce($response['servicePoints'], function ($carry, $element) {
+                    $carry["{$element['name']}. 
+                    {$element['visitingAddress']['streetName']}
+                    {$element['visitingAddress']['streetNumber']},
+                    {$element['visitingAddress']['postalCode']}
+                    {$element['visitingAddress']['city']}
+                    "] = $element['servicePointId'];
+                    return $carry;
+                }, []);
+                return [$servicePoints, $postalCode];
+            } else {
+                return [[$response['error'] => null], $postalCode];
+            }
+        } catch (Exception $e) {
+            return [
+                [$e->getMessage() => null],
+                $postalCode
+            ];
+        }
     }
 }

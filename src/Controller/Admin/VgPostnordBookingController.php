@@ -5,10 +5,16 @@ declare(strict_types=1);
 namespace Vilkas\Postnord\Controller\Admin;
 
 use Context;
+use Exception;
 use Doctrine\ORM\EntityManager;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+use PrestaShop\PrestaShop\Adapter\Entity\Address;
+use PrestaShop\PrestaShop\Adapter\Entity\Configuration;
+use PrestaShop\PrestaShop\Adapter\Entity\Country;
+use PrestaShop\PrestaShop\Adapter\Entity\Db;
+use PrestaShop\PrestaShop\Adapter\Entity\DbQuery;
 use PrestaShop\PrestaShop\Core\Grid\Search\SearchCriteria;
 use PrestaShopBundle\Controller\Admin\FrameworkBundleAdminController;
 use PrestaShopBundle\Security\Annotation\AdminSecurity;
@@ -16,15 +22,10 @@ use PrestaShopBundle\Security\Annotation\ModuleActivated;
 
 use iio\libmergepdf\Merger;
 use iio\libmergepdf\Driver\TcpdiDriver;
-use PrestaShop\PrestaShop\Adapter\Entity\Address;
-use PrestaShop\PrestaShop\Adapter\Entity\Configuration;
-use PrestaShop\PrestaShop\Adapter\Entity\Country;
-use PrestaShop\PrestaShop\Adapter\Entity\Db;
-use PrestaShop\PrestaShop\Adapter\Entity\DbQuery;
+
 use Vilkas\Postnord\Client\PostnordClient;
 use Vilkas\Postnord\Entity\VgPostnordBooking;
 use Vilkas\Postnord\Grid\Filter\VgPostnordBookingQueryFilter;
-use Vilkas\Postnord\Form\Data\Provider\VgPostnordBookingFormDataProvider;
 
 /**
  * Class VgPostnordBookingController.
@@ -62,7 +63,6 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
         $bookingFormBuilder = $this->get('vilkas.postnord.form.identifiable_object.builder.vg_postnord_booking_form_builder');
         $bookingForm = $bookingFormBuilder->getFormFor((int) $bookingId);
         $bookingForm->handleRequest($request);
-        var_dump($request->request);
         $bookingFormHandler = $this->get('vilkas.postnord.form.identifiable_object.handler.vg_postnord_booking_form_handler');
         $result = $bookingFormHandler->handleFor((int) $bookingId, $bookingForm);
 
@@ -117,23 +117,38 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
             'numberOfServicePoints' => 100, // TODO: this should probably be a setting?
             'typeId' => $carrierSetting[$idCarrier]['service_codes'] // "type of the service point" or service code, see module configuration page
         ];
-        
-        $servicePoints = $client->getServicePointsByAddress($params)['servicePoints'];
-        
-        $servicePoints = array_reduce($servicePoints, function ($carry, $element) {
-            $carry[] =[
-                'servicePointId'=>$element['servicePointId'],
-                'servicePointDetail'=>"{$element['name']}. {$element['visitingAddress']['streetName']} {$element['visitingAddress']['streetNumber']}, {$element['visitingAddress']['postalCode']} {$element['visitingAddress']['city']}"];
-            return $carry;
-        }, []);
 
-        return new Response(
-            json_encode($servicePoints),
-            Response::HTTP_OK,
-            [
-                'content-type' => 'application/JSON'
-            ]
-        );
+        try {
+            $response = $client->getServicePointsByAddress($params);
+            if (!empty($response['servicePoints'])) {
+                $servicePoints = $response['servicePoints'];
+                $servicePoints = array_reduce($servicePoints, function ($carry, $element) {
+                    $carry[] = [
+                        'servicePointId' => $element['servicePointId'],
+                        'servicePointDetail' => "{$element['name']}. {$element['visitingAddress']['streetName']} {$element['visitingAddress']['streetNumber']}, {$element['visitingAddress']['postalCode']} {$element['visitingAddress']['city']}"
+                    ];
+                    return $carry;
+                }, []);
+
+                return new Response(
+                    json_encode($servicePoints),
+                    Response::HTTP_OK,
+                    ['content-type' => 'application/JSON']
+                );
+            } else {
+                return new Response(
+                    json_encode(['error' => $response['error']]),
+                    Response::HTTP_BAD_REQUEST,
+                    ['content-type' => 'application/JSON']
+                );
+            }
+        } catch (Exception $e) {
+            return new Response(
+                json_encode(['error' => $e->getMessage()]),
+                Response::HTTP_INTERNAL_SERVER_ERROR,
+                ['content-type' => 'application/JSON']
+            );
+        }
     }
     // TODO: logging, I guess
 

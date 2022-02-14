@@ -4,12 +4,18 @@ $(document).ready(function () {
     $('body').on('click', '#vg_postnord_booking_button', function (e) {
         e.preventDefault();
 
+        const $button = $(this).find('button');
         const $servicePointTable = $('body').find('.servicePointIdPicker');
         const $tableBody = $servicePointTable.find('tbody');
         const zipcode = $('#vg_postnord_booking_postcode').val();
         const ajaxurl = $('#vg_postnord_edit_booking').data('ajaxurl');
         const idOrder = $('#vg_postnord_booking_id_order').val();
 
+        $button.prop('disabled', true);
+        $button.html(`  
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            <span class="sr-only">Loading...</span>
+        `)
         // request the pickup points
         $.ajax({
             type: "POST",
@@ -25,17 +31,22 @@ $(document).ready(function () {
                 $tableBody.empty();
                 servicePoint.forEach((element, i) => {
                     $tableBody.append(renderPickupPoint(element, i))
-                }
-                );
+                });
             }
+            $('#save-button').prop('disabled', false);
         }).fail(function (jqXHR, textStatus) {
             console.error(jqXHR);
-            $tableBody.html('<h3 class="alert alert-warning">' + jqXHR.statusText + '</h3>');
+            const error = JSON.parse(jqXHR.responseText)
+            if (error.error) {
+                $tableBody.html('<h3 class="alert alert-warning">' + error.error + '</h3>');
+            } else {
+                $tableBody.html('<h3 class="alert alert-warning">' + jqXHR.statusText + '</h3>');
+            }
+            $('#save-button').prop('disabled', true);
         }).always(function () {
-            $tableBody.removeClass('vg_postnord_loading');
-            // $button.prop('disabled', false);
+            $button.prop('disabled', false);
+            $button.html('Search')
         });
-
     });
 
     /**
