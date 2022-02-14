@@ -47,6 +47,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
      * @param VgPostnordBookingQueryFilter $filters)
      *
      * @return Response
+     * 
      */
     public function listAction(VgPostnordBookingQueryFilter $filters): Response
     {
@@ -85,9 +86,8 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
      *
      * @param Request $request
      *
-     * @return RedirectResponse|Response
-     *
-     * @throws \Exception
+     * @return Response
+     * 
      */
     public function ajaxServicePointAction(Request $request): Response
     {
