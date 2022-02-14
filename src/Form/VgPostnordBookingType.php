@@ -162,14 +162,11 @@ class VgPostnordBookingType extends TranslatorAwareType
         $dbQuery->select('id_carrier, id_address_delivery')
             ->from('orders', 'a')
             ->where("a.id_order = {$idOrder}");
-        $idCarrier = (int) (Db::getInstance()->executeS($dbQuery))[0]['id_carrier'];
-
-        $idAddress = (int) (Db::getInstance()->executeS($dbQuery))[0]['id_address_delivery'];
-
+        $dbResult = (Db::getInstance()->executeS($dbQuery))[0];
+        $idCarrier = (int) $dbResult['id_carrier'];
+        $idAddress = (int) $dbResult['id_address_delivery'];
         $address = new Address($idAddress);
-
         $postalCode = $address->postcode;
-
         $countryIsoCode = Country::getIsoById($address->id_country);
 
         $params = [
