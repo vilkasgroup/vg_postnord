@@ -65,7 +65,6 @@ class VgPostnordBookingType extends TranslatorAwareType
                 'help' => $this->trans('Enable additional services for the shipment', 'Modules.Vgpostnord.Admin'),
                 'choices' => $this->getAdditionalServices($options),
             ])
-
             ->add('servicepointid', MaterialChoiceTableType::class, [
                 'label' => $this->trans('Service Point', 'Modules.Vgpostnord.Admin'),
                 'help' => $this->trans('Service Point', 'Modules.Vgpostnord.Admin'),
@@ -77,13 +76,11 @@ class VgPostnordBookingType extends TranslatorAwareType
                 'required'   => false,
                 'data' => $postalCode,
             ])
-            ->add(
-                $builder->create('button', FormType::class)
-                    ->add('search', ButtonType::class, [
-                        'attr' => ['class' => 'search btn-primary float-right col px-md-5'],
-                        'label' => $this->trans('Search', 'Modules.Vgpostnord.Admin'),
-                    ])
-            )
+            ->add($builder->create('button', FormType::class)
+                ->add('search', ButtonType::class, [
+                    'attr' => ['class' => 'search btn-primary float-right col px-md-5'],
+                    'label' => $this->trans('Search', 'Modules.Vgpostnord.Admin'),
+                ]))
             ->addEventListener(FormEvents::PRE_SUBMIT, function (FormEvent $event) {
                 // get form, options from event
                 $form = $event->getForm();
