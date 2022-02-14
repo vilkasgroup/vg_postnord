@@ -79,6 +79,19 @@ class PostnordClientTest extends TestCase
     }
     */
 
+    public function testGetServicePointsById(): void
+    {
+        $params = [
+            'countryCode' => 'FI',
+            'ids' => '9335'
+        ];
+
+        $results = $this->client->getServicePointById($params);
+
+        var_dump($results);
+        $this->assertArrayHasKey('name', $results);
+        $this->assertEquals($params['ids'], $results['servicePointId']);
+    }
     public function testGetBasicServiceCodes(): void
     {
         $params = [];

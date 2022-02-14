@@ -77,13 +77,24 @@ class VgPostnordBookingType extends TranslatorAwareType
                     return $disabled === true ? ['disabled' => true] : [];
                 }
             ])
+            // HACK: add mandatory services codes as hidden inputs, so they get POSTed
+            ->add('mandatory_service_codes', CollectionType::class, [
+                'data' => $this->mandatory_service_codes,
+                'label' => false,
+                'entry_type' => HiddenType::class,
+                'entry_options' => [
+                    'attr' => ['readonly' => 'true']
+                ]
+            ])
             ->add('servicepointid', MaterialChoiceTableType::class, [
                 'label' => $this->trans('Service Point', 'Modules.Vgpostnord.Admin'),
                 'help' => $this->trans('Service Point', 'Modules.Vgpostnord.Admin'),
                 'choices' => $servicePoints,
                 'multiple' => false,
                 'row_attr' => ['class' => 'servicePointIdPicker']
-            ])->add('postcode', TextType::class, [
+            ])
+            ->add('service_point_data', HiddenType::class)
+            ->add('postcode', TextType::class, [
                 'label' => $this->trans('Postal Code', 'Modules.Vgpostnord.Admin'),
                 'required'   => false,
                 'data' => $postalCode,
@@ -93,22 +104,31 @@ class VgPostnordBookingType extends TranslatorAwareType
                     'attr' => ['class' => 'search btn-primary float-right col px-md-5'],
                     'label' => $this->trans('Search', 'Modules.Vgpostnord.Admin'),
                 ]))
+
             ->addEventListener(FormEvents::PRE_SUBMIT, function (FormEvent $event) {
                 // get form, options from event
                 $form = $event->getForm();
-
+                $data = $event->getData();
                 // get submitted form data
-                $data = $event->getData()['servicepointid'];
+                $servicePoints = $data['servicepointid'];
+                $idOrder = $data['id_order'];
+
 
                 // create new choices list
                 $choices = [];
 
-                if (is_array($data)) {
-                    foreach ($data as $choice) {
+                // data only return array if it's multiple choice/checkbox
+                // So this one will always return string but keep it here
+                // as a reference.
+                if (is_array($servicePoints)) {
+                    foreach ($servicePoints as $choice) {
                         $choices[$choice] = $choice;
                     }
                 } else {
-                    $choices[$data] = $data;
+                    $choices[$servicePoints] = $servicePoints;
+                    $servicePointData = $this->getServicePointData($idOrder, $servicePoints);
+                    $data['service_point_data'] = json_encode($servicePointData);
+                    $event->setData($data);
                 }
 
                 // Add field with new choices to form
@@ -116,19 +136,9 @@ class VgPostnordBookingType extends TranslatorAwareType
                     'choices' => $choices
                 ]);
             });
-
-        // HACK: add mandatory services codes as hidden inputs, so they get POSTed
-        $builder->add("mandatory_service_codes", CollectionType::class, [
-            'data' => $this->mandatory_service_codes,
-            'label' => false,
-            'entry_type' => HiddenType::class,
-            'entry_options' => [
-                'attr' => ['readonly' => 'true']
-            ]
-        ]);
     }
 
-    private function getAdditionalServices(&$options)
+    private function getAdditionalServices(&$options): array
     {
         $issuerCountry = Configuration::get('VG_POSTNORD_ISSUER_COUNTRY');
         $carrierSetting = json_decode(Configuration::get('VG_POSTNORD_CARRIER_SETTINGS'), true);
@@ -176,7 +186,7 @@ class VgPostnordBookingType extends TranslatorAwareType
         });
         return $finalCombination;
     }
-    private function getServicePoint(&$options)
+    private function getServicePoint(&$options): array
     {
         $carrierSetting = json_decode(Configuration::get('VG_POSTNORD_CARRIER_SETTINGS'), true);
         $idOrder = (int) $options['data']['id_order'];
@@ -225,5 +235,24 @@ class VgPostnordBookingType extends TranslatorAwareType
                 $postalCode
             ];
         }
+    }
+    private function getServicePointData($idOrder, $servicePointId): array
+    {
+        $dbQuery = new DbQuery();
+        // Get correct carrier setting for this order to extract from VG_POSTNORD_CARRIER_SETTINGS
+        $dbQuery->select('id_carrier, id_address_delivery')
+            ->from('orders', 'a')
+            ->where("a.id_order = {$idOrder}");
+        $dbResult = (Db::getInstance()->executeS($dbQuery))[0];
+        $idAddress = (int) $dbResult['id_address_delivery'];
+        $address = new Address($idAddress);
+        $countryIsoCode = Country::getIsoById($address->id_country);
+
+        $params = [
+            'countryCode' => $countryIsoCode,
+            'ids' => $servicePointId
+        ];
+
+        return $this->client->getServicePointById($params);
     }
 }
