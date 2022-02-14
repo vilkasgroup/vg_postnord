@@ -22,7 +22,7 @@ use PrestaShop\PrestaShop\Adapter\Entity\Db;
 use PrestaShop\PrestaShop\Adapter\Entity\DbQuery;
 use PrestaShopBundle\Form\Admin\Type\Material\MaterialChoiceTableType;
 use PrestaShopBundle\Form\Admin\Type\TranslatorAwareType;
-
+use Symfony\Component\Form\Extension\Core\Type\CollectionType;
 use Vilkas\Postnord\Client\PostnordClient;
 
 class VgPostnordBookingType extends TranslatorAwareType
