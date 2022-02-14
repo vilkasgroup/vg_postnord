@@ -87,12 +87,16 @@ class Vg_postnord extends CarrierModule
             && $this->registerHook('displayAdminOrderMain')
             && $this->registerHook('actionValidateOrder')
 
-            // add "generate label" button to order preview
+            // add "fetch label" button to order preview
             && $this->registerHook('displayOrderPreview')
-            // add "generate label" button to order buttons
+            // add "fetch label" button to order buttons
             && $this->registerHook('actionGetAdminOrderButtons')
-            // add "generate label" to orders bulk actions
-            && $this->registerHook('actionOrderGridDefinitionModifier');
+            // add "fetch label" button to order bulk actions
+            && $this->registerHook('actionOrderGridDefinitionModifier')
+
+            // add service point information to order confirmation email
+            && $this->registerHook('sendMailAlterTemplateVars')
+            ;
     }
 
     public function uninstall(): bool
@@ -555,9 +559,7 @@ class Vg_postnord extends CarrierModule
      */
     public function getCarrierConfigurations(): array
     {
-        $carrierSettings = json_decode(Configuration::get('VG_POSTNORD_CARRIER_SETTINGS'), true);
-
-        return $carrierSettings;
+        return json_decode(Configuration::get('VG_POSTNORD_CARRIER_SETTINGS'), true);
     }
 
     /**
@@ -607,14 +609,52 @@ class Vg_postnord extends CarrierModule
             $carrier_config[$idx][$newkey] = Tools::getValue($key);
         }
 
-        // set the carriers that are marked to use pickup to is_module so that it can do displayCarrierExtraContent
-        foreach ($carrier_config as $id_carrier_reference => $oneconfig) {
+        try {
+            $client = new PostnordClient(
+                Configuration::get("VG_POSTNORD_HOST"),
+                Configuration::get("VG_POSTNORD_APIKEY")
+            );
+            $valid_combinations = $client->getValidCombinationsOfServiceCodes()["data"];
+        } catch (Exception $e) {
+            $msg = $this->trans("Error fetching service code combinations: %error%", ["%error%" => $e->getMessage()], "Modules.Vgpostnord.Admin");
+            $this->context->controller->errors[] = $msg;
+            return false;
+        }
+
+        foreach ($carrier_config as $id_carrier_reference => &$oneconfig) {
+            // set the carriers that are marked to use pickup to is_module so that it can do displayCarrierExtraContent
             if ($oneconfig['service_code_consigneecountry']) {
                 $this->setCarrierToPostNord($id_carrier_reference, true);
             } else {
                 $this->setCarrierToPostNord($id_carrier_reference, false);
             }
+
+            // TODO: swear there's a better way to do whatever the following lines do
+
+            if ($oneconfig["service_code_consigneecountry"] === "0") {
+                $oneconfig["mandatory_service_codes"] = [];
+                continue;
+            }
+
+            $split = explode("_", $oneconfig["service_code_consigneecountry"]);
+            [$service_code, $consignee_country] = $split;
+
+            // find combinations related to issuer country
+            $valid_country_combinations = array_filter($valid_combinations, function ($element) use ($consignee_country) {
+                return $element['issuerCountryCode'] === $consignee_country ? $element : null;
+            });
+            // find mandatory services for service code and consignee country
+            $valid_country_combinations = reset($valid_country_combinations)["adnlServiceCodeCombDetails"];
+            $mandatory_combinations = array_filter($valid_country_combinations, function ($element) use ($service_code, $consignee_country) {
+                return $element["mandatory"] === true
+                    && $element["serviceCode"] === $service_code
+                    && $element["allowedConsigneeCountry"] === $consignee_country;
+            });
+            // grab 'adnlServiceCode' from every matching service
+            $mandatory_service_codes = array_column($mandatory_combinations, "adnlServiceCode");
+            $oneconfig["mandatory_service_codes"] = $mandatory_service_codes;
         }
+        unset($oneconfig);
 
         // and save the carrier config
         $result &= Configuration::updateValue('VG_POSTNORD_CARRIER_SETTINGS', json_encode($carrier_config));
@@ -682,6 +722,12 @@ class Vg_postnord extends CarrierModule
      */
     public function hookDisplayCarrierExtraContent($params)
     {
+        // don't show pickup point selection if "optional service point" isn't a mandatory additional service
+        $carrier_config = $this->getCarrierConfiguration((int) $params["carrier"]["id_reference"]);
+        if (!in_array("A7", $carrier_config["mandatory_service_codes"])) {
+            return null;
+        }
+
         // prefill with the zipcode user has already given
         $id_address = $params['cart']->id_address_delivery;
         $address = new Address($id_address);
@@ -738,7 +784,8 @@ class Vg_postnord extends CarrierModule
         try {
             /** @var EntityManager $entityManager */
             $entityManager = $this->get('doctrine.orm.entity_manager');
-            $repository = $entityManager->getRepository(VgPostnordBooking::class);
+            $cartDataRepository = $entityManager->getRepository(VgPostnordCartData::class);
+            $bookingRepository  = $entityManager->getRepository(VgPostnordBooking::class);
         } catch (Exception $e) {
             $this->logger->error('Error getting entity manager or repository', [
                 'exception' => $e,
@@ -749,15 +796,27 @@ class Vg_postnord extends CarrierModule
             return null;
         }
 
-        $bookings = $repository->findBy(["id_order" => $id_order]);
+        $cartData = $cartDataRepository->findOneBy(['id_order' => $id_order]);
+        $bookings = $bookingRepository->findBy(['id_order' => $id_order], ['id' => 'DESC']);
+
+        // get service point data from cart data or the latest booking
+        $service_point_data = null;
+        if ($cartData) {
+            $service_point_data = json_decode($cartData->getServicePointData(), true);
+        } else {
+            if (count($bookings)) {
+                $service_point_data = json_decode($bookings[0]->getServicePointData(), true);
+            }
+        }
 
         try {
             /** @var Twig\Environment $twig */
             $twig = $this->get('twig');
 
             return $twig->render('@Modules/vg_postnord/views/templates/admin/order-actions.html.twig', [
-                'id_order' => $id_order,
-                'bookings' => $bookings
+                'id_order'      => $id_order,
+                'bookings'      => $bookings,
+                'service_point' => $service_point_data
             ]);
         } catch (Exception $e) {
             $this->logger->error('Could not render Twig template', [
@@ -833,7 +892,7 @@ class Vg_postnord extends CarrierModule
                         'name' => 'vg-postnord-generate-label-button',
                         'onclick' => "window.open('$route', '_blank')"
                     ],
-                    $this->trans('Fetch label', [], 'Modules.Vgpostnord.Admin')
+                    $this->trans('Create booking and fetch label', [], 'Modules.Vgpostnord.Admin')
                 )
             );
         } catch (Exception $e) {
@@ -905,12 +964,48 @@ class Vg_postnord extends CarrierModule
             return;
         }
 
+        // clear service point from cart data if "optional service point" isn't mandatory
+        // reason: service point id might be saved to cart data even if selected carrier doesn't support them,
+        //         since it is saved as soon as the service point is clicked, even if the user ends up choosing
+        //         another carrier later
+        $carrier_config = $this->getCarrierConfiguration($carrier->id_reference);
+        if (!in_array("A7", $carrier_config["mandatory_service_codes"])) {
+            $cartData->setServicePointId(null);
+        }
+
+        // fetch and save service point data to cart data if cart data has a service point id
+        if ($cartData->getServicePointId()) {
+            try {
+                $address = new Address($order->id_address_delivery);
+                $country = new Country($address->id_country);
+
+                $params = [
+                    "countryCode" => $country->iso_code,
+                    "ids" => $cartData->getServicePointId()
+                ];
+                $client = new PostnordClient(
+                    Configuration::get("VG_POSTNORD_HOST"),
+                    Configuration::get("VG_POSTNORD_APIKEY")
+                );
+
+                $service_point = $client->getServicePointById($params);
+                $cartData->setServicePointData(json_encode($service_point));
+            } catch (Throwable $e) {
+                $this->logger->error('Error getting service point data', [
+                    'hook' => 'actionValidateOrder',
+                    'exception' => $e,
+                    'id_order' => $order->id,
+                    'id_cart' => $cart->id
+                ]);
+            }
+        }
+
         $cartData->setIdOrder($order->id);
         try {
             $entityManager->persist($cartData);
             $entityManager->flush();
         } catch (ORMException $e) {
-            $this->logger->error('Error setting id_order of cart data', [
+            $this->logger->error('Error updating cart data', [
                 'exception' => $e->getMessage(),
                 'hook' => 'actionValidateOrder',
                 'id_cart' => $cart->id,

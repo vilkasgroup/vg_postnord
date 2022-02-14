@@ -47,8 +47,8 @@ class VgPostnordBookingType extends TranslatorAwareType
      */
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
-        // To disable editing when finalized. 
-        // I couldn't find a way to disable the edit button 
+        // To disable editing when finalized.
+        // I couldn't find a way to disable the edit button
         // So let settle with disabled form with this instead.
         $builder->setDisabled(!empty($options['data']['finalized']));
         list($servicePoints, $postalCode) = $this->getServicePoint($options);
@@ -64,6 +64,14 @@ class VgPostnordBookingType extends TranslatorAwareType
                 'label' => $this->trans('Additional Services', 'Modules.Vgpostnord.Admin'),
                 'help' => $this->trans('Enable additional services for the shipment', 'Modules.Vgpostnord.Admin'),
                 'choices' => $this->getAdditionalServices($options),
+                'choice_attr' => function($choice) {
+                    $disabled = false;
+                    // disable editing of mandatory service codes
+                    if (in_array($choice, $this->mandatory_service_codes)) {
+                        $disabled = true;
+                    }
+                    return $disabled === true ? ['disabled' => true] : [];
+                }
             ])
             ->add('servicepointid', MaterialChoiceTableType::class, [
                 'label' => $this->trans('Service Point', 'Modules.Vgpostnord.Admin'),
@@ -104,6 +112,17 @@ class VgPostnordBookingType extends TranslatorAwareType
                     'choices' => $choices
                 ]);
             });
+
+        // HACK: add mandatory services codes as hidden inputs, so they get POSTed
+        $builder->add("mandatory_service_codes", CollectionType::class, [
+            'data' => $this->mandatory_service_codes,
+            'label' => false,
+            'entry_type' => HiddenType::class,
+            'entry_options' => [
+                'attr' => ['readonly' => 'true']
+            ]
+        ]);
+
     }
 
     private function getAdditionalServices(&$options)
@@ -134,9 +153,11 @@ class VgPostnordBookingType extends TranslatorAwareType
                 if (
                     $element['serviceCode'] === $carrierSetting[0]
                     && $element['allowedConsigneeCountry'] === $carrierSetting[1]
-                    && !$element['mandatory']
                 ) {
-                    $carry[] = [$element["adnlServiceName"] => $element["adnlServiceCode"]];
+                    $carry[] = [$element['adnlServiceName'] => $element['adnlServiceCode']];
+                    if ($element['mandatory'] === true) {
+                        $this->mandatory_service_codes[] = $element['adnlServiceCode'];
+                    }
                 }
                 return $carry;
             },

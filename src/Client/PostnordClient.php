@@ -228,6 +228,38 @@ class PostnordClient
     }
 
     /**
+     * Get service point information by id
+     *
+     * @throws ExceptionInterface
+     * @throws Exception
+     */
+    public function getServicePointById(array $parameters): array
+    {
+        $defaults = [
+            'returnType'     => 'json',
+            'responseFilter' => 'public'
+        ];
+        $parameters = $this->mergeOptions($defaults, $parameters);
+        $options['query'] = $parameters;
+
+        try {
+            $response = $this->doRequest('GET', '/rest/businesslocation/v5/servicepoints/ids', $options);
+        } catch (Exception $e) {
+            return [
+                'error' => $e->getMessage(),
+            ];
+        }
+
+        if (array_key_exists('servicePointInformationResponse', $response)) {
+            return $response['servicePointInformationResponse']['servicePoints'][0];
+        }
+
+        // TODO: write test
+
+        throw new Exception('servicePointInformationResponse missing from response');
+    }
+
+    /**
      * Get basic service codes.
      *
      * https://guides.atdeveloper.postnord.com/#0c2721e2-3aa8-4bbb-bf39-049721601c01

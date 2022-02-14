@@ -40,6 +40,13 @@ class VgPostnordCartData
      */
     private $servicepointid;
 
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="service_point_data", type="text", nullable=true)
+     */
+    private $service_point_data;
+
 
     /**
      * @return int
@@ -102,22 +109,41 @@ class VgPostnordCartData
 
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getServicePointId(): string
+    public function getServicePointId(): ?string
     {
         return $this->servicepointid;
     }
 
     /**
-     * @param string $servicepointid
+     * @param string|null $servicepointid
      *
      * @return $this
      */
-    public function setServicePointId(string $servicepointid): self
+    public function setServicePointId(?string $servicepointid): self
     {
         $this->servicepointid = $servicepointid;
         return $this;
     }
 
+    /**
+     * @return string|null
+     */
+    public function getServicePointData(): ?string
+    {
+        return $this->service_point_data;
+    }
+
+    /**
+     * @param string|null $service_point_data
+     *
+     * @return $this
+     */
+    public function setServicePointData(?string $service_point_data): self
+    {
+        $this->service_point_data = $service_point_data;
+
+        return $this;
+    }
 }

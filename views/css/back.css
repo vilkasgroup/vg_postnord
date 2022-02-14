@@ -14,7 +14,43 @@
 *  International Registered Trademark & Property of Vilkas Group Oy
 */
 
-.vg-postnord-booking-list table td {
-  padding: 5px;
+/********************/
+/* BO actions panel */
+/********************/
+
+.vg-postnord-order-shipment-info {
+  display: flex;
+  align-items: flex-start;
+}
+
+.vg-postnord-shipment-pickup-info {
   border: 1px solid #ccc;
+  margin-right: 15px;
+  padding: 10px;
+}
+
+.vg-postnord-booking-list table td,
+.vg-postnord-booking-list table th {
+  padding: 5px 10px;
+  border: 1px solid #ccc;
+}
+
+.vg-postnord-booking-list table td.vg-postnord-table-sub-heading {
+  border: none;
+  font-size: 16px;
+  font-weight: bold;
+  padding: 20px 0 10px;
+}
+
+.vg-postnord-action-buttons {
+  margin-top: 20px;
+}
+
+/********************/
+/* Admin Order page */
+/********************/
+
+.btn-generate-label {
+  /* theme.css has very specific styles for anchors without href */
+  color: #fff !important;
 }
