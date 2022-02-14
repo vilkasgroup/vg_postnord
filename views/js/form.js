@@ -5,6 +5,7 @@ $(document).ready(function () {
         e.preventDefault();
 
         const $button = $(this).find('button');
+        const $buttonText = $button.html()
         const $servicePointTable = $('body').find('.servicePointIdPicker');
         const $tableBody = $servicePointTable.find('tbody');
         const zipcode = $('#vg_postnord_booking_postcode').val();
@@ -45,7 +46,7 @@ $(document).ready(function () {
             $('#save-button').prop('disabled', true);
         }).always(function () {
             $button.prop('disabled', false);
-            $button.html('Search')
+            $button.html($buttonText)
         });
     });
 
