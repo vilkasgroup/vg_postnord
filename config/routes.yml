@@ -38,3 +38,4 @@ admin_vg_postnord_ajax_service_point_action:
   defaults:
     _controller: 'Vilkas\Postnord\Controller\Admin\VgPostnordBookingController::ajaxServicePointAction'
     _legacy_controller: VgPostnordBookingController
+    

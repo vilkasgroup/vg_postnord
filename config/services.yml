@@ -83,5 +83,3 @@ services:
     factory: 'prestashop.core.form.identifiable_object.handler.form_handler_factory:create'
     arguments:
       - '@vilkas.postnord.form.identifiable_object.data_handler.vg_postnord_booking_form_data_handler'
-
-
