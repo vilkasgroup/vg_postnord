@@ -9,7 +9,6 @@ use Symfony\Component\Translation\TranslatorInterface;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\ButtonType;
 use Symfony\Component\Form\Extension\Core\Type\FormType;
-use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 
 use PrestaShop\PrestaShop\Adapter\Entity\Address;
 use PrestaShop\PrestaShop\Adapter\Entity\Configuration;
@@ -18,7 +17,10 @@ use PrestaShop\PrestaShop\Adapter\Entity\Db;
 use PrestaShop\PrestaShop\Adapter\Entity\DbQuery;
 use PrestaShopBundle\Form\Admin\Type\Material\MaterialChoiceTableType;
 use PrestaShopBundle\Form\Admin\Type\TranslatorAwareType;
-
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Form\Extension\Core\Type\HiddenType;
+use Symfony\Component\Form\FormEvent;
+use Symfony\Component\Form\FormEvents;
 use Vilkas\Postnord\Client\PostnordClient;
 
 class VgPostnordBookingType extends TranslatorAwareType
@@ -48,13 +50,14 @@ class VgPostnordBookingType extends TranslatorAwareType
         // So let settle with disabled form with this instead.
         $builder->setDisabled(!empty($options['data']['finalized']));
         list($servicePoints, $postalCode) = $this->getServicePoint($options);
-        // var_dump($servicePoints);
+
         $builder
             // Not used yet
             // ->add('tracking_url', TextType::class, [
             //     'label' => $this->trans('Tracking URL', 'Modules.Vgpostnord.Admin'),
             //     'disabled' => empty($options['data']['tracking_url'])
             // ])
+            ->add('id_order', HiddenType::class)
             ->add('additional_services', MaterialChoiceTableType::class, [
                 'label' => $this->trans('Additional Services', 'Modules.Vgpostnord.Admin'),
                 'help' => $this->trans('Enable additional services for the shipment', 'Modules.Vgpostnord.Admin'),
@@ -65,7 +68,8 @@ class VgPostnordBookingType extends TranslatorAwareType
                 'label' => $this->trans('Service Point', 'Modules.Vgpostnord.Admin'),
                 'help' => $this->trans('Service Point', 'Modules.Vgpostnord.Admin'),
                 'choices' => $servicePoints,
-                'multiple' => false
+                'multiple' => false,
+                'row_attr' => ['class' => 'servicePointIdPicker']
             ])->add('postcode', TextType::class, [
                 'label' => $this->trans('Postal Code', 'Modules.Vgpostnord.Admin'),
                 'required'   => false,
@@ -77,7 +81,30 @@ class VgPostnordBookingType extends TranslatorAwareType
                         'attr' => ['class' => 'search btn-primary float-right col px-md-5'],
                         'label' => $this->trans('Search', 'Modules.Vgpostnord.Admin'),
                     ])
-            );
+            )
+            ->addEventListener(FormEvents::PRE_SUBMIT, function (FormEvent $event) {
+                // get form, options from event
+                $form = $event->getForm();
+
+                // get submitted form data
+                $data = $event->getData()['servicepointid'];
+
+                // create new choices list
+                $choices = [];
+
+                if (is_array($data)) {
+                    foreach ($data as $choice) {
+                        $choices[$choice] = $choice;
+                    }
+                } else {
+                    $choices[$data] = $data;
+                }
+
+                // Add field with new choices to form
+                $form->add('servicepointid', ChoiceType::class, [
+                    'choices' => $choices
+                ]);
+            });
     }
 
     private function getAdditionalServices(&$options)

@@ -7,3 +7,9 @@
     </div>
   </div>
 {% endblock %}
+
+{% block javascripts %}
+  {{ parent() }}
+
+  <script src="{{ asset('../modules/vg_postnord/views/js/form.js') }}"></script>
+{% endblock %}

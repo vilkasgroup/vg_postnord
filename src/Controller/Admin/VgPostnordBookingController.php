@@ -62,7 +62,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
         $bookingFormBuilder = $this->get('vilkas.postnord.form.identifiable_object.builder.vg_postnord_booking_form_builder');
         $bookingForm = $bookingFormBuilder->getFormFor((int) $bookingId);
         $bookingForm->handleRequest($request);
-
+        var_dump($request->request);
         $bookingFormHandler = $this->get('vilkas.postnord.form.identifiable_object.handler.vg_postnord_booking_form_handler');
         $result = $bookingFormHandler->handleFor((int) $bookingId, $bookingForm);
 
@@ -72,23 +72,16 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
             return $this->redirectToRoute('admin_vg_postnord_list_action');
         }
 
-        $link = Context::getContext()->link;
-
-        // Generate url with Symfony route (first argument is the legacy controller, even though it should be ignored)
-        // $symfonyUrl = $link->getAdminLink('AdminProducts', true, array('route' => 'admin_product_catalog'));
-
-        // Generate url with Symfony route and arguments
-        // $symfonyUrl = $link->getModuleLink('vg_postnord', 'CartPickupPoint', [], true);
-
         $symfonyUrl = $this->get('router')->generate('admin_vg_postnord_ajax_service_point_action');
 
         return $this->render('@Modules/vg_postnord/views/templates/admin/edit-booking.html.twig', [
             'vgPostnordBookingEditForm' => $bookingForm->createView(),
-            'link' => $symfonyUrl
+            'ajaxurl' => $symfonyUrl,
+            'layoutTitle' => $this->trans('Edit Booking', 'Modules.Vgpostnord.Admin'),
         ]);
     }
     /**
-     * @AdminSecurity("is_granted(['read', 'create', 'update', 'delete'], request.get('_legacy_controller'))", message="Access denied.")
+     * @AdminSecurity("is_granted(['create'], request.get('_legacy_controller'))", message="Access denied.")
      *
      * @param Request $request
      *
@@ -104,45 +97,43 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
         );
         $carrierSetting = json_decode(Configuration::get('VG_POSTNORD_CARRIER_SETTINGS'), true);
         $idOrder = (int) $request->request->get('idOrder');
+        $postalCode = $request->request->get('zipcode');
+        $dbQuery = new DbQuery();
+        $dbQuery->select('id_carrier, id_address_delivery')
+            ->from('orders', 'a')
+            ->where("a.id_order = {$idOrder}");
+        $idCarrier = (int) (Db::getInstance()->executeS($dbQuery))[0]['id_carrier'];
+        $idAddress = (int) (Db::getInstance()->executeS($dbQuery))[0]['id_address_delivery'];
+        $address = new Address($idAddress);
+        $countryIsoCode = Country::getIsoById($address->id_country);
 
-        // $dbQuery = new DbQuery();
+        $params = [
+            'countryCode' => $countryIsoCode,
+            'agreementCountry' => $countryIsoCode,
+            //'city' => $address->city,
+            'postalCode' => $postalCode,
+            //'streetName' => $address->address1,
+            //'streetNumber' => '19',
+            'numberOfServicePoints' => 100, // TODO: this should probably be a setting?
+            'typeId' => $carrierSetting[$idCarrier]['service_codes'] // "type of the service point" or service code, see module configuration page
+        ];
+        
+        $servicePoints = $client->getServicePointsByAddress($params)['servicePoints'];
+        
+        $servicePoints = array_reduce($servicePoints, function ($carry, $element) {
+            $carry[] =[
+                'servicePointId'=>$element['servicePointId'],
+                'servicePointDetail'=>"{$element['name']}. {$element['visitingAddress']['streetName']} {$element['visitingAddress']['streetNumber']}, {$element['visitingAddress']['postalCode']} {$element['visitingAddress']['city']}"];
+            return $carry;
+        }, []);
 
-        // // Get correct carrier setting for this order to extract from VG_POSTNORD_CARRIER_SETTINGS
-        // $dbQuery->select('id_carrier, id_address_delivery')
-        //     ->from('orders', 'a')
-        //     ->where("a.id_order = {$idOrder}");
-        // $idCarrier = (int) (Db::getInstance()->executeS($dbQuery))[0]['id_carrier'];
-
-        // $idAddress = (int) (Db::getInstance()->executeS($dbQuery))[0]['id_address_delivery'];
-
-        // $address = new Address($idAddress);
-
-        // $postalCode = $address->postcode;
-
-        // $countryIsoCode = Country::getIsoById($address->id_country);
-
-        // $params = [
-        //     'countryCode' => $countryIsoCode,
-        //     'agreementCountry' => $countryIsoCode,
-        //     //'city' => $address->city,
-        //     'postalCode' => $postalCode,
-        //     //'streetName' => $address->address1,
-        //     //'streetNumber' => '19',
-        //     'numberOfServicePoints' => 100, // TODO: this should probably be a setting?
-        //     'typeId' => $carrierSetting[$idCarrier]['service_codes'] // "type of the service point" or service code, see module configuration page
-        // ];
-        // $servicePoints = $this->client->getServicePointsByAddress($params)['servicePoints'];
-        // $servicePoints = array_reduce($servicePoints, function ($carry, $element) {
-        //     $carry["{$element['name']}. 
-        //     {$element['visitingAddress']['streetName']}
-        //     {$element['visitingAddress']['streetNumber']},
-        //     {$element['visitingAddress']['postalCode']}
-        //     {$element['visitingAddress']['city']}
-        //     "] = $element['servicePointId'];
-        //     return $carry;
-        // }, []);
-        // return [$servicePoints, $postalCode];
-        return new Response($idOrder, 200);
+        return new Response(
+            json_encode($servicePoints),
+            Response::HTTP_OK,
+            [
+                'content-type' => 'application/JSON'
+            ]
+        );
     }
     // TODO: logging, I guess
 
