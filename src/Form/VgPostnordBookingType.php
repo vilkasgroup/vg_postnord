@@ -28,6 +28,10 @@ use Vilkas\Postnord\Client\PostnordClient;
 class VgPostnordBookingType extends TranslatorAwareType
 {
     private $client;
+
+    /** @var string[] */
+    private $mandatory_service_codes = [];
+
     /**
      * @param TranslatorInterface $translator
      * @param array $locales
@@ -64,7 +68,7 @@ class VgPostnordBookingType extends TranslatorAwareType
                 'label' => $this->trans('Additional Services', 'Modules.Vgpostnord.Admin'),
                 'help' => $this->trans('Enable additional services for the shipment', 'Modules.Vgpostnord.Admin'),
                 'choices' => $this->getAdditionalServices($options),
-                'choice_attr' => function($choice) {
+                'choice_attr' => function ($choice) {
                     $disabled = false;
                     // disable editing of mandatory service codes
                     if (in_array($choice, $this->mandatory_service_codes)) {
@@ -122,7 +126,6 @@ class VgPostnordBookingType extends TranslatorAwareType
                 'attr' => ['readonly' => 'true']
             ]
         ]);
-
     }
 
     private function getAdditionalServices(&$options)
