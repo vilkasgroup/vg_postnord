@@ -21,6 +21,8 @@ use PrestaShopBundle\Security\Annotation\ModuleActivated;
 
 use iio\libmergepdf\Merger;
 use iio\libmergepdf\Driver\TcpdiDriver;
+use PrestaShop\PrestaShop\Adapter\Entity\Db;
+use PrestaShop\PrestaShop\Adapter\Entity\DbQuery;
 use Vilkas\Postnord\Client\PostnordClient;
 use Vilkas\Postnord\Entity\VgPostnordBooking;
 use Vilkas\Postnord\Grid\Filter\VgPostnordBookingQueryFilter;
@@ -57,13 +59,19 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
         ]);
     }
 
-    public function editBookingAction(Request $request, $bookingId): Response
+    public function editBookingAction(Request $request,  $bookingId): Response
     {
+        $idBooking = (int) $bookingId;
+        $dbQuery = new DbQuery();
+        $dbQuery->select('id_order')
+            ->from('vg_postnord_booking', 'b')
+            ->where("b.id_booking = {$idBooking}");
+        $idOrder = (int) (Db::getInstance()->executeS($dbQuery))[0]['id_order'];
         $bookingFormBuilder = $this->get('vilkas.postnord.form.identifiable_object.builder.vg_postnord_booking_form_builder');
-        $bookingForm = $bookingFormBuilder->getFormFor((int) $bookingId);
+        $bookingForm = $bookingFormBuilder->getFormFor($idBooking);
         $bookingForm->handleRequest($request);
         $bookingFormHandler = $this->get('vilkas.postnord.form.identifiable_object.handler.vg_postnord_booking_form_handler');
-        $result = $bookingFormHandler->handleFor((int) $bookingId, $bookingForm);
+        $result = $bookingFormHandler->handleFor($idBooking, $bookingForm);
 
         if ($result->isSubmitted() && $result->isValid()) {
             $this->addFlash('success', $this->trans('Successful modification.', 'Admin.Notifications.Success'));
@@ -71,12 +79,11 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
             return $this->redirectToRoute('admin_vg_postnord_list_action');
         }
 
-        $symfonyUrl = $this->get('router')->generate('admin_vg_postnord_ajax_service_point_action');
-
         return $this->render('@Modules/vg_postnord/views/templates/admin/edit-booking.html.twig', [
             'vgPostnordBookingEditForm' => $bookingForm->createView(),
-            'ajaxurl' => $symfonyUrl,
+            'ajaxurl' => $this->get('router')->generate('admin_vg_postnord_ajax_service_point_action'),
             'layoutTitle' => $this->trans('Edit Booking', 'Modules.Vgpostnord.Admin'),
+            'layoutHeaderToolbarBtn' => $this->getToolbarButtons($idOrder),
         ]);
     }
     /**
@@ -291,5 +298,22 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
                 "Content-Disposition" => "inline;filename=$filename"
             ]
         );
+    }
+
+    /**
+     * Gets the header toolbar buttons.
+     *
+     * @return array
+     */
+    private function getToolbarButtons($id_order)
+    {
+        $toolbarButtons = [];
+        $toolbarButtons['go_to_order'] = [
+            'href' => $this->generateUrl('admin_orders_view', ["orderId" => $id_order]),
+            'desc' => $this->trans('Go to Order', "Modules.Vgpostnord.Admin"),
+            'icon' => 'arrow_back',
+            // 'help' => $this->trans('Create a new product: CTRL+P', 'Admin.Catalog.Help'),
+        ];
+        return $toolbarButtons;
     }
 }
