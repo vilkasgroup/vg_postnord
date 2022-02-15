@@ -87,7 +87,7 @@ class VgPostnordBookingType extends TranslatorAwareType
             ->add('servicepointid', MaterialChoiceTableType::class, [
                 'label' => $this->trans('Service Point', 'Modules.Vgpostnord.Admin'),
                 'help' => $this->trans('Service Point', 'Modules.Vgpostnord.Admin'),
-                'choices' => $servicePoints,
+                'choices' => [],
                 'multiple' => false,
                 'row_attr' => ['class' => 'servicePointIdPicker']
             ])
