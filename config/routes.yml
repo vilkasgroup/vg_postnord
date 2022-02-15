@@ -33,7 +33,7 @@ admin_vg_postnord_edit_action:
     bookingId: \d+
 
 admin_vg_postnord_ajax_service_point_action:
-  path: vg_postnordajax_service_point
+  path: vg_postnord_ajax_service_point
   methods: [POST]
   defaults:
     _controller: 'Vilkas\Postnord\Controller\Admin\VgPostnordBookingController::ajaxServicePointAction'
