@@ -25,26 +25,34 @@ $(document).ready(function () {
             data: {
                 idOrder,
                 zipcode
-            }
+            },
         }).done(function (resp) {
             // render the results
-            try{
-                const servicePoint = JSON.parse(resp)
-    
+            try {
+                let servicePoint = resp
+                
+                if (typeof resp === 'string') {
+                    servicePoint = JSON.parse(resp)
+                }
+
                 if (Array.isArray(servicePoint)) {
                     $tableBody.empty();
                     servicePoint.forEach((element, i) => {
                         $tableBody.append(renderPickupPoint(element, i, servicePointValue))
                     });
                 }
-            }catch(error){
+            } catch (error) {
+                $tableBody.html(`<h3 class="alert alert-warning"> Error while fetching data. </h3>`);
                 console.error(error)
                 console.error(resp)
             }
             $('#save-button').prop('disabled', false);
         }).fail(function (jqXHR, textStatus) {
             console.error(jqXHR);
-            const error = JSON.parse(jqXHR.responseText)
+            let error = jsqXHR
+            if(typeof jqXHR === 'string'){
+                error = JSON.parse(jqXHR.responseText)
+            }
             if (error.error) {
                 $tableBody.html('<h3 class="alert alert-warning">' + error.error + '</h3>');
             } else {
@@ -70,7 +78,7 @@ $(document).ready(function () {
                     <input type="radio" id="vg_postnord_booking_servicepointid_${$i}" 
                     name="vg_postnord_booking[servicepointid]" 
                     required="required" class="form-check-input" value=${servicePointId}
-                    ${servicePointId==servicePointValue?'checked':''}>
+                    ${servicePointId == servicePointValue ? 'checked' : ''}>
                     <i class="form-check-round"></i>
                     ${servicePointDetail}
                 </label>

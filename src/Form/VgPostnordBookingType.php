@@ -112,7 +112,7 @@ class VgPostnordBookingType extends TranslatorAwareType
                 $data = $event->getData();
                 // get submitted form data
                 $servicePoints = $data['servicepointid'];
-                var_dump($servicePoints);
+
                 $form->add('servicepointidvalue', HiddenType::class, [
                     'data' => $servicePoints
                 ]);
