@@ -123,7 +123,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
 
         try {
             $response = $client->getServicePointsByAddress($params);
-            var_dump($response);
+            
             if (!empty($response['servicePoints'])) {
                 $servicePoints = $response['servicePoints'];
                 $servicePoints = array_reduce($servicePoints, function ($carry, $element) {
