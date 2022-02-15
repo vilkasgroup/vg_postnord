@@ -83,71 +83,75 @@ class VgPostnordBookingType extends TranslatorAwareType
                 'data' => $this->mandatory_service_codes,
                 'label' => false,
                 'entry_type' => HiddenType::class
-            ])
-            ->add('servicepointid', MaterialChoiceTableType::class, [
+            ]);
+
+        // Only show service point selector when carrier support service point(A7)
+        if (in_array('A7', $this->mandatory_service_codes)) {
+            $builder->add('servicepointid', MaterialChoiceTableType::class, [
                 'label' => $this->trans('Service Point', 'Modules.Vgpostnord.Admin'),
                 'help' => $this->trans('Service Point', 'Modules.Vgpostnord.Admin'),
                 'choices' => [],
                 'multiple' => false,
                 'row_attr' => ['class' => 'servicePointIdPicker']
             ])
-            ->add('service_point_data', HiddenType::class, [
-                'data' => ' '
-            ])
-            ->add('postcode', TextType::class, [
-                'label' => $this->trans('Postal Code', 'Modules.Vgpostnord.Admin'),
-                'required'   => false,
-                'data' => $postalCode,
-            ])
-            ->add($builder->create('button', FormType::class, [
-                'label' => false
-            ])
-                ->add('search', ButtonType::class, [
-                    'attr' => ['class' => 'search btn-primary float-right col px-md-5'],
-                    'label' => $this->trans('Search', 'Modules.Vgpostnord.Admin'),
-                ]))
-            ->addEventListener(FormEvents::PRE_SET_DATA, function (FormEvent $event) {
-                // get form, options from event
-                $form = $event->getForm();
-                $data = $event->getData();
-                // get submitted form data
-                $servicePoints = $data['servicepointid'];
+                ->add('service_point_data', HiddenType::class, [
+                    'data' => ' '
+                ])
+                ->add('postcode', TextType::class, [
+                    'label' => $this->trans('Postal Code', 'Modules.Vgpostnord.Admin'),
+                    'required'   => false,
+                    'data' => $postalCode,
+                ])
+                ->add($builder->create('button', FormType::class, [
+                    'label' => false
+                ])
+                    ->add('search', ButtonType::class, [
+                        'attr' => ['class' => 'search btn-primary float-right col px-md-5'],
+                        'label' => $this->trans('Search', 'Modules.Vgpostnord.Admin'),
+                    ]))
+                ->addEventListener(FormEvents::PRE_SET_DATA, function (FormEvent $event) {
+                    // get form, options from event
+                    $form = $event->getForm();
+                    $data = $event->getData();
 
-                $form->add('servicepointidvalue', HiddenType::class, [
-                    'data' => $servicePoints
-                ]);
-            })
-            ->addEventListener(FormEvents::PRE_SUBMIT, function (FormEvent $event) {
-                // get form, options from event
-                $form = $event->getForm();
-                $data = $event->getData();
-                // get submitted form data
-                $servicePoints = $data['servicepointid'];
-                $idOrder = $data['id_order'];
+                    // get form data
+                    $servicePoints = $data['servicepointid'];
+                    $form->add('servicepointidvalue', HiddenType::class, [
+                        'data' => $servicePoints
+                    ]);
+                })
+                ->addEventListener(FormEvents::PRE_SUBMIT, function (FormEvent $event) {
+                    // get form, options from event
+                    $form = $event->getForm();
+                    $data = $event->getData();
+                    // get submitted form data
+                    $servicePoints = $data['servicepointid'];
+                    $idOrder = $data['id_order'];
 
+                    // create new choices list
+                    $choices = [];
 
-                // create new choices list
-                $choices = [];
+                    // data only return array if it's multiple choice/checkbox
+                    // So this one will always return string but keep it here
+                    // as a reference.
 
-                // data only return array if it's multiple choice/checkbox
-                // So this one will always return string but keep it here
-                // as a reference.
-                if (is_array($servicePoints)) {
-                    foreach ($servicePoints as $choice) {
-                        $choices[$choice] = $choice;
+                    if (is_array($servicePoints)) {
+                        foreach ($servicePoints as $choice) {
+                            $choices[$choice] = $choice;
+                        }
+                    } else {
+                        $choices[$servicePoints] = $servicePoints;
+                        $servicePointData = $this->getServicePointData($idOrder, $servicePoints);
+                        $data['service_point_data'] = json_encode($servicePointData);
+                        $event->setData($data);
                     }
-                } else {
-                    $choices[$servicePoints] = $servicePoints;
-                    $servicePointData = $this->getServicePointData($idOrder, $servicePoints);
-                    $data['service_point_data'] = json_encode($servicePointData);
-                    $event->setData($data);
-                }
 
-                // Add field with new choices to form
-                $form->add('servicepointid', ChoiceType::class, [
-                    'choices' => $choices
-                ]);
-            });
+                    // Add field with new choices to form
+                    $form->add('servicepointid', ChoiceType::class, [
+                        'choices' => $choices
+                    ]);
+                });
+        }
     }
 
     private function getAdditionalServices($options): array
