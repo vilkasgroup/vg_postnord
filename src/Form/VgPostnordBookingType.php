@@ -106,7 +106,17 @@ class VgPostnordBookingType extends TranslatorAwareType
                     'attr' => ['class' => 'search btn-primary float-right col px-md-5'],
                     'label' => $this->trans('Search', 'Modules.Vgpostnord.Admin'),
                 ]))
-
+            ->addEventListener(FormEvents::PRE_SET_DATA, function (FormEvent $event) {
+                // get form, options from event
+                $form = $event->getForm();
+                $data = $event->getData();
+                // get submitted form data
+                $servicePoints = $data['servicepointid'];
+                var_dump($servicePoints);
+                $form->add('servicepointidvalue', HiddenType::class, [
+                    'data' => $servicePoints
+                ]);
+            })
             ->addEventListener(FormEvents::PRE_SUBMIT, function (FormEvent $event) {
                 // get form, options from event
                 $form = $event->getForm();

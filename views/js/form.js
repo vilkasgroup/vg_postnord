@@ -11,6 +11,7 @@ $(document).ready(function () {
         const zipcode = $('#vg_postnord_booking_postcode').val();
         const ajaxurl = $('#vg_postnord_edit_booking').data('ajaxurl');
         const idOrder = $('#vg_postnord_booking_id_order').val();
+        const servicePointValue = $('#vg_postnord_booking_servicepointidvalue').val();
 
         $button.prop('disabled', true);
         $button.html(`  
@@ -33,7 +34,7 @@ $(document).ready(function () {
                 if (Array.isArray(servicePoint)) {
                     $tableBody.empty();
                     servicePoint.forEach((element, i) => {
-                        $tableBody.append(renderPickupPoint(element, i))
+                        $tableBody.append(renderPickupPoint(element, i, servicePointValue))
                     });
                 }
             }catch(error){
@@ -59,7 +60,7 @@ $(document).ready(function () {
     /**
      * Render one pickup point as html. data from pickupoint api
      */
-    function renderPickupPoint($servicePoint, $i) {
+    function renderPickupPoint($servicePoint, $i, servicePointValue) {
         console.debug($servicePoint);
         const { servicePointId, servicePointDetail } = $servicePoint
         let html = `
@@ -68,7 +69,8 @@ $(document).ready(function () {
                 <label class="form-check-label">
                     <input type="radio" id="vg_postnord_booking_servicepointid_${$i}" 
                     name="vg_postnord_booking[servicepointid]" 
-                    required="required" class="form-check-input" value=${servicePointId}>
+                    required="required" class="form-check-input" value=${servicePointId}
+                    ${servicePointId==servicePointValue?'checked':''}>
                     <i class="form-check-round"></i>
                     ${servicePointDetail}
                 </label>
