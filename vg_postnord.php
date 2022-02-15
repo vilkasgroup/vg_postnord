@@ -94,8 +94,8 @@ class Vg_postnord extends CarrierModule
             // add "fetch label" button to order bulk actions
             && $this->registerHook('actionOrderGridDefinitionModifier')
 
-            // add service point information to order confirmation email
-            && $this->registerHook('sendMailAlterTemplateVars')
+            // add service point information to order confirmation template variables
+            && $this->registerHook('actionGetExtraMailTemplateVars')
             ;
     }
 
@@ -1036,5 +1036,75 @@ class Vg_postnord extends CarrierModule
 
         $carrier = new Carrier($order->id_carrier);
         return $carrier->external_module_name === $this->name;
+    }
+
+    /**
+     * Add service point information to a placeholder in order confirmation template variables
+     *
+     * Placeholder: {postnord_service_point}
+     *
+     * @noinspection PhpArrayWriteIsNotUsedInspection
+     */
+    public function hookActionGetExtraMailTemplateVars(array $params)
+    {
+        if ($params["template"] !== "order_conf") {
+            return;
+        }
+
+        /**
+         * Default value (so that nothing is shown if carrier is not PostNord for example)
+         */
+        $params["extra_template_vars"]["{postnord_service_point}"] = "";
+
+        $id_order = (int) $params["template_vars"]["{id_order}"];
+        if (!$id_order) {
+            return;
+        }
+        if (!$this->isPostNordOrder($id_order)) {
+            return;
+        }
+
+        try {
+            /** @var EntityManager $entityManager */
+            $entityManager = $this->get("doctrine.orm.entity_manager");
+            $repository = $entityManager->getRepository(VgPostnordCartData::class);
+        } catch (Exception $e) {
+            $this->logger->error("Error getting entity manager or repository", [
+                "exception" => $e,
+                "hook"      => "actionGetExtraMailTemplateVars",
+                "id_order"  => $id_order
+            ]);
+
+            return;
+        }
+
+        $cartData = $repository->findOneBy(["id_order" => $id_order]);
+        if (!$cartData) {
+            $this->logger->error("Couldn't find cart data for order", [
+                "hook"      => "actionGetExtraMailTemplateVars",
+                "id_order"  => $id_order
+            ]);
+            return;
+        }
+        $service_point_data = json_decode($cartData->getServicePointData(), true);
+        if (!$service_point_data) {
+            return;
+        }
+
+        // Note: seems you can't get an instance of the Symfony container here, so you can't load services like Twig
+        try {
+            $this->context->smarty->assign([
+                "service_point" => $service_point_data,
+                "service_point_header" => $this->trans("Pickup point", [], "Modules.Vgpostnord.Admin")
+            ]);
+            $tpl = $this->context->smarty->fetch($this->local_path . "views/templates/mails/order-confirmation-service-point.tpl");
+            $params["extra_template_vars"]["{postnord_service_point}"] = $tpl;
+        } catch (Exception $e) {
+            $this->logger->error("Couldn't fetch Smarty template", [
+                "exception" => $e->getMessage(),
+                "hook"      => "actionGetExtraMailTemplateVars",
+                "id_order"  => $id_order,
+            ]);
+        }
     }
 }
