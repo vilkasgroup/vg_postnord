@@ -20,6 +20,7 @@ use PrestaShop\PrestaShop\Adapter\Entity\Configuration;
 use PrestaShop\PrestaShop\Adapter\Entity\Country;
 use PrestaShop\PrestaShop\Adapter\Entity\Db;
 use PrestaShop\PrestaShop\Adapter\Entity\DbQuery;
+use PrestaShop\PrestaShop\Adapter\Entity\Order;
 use PrestaShopBundle\Form\Admin\Type\Material\MaterialChoiceTableType;
 use PrestaShopBundle\Form\Admin\Type\TranslatorAwareType;
 use Symfony\Component\Form\Extension\Core\Type\CollectionType;
@@ -190,15 +191,9 @@ class VgPostnordBookingType extends TranslatorAwareType
     {
         $carrierSetting = json_decode(Configuration::get('VG_POSTNORD_CARRIER_SETTINGS'), true);
         $idOrder = (int) $options['data']['id_order'];
-        $dbQuery = new DbQuery();
-
-        // Get correct carrier setting for this order to extract from VG_POSTNORD_CARRIER_SETTINGS
-        $dbQuery->select('id_carrier, id_address_delivery')
-            ->from('orders', 'a')
-            ->where("a.id_order = {$idOrder}");
-        $dbResult = (Db::getInstance()->executeS($dbQuery))[0];
-        $idCarrier = (int) $dbResult['id_carrier'];
-        $idAddress = (int) $dbResult['id_address_delivery'];
+        $order = new Order($idOrder);
+        $idCarrier = (int) $order->id_carrier;
+        $idAddress = (int) $order->id_address_delivery;
         $address = new Address($idAddress);
         $postalCode = $address->postcode;
         $countryIsoCode = Country::getIsoById($address->id_country);

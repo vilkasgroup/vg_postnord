@@ -13,8 +13,7 @@ use Symfony\Component\HttpFoundation\Response;
 use PrestaShop\PrestaShop\Adapter\Entity\Address;
 use PrestaShop\PrestaShop\Adapter\Entity\Configuration;
 use PrestaShop\PrestaShop\Adapter\Entity\Country;
-use PrestaShop\PrestaShop\Adapter\Entity\Db;
-use PrestaShop\PrestaShop\Adapter\Entity\DbQuery;
+use PrestaShop\PrestaShop\Adapter\Entity\Order;
 use PrestaShop\PrestaShop\Core\Grid\Search\SearchCriteria;
 use PrestaShopBundle\Controller\Admin\FrameworkBundleAdminController;
 use PrestaShopBundle\Security\Annotation\AdminSecurity;
@@ -22,7 +21,6 @@ use PrestaShopBundle\Security\Annotation\ModuleActivated;
 
 use iio\libmergepdf\Merger;
 use iio\libmergepdf\Driver\TcpdiDriver;
-
 use Vilkas\Postnord\Client\PostnordClient;
 use Vilkas\Postnord\Entity\VgPostnordBooking;
 use Vilkas\Postnord\Grid\Filter\VgPostnordBookingQueryFilter;
@@ -98,12 +96,10 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
         $carrierSetting = json_decode(Configuration::get('VG_POSTNORD_CARRIER_SETTINGS'), true);
         $idOrder = (int) $request->request->get('idOrder');
         $postalCode = $request->request->get('zipcode');
-        $dbQuery = new DbQuery();
-        $dbQuery->select('id_carrier, id_address_delivery')
-            ->from('orders', 'a')
-            ->where("a.id_order = {$idOrder}");
-        $idCarrier = (int) (Db::getInstance()->executeS($dbQuery))[0]['id_carrier'];
-        $idAddress = (int) (Db::getInstance()->executeS($dbQuery))[0]['id_address_delivery'];
+        $order = new Order($idOrder);
+        $idCarrier = (int) $order->id_carrier;
+        $idAddress = (int) $order->id_address_delivery;
+
         $address = new Address($idAddress);
         $countryIsoCode = Country::getIsoById($address->id_country);
 
