@@ -27,12 +27,18 @@ $(document).ready(function () {
             }
         }).done(function (resp) {
             // render the results
-            const servicePoint = JSON.parse(resp)
-            if (servicePoint) {
-                $tableBody.empty();
-                servicePoint.forEach((element, i) => {
-                    $tableBody.append(renderPickupPoint(element, i))
-                });
+            try{
+                const servicePoint = JSON.parse(resp)
+    
+                if (Array.isArray(servicePoint)) {
+                    $tableBody.empty();
+                    servicePoint.forEach((element, i) => {
+                        $tableBody.append(renderPickupPoint(element, i))
+                    });
+                }
+            }catch(error){
+                console.error(error)
+                console.error(resp)
             }
             $('#save-button').prop('disabled', false);
         }).fail(function (jqXHR, textStatus) {
@@ -71,4 +77,8 @@ $(document).ready(function () {
 
         return html;
     }
+
+    // on page load trigger search to prefill the results
+    $('#vg_postnord_booking_button_search').click()
+
 });

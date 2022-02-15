@@ -94,13 +94,17 @@ class VgPostnordBookingType extends TranslatorAwareType
                 'multiple' => false,
                 'row_attr' => ['class' => 'servicePointIdPicker']
             ])
-            ->add('service_point_data', HiddenType::class)
+            ->add('service_point_data', HiddenType::class, [
+                'data' => ' '
+            ])
             ->add('postcode', TextType::class, [
                 'label' => $this->trans('Postal Code', 'Modules.Vgpostnord.Admin'),
                 'required'   => false,
                 'data' => $postalCode,
             ])
-            ->add($builder->create('button', FormType::class)
+            ->add($builder->create('button', FormType::class, [
+                'label' => false
+            ])
                 ->add('search', ButtonType::class, [
                     'attr' => ['class' => 'search btn-primary float-right col px-md-5'],
                     'label' => $this->trans('Search', 'Modules.Vgpostnord.Admin'),
@@ -139,19 +143,14 @@ class VgPostnordBookingType extends TranslatorAwareType
             });
     }
 
-    private function getAdditionalServices(&$options): array
+    private function getAdditionalServices($options): array
     {
         $issuerCountry = Configuration::get('VG_POSTNORD_ISSUER_COUNTRY');
         $carrierSetting = json_decode(Configuration::get('VG_POSTNORD_CARRIER_SETTINGS'), true);
         $idOrder = (int) $options['data']['id_order'];
-        $dbQuery = new DbQuery();
-
-        // get correct carrier setting for this order to extract from VG_POSTNORD_CARRIER_SETTINGS
-        $dbQuery->select('id_carrier')
-            ->from('orders', 'o')
-            ->where("o.id_order = {$idOrder}");
-        $idCarrier = (int) (Db::getInstance()->executeS($dbQuery))[0]['id_carrier'];
-
+        $idOrder = (int) $options['data']['id_order'];
+        $order = new Order($idOrder);
+        $idCarrier = (int) $order->id_carrier;
         // split carrierSetting into ['servicecode', 'consigneeCountry']
         $carrierSetting = explode('_', $carrierSetting[$idCarrier]["service_code_consigneecountry"]);
 
@@ -187,7 +186,9 @@ class VgPostnordBookingType extends TranslatorAwareType
         });
         return $finalCombination;
     }
-    private function getServicePoint(&$options): array
+    // Only work for PS 1.7.8 
+    // PS 1.7.7 MaterialChoiceTableType does not support radio for some reason 
+    private function getServicePoint($options): array
     {
         $carrierSetting = json_decode(Configuration::get('VG_POSTNORD_CARRIER_SETTINGS'), true);
         $idOrder = (int) $options['data']['id_order'];
@@ -233,13 +234,8 @@ class VgPostnordBookingType extends TranslatorAwareType
     }
     private function getServicePointData($idOrder, $servicePointId): array
     {
-        $dbQuery = new DbQuery();
-        // Get correct carrier setting for this order to extract from VG_POSTNORD_CARRIER_SETTINGS
-        $dbQuery->select('id_carrier, id_address_delivery')
-            ->from('orders', 'a')
-            ->where("a.id_order = {$idOrder}");
-        $dbResult = (Db::getInstance()->executeS($dbQuery))[0];
-        $idAddress = (int) $dbResult['id_address_delivery'];
+        $order = new Order($idOrder);
+        $idAddress = (int) $order->id_address_delivery;
         $address = new Address($idAddress);
         $countryIsoCode = Country::getIsoById($address->id_country);
 
