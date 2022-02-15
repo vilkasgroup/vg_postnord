@@ -82,10 +82,7 @@ class VgPostnordBookingType extends TranslatorAwareType
             ->add('mandatory_service_codes', CollectionType::class, [
                 'data' => $this->mandatory_service_codes,
                 'label' => false,
-                'entry_type' => HiddenType::class,
-                'entry_options' => [
-                    'attr' => ['readonly' => 'true']
-                ]
+                'entry_type' => HiddenType::class
             ])
             ->add('servicepointid', MaterialChoiceTableType::class, [
                 'label' => $this->trans('Service Point', 'Modules.Vgpostnord.Admin'),
