@@ -116,6 +116,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
 
         try {
             $response = $client->getServicePointsByAddress($params);
+            var_dump($response);
             if (!empty($response['servicePoints'])) {
                 $servicePoints = $response['servicePoints'];
                 $servicePoints = array_reduce($servicePoints, function ($carry, $element) {
@@ -125,24 +126,17 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
                     ];
                     return $carry;
                 }, []);
-
-                return new Response(
-                    json_encode($servicePoints),
-                    Response::HTTP_OK,
-                    ['content-type' => 'application/JSON']
-                );
+                return $this->json($servicePoints);
             } else {
-                return new Response(
-                    json_encode(['error' => $response['error']]),
-                    Response::HTTP_BAD_REQUEST,
-                    ['content-type' => 'application/JSON']
+                return $this->returnErrorJsonResponse(
+                    ['error' => $response['error']],
+                    Response::HTTP_BAD_REQUEST
                 );
             }
         } catch (Exception $e) {
-            return new Response(
-                json_encode(['error' => $e->getMessage()]),
-                Response::HTTP_INTERNAL_SERVER_ERROR,
-                ['content-type' => 'application/JSON']
+            return $this->returnErrorJsonResponse(
+                ['error' => $e->getMessage()],
+                Response::HTTP_INTERNAL_SERVER_ERROR
             );
         }
     }
@@ -289,10 +283,9 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
         }
 
         $filename = $this->_getFileName($booking);
-
-        return new Response(
+        return $this->json(
             base64_decode($booking->getLabelData()),
-            200,
+            Response::HTTP_OK,
             [
                 "Content-Type"        => "application/pdf",
                 "Content-Disposition" => "inline;filename=$filename"

@@ -88,10 +88,11 @@ class PostnordClientTest extends TestCase
 
         $results = $this->client->getServicePointById($params);
 
-        var_dump($results);
+        // var_dump($results);
         $this->assertArrayHasKey('name', $results);
         $this->assertEquals($params['ids'], $results['servicePointId']);
     }
+
     public function testGetBasicServiceCodes(): void
     {
         $params = [];

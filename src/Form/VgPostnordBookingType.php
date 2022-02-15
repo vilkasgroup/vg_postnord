@@ -155,7 +155,6 @@ class VgPostnordBookingType extends TranslatorAwareType
         $issuerCountry = Configuration::get('VG_POSTNORD_ISSUER_COUNTRY');
         $carrierSetting = json_decode(Configuration::get('VG_POSTNORD_CARRIER_SETTINGS'), true);
         $idOrder = (int) $options['data']['id_order'];
-        $idOrder = (int) $options['data']['id_order'];
         $order = new Order($idOrder);
         $idCarrier = (int) $order->id_carrier;
         // split carrierSetting into ['servicecode', 'consigneeCountry']

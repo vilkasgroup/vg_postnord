@@ -49,7 +49,7 @@ $(document).ready(function () {
             $('#save-button').prop('disabled', false);
         }).fail(function (jqXHR, textStatus) {
             console.error(jqXHR);
-            let error = jsqXHR
+            let error = jqXHR
             if(typeof jqXHR === 'string'){
                 error = JSON.parse(jqXHR.responseText)
             }
