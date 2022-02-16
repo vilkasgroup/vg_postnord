@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Vilkas\Postnord\Controller\Admin;
 
-use Context;
 use Exception;
 use Doctrine\ORM\EntityManager;
 use Symfony\Component\HttpFoundation\Request;
@@ -21,8 +20,6 @@ use PrestaShopBundle\Security\Annotation\ModuleActivated;
 
 use iio\libmergepdf\Merger;
 use iio\libmergepdf\Driver\TcpdiDriver;
-use PrestaShop\PrestaShop\Adapter\Entity\Db;
-use PrestaShop\PrestaShop\Adapter\Entity\DbQuery;
 use Vilkas\Postnord\Client\PostnordClient;
 use Vilkas\Postnord\Entity\VgPostnordBooking;
 use Vilkas\Postnord\Grid\Filter\VgPostnordBookingQueryFilter;
@@ -62,11 +59,9 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
     public function editBookingAction(Request $request,  $bookingId): Response
     {
         $idBooking = (int) $bookingId;
-        $dbQuery = new DbQuery();
-        $dbQuery->select('id_order')
-            ->from('vg_postnord_booking', 'b')
-            ->where("b.id_booking = {$idBooking}");
-        $idOrder = (int) (Db::getInstance()->executeS($dbQuery))[0]['id_order'];
+        $repository = $this->get('vilkas.postnord.repository.vgpostnordbooking');
+        $booking = $repository->findOneById($idBooking);
+        $idOrder = $booking->getIdOrder();
         $bookingFormBuilder = $this->get('vilkas.postnord.form.identifiable_object.builder.vg_postnord_booking_form_builder');
         $bookingForm = $bookingFormBuilder->getFormFor($idBooking);
         $bookingForm->handleRequest($request);
@@ -194,9 +189,10 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
             return $this->redirectToRoute("admin_orders_index");
         }
 
-        /** @var EntityManager $entityManager */
-        $entityManager = $this->container->get('doctrine.orm.entity_manager');
-        $repository = $entityManager->getRepository(VgPostnordBooking::class);
+        // /** @var EntityManager $entityManager */
+        // $entityManager = $this->container->get('doctrine.orm.entity_manager');
+        // $repository = $entityManager->getRepository(VgPostnordBooking::class);
+        $repository = $this->get('vilkas.postnord.repository.vgpostnordbooking');
 
         $booking = $repository->findOneBy(["id" => $id_booking]);
         if (!$booking) {
