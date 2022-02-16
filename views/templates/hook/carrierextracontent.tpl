@@ -5,6 +5,7 @@
     </div>
     <div class="vg_postnord_pickup_search_container row form-group">
         <div class="col-md-9">
+            <input type="hidden" class="carrierIdReference" value="{$vg_postnord_carrier_reference}" />
             <input type="text" class="vg_postnord_zipcode form-control col-md-3"
                 value="{$vg_postnord_postcode_prefill}">
         </div>

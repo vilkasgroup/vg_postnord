@@ -126,6 +126,7 @@ $(document).ready(function () {
         let data = {
             'action': 'search',
             'zipcode': $container.find('.vg_postnord_zipcode').val(),
+            'carrierIdReference': $container.find('.carrierIdReference').val(),
         }
 
         // request the pickup points

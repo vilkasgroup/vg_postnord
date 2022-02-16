@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 use Vilkas\Postnord\Client\PostnordClient;
 use Vilkas\Postnord\Entity\VgPostnordCartData;
@@ -61,9 +61,8 @@ class Vg_postnordCartPickupPointModuleFrontController extends ModuleFrontControl
      */
     private function getCarrierSettingsForCart(Cart $Cart): array
     {
-        $id_carrier = $Cart->id_carrier;
-        $Carrier = new Carrier($id_carrier);
-        $id_carrier_reference = $Carrier->id_reference;
+        // in the first query the carrier is not yet set in the context->cart
+        $id_carrier_reference = Tools::getValue('carrierIdReference');
         $carrierSettings = $this->module->getCarrierConfiguration($id_carrier_reference);
 
         return $carrierSettings;
