@@ -88,7 +88,6 @@ class PostnordClientTest extends TestCase
 
         $results = $this->client->getServicePointById($params);
 
-        // var_dump($results);
         $this->assertArrayHasKey('name', $results);
         $this->assertEquals($params['ids'], $results['servicePointId']);
     }
@@ -181,7 +180,7 @@ class PostnordClientTest extends TestCase
         // 'paperSize' => 'LABEL'
         // ];
         $results = $this->client->createBooking($email, $address, $order, $shopAddress, $country, [], $pickupAddress);
-        // var_dump($results);
+        var_dump($results);
         $this->assertArrayHasKey('bookingId', $results);
         $this->assertArrayHasKey('value', $results['idInformation'][0]['ids'][0]);
         $this->assertRegExp('/\d{20}/m', $results['idInformation'][0]['ids'][0]['value']);

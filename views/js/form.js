@@ -49,10 +49,8 @@ $(document).ready(function () {
             $('#save-button').prop('disabled', false);
         }).fail(function (jqXHR, textStatus) {
             console.error(jqXHR);
-            let error = jqXHR
-            if(typeof jqXHR === 'string'){
-                error = JSON.parse(jqXHR.responseText)
-            }
+            console.log(jqXHR)
+            const error = jqXHR.responseJSON
             if (error.error) {
                 $tableBody.html('<h3 class="alert alert-warning">' + error.error + '</h3>');
             } else {

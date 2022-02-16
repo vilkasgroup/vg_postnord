@@ -56,19 +56,6 @@ class Vg_postnordCartPickupPointModuleFrontController extends ModuleFrontControl
     }
 
     /**
-     * Get carts postnord carrier settings
-     * TODO: this should probably live in a service
-     */
-    private function getCarrierSettingsForCart(Cart $Cart): array
-    {
-        // in the first query the carrier is not yet set in the context->cart
-        $id_carrier_reference = Tools::getValue('carrierIdReference');
-        $carrierSettings = $this->module->getCarrierConfiguration($id_carrier_reference);
-
-        return $carrierSettings;
-    }
-
-    /**
      * Search for pickup points with the cart address.
      *
      * Returns results directly from postnord api or an error
@@ -80,7 +67,8 @@ class Vg_postnordCartPickupPointModuleFrontController extends ModuleFrontControl
         $id_address = $Cart->id_address_delivery;
         $Address = new Address($id_address);
 
-        $carrierSettings = $this->getCarrierSettingsForCart($Cart);
+        $id_carrier_reference = Tools::getValue('carrierIdReference');
+        $carrierSettings = $this->module->getCarrierConfiguration($id_carrier_reference);
 
         $typeId = $carrierSettings['service_codes'];
 

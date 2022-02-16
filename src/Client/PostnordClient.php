@@ -254,9 +254,6 @@ class PostnordClient
             return $response['servicePointInformationResponse']['servicePoints'][0];
         }
 
-        // // TODO: write test
-        // TODO: check written test
-
         throw new Exception('servicePointInformationResponse missing from response');
     }
 

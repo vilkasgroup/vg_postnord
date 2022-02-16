@@ -189,9 +189,6 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
             return $this->redirectToRoute("admin_orders_index");
         }
 
-        // /** @var EntityManager $entityManager */
-        // $entityManager = $this->container->get('doctrine.orm.entity_manager');
-        // $repository = $entityManager->getRepository(VgPostnordBooking::class);
         $repository = $this->get('vilkas.postnord.repository.vgpostnordbooking');
 
         $booking = $repository->findOneBy(["id" => $id_booking]);
@@ -308,7 +305,6 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
             'href' => $this->generateUrl('admin_orders_view', ["orderId" => $id_order]),
             'desc' => $this->trans('Go to Order', "Modules.Vgpostnord.Admin"),
             'icon' => 'arrow_back',
-            // 'help' => $this->trans('Create a new product: CTRL+P', 'Admin.Catalog.Help'),
         ];
         return $toolbarButtons;
     }

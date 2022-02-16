@@ -222,15 +222,7 @@ class VgPostnordBookingType extends TranslatorAwareType
         try {
             $response = $this->client->getServicePointsByAddress($params);
             if (!empty($response['servicePoints'])) {
-                $servicePoints = array_reduce($response['servicePoints'], function ($carry, $element) {
-                    $carry["{$element['name']}. 
-                    {$element['visitingAddress']['streetName']}
-                    {$element['visitingAddress']['streetNumber']},
-                    {$element['visitingAddress']['postalCode']}
-                    {$element['visitingAddress']['city']}
-                    "] = $element['servicePointId'];
-                    return $carry;
-                }, []);
+                $servicePoints = $this->getServicePointOption($response['servicePoints']);
                 return [$servicePoints, $postalCode];
             } else {
                 return [[$response['error'] => null], $postalCode];
@@ -255,5 +247,18 @@ class VgPostnordBookingType extends TranslatorAwareType
         ];
 
         return $this->client->getServicePointById($params);
+    }
+
+    private function getServicePointOption($servicePoints): array
+    {
+        return array_reduce($servicePoints, function ($carry, $element) {
+            $carry["{$element['name']}. 
+            {$element['visitingAddress']['streetName']}
+            {$element['visitingAddress']['streetNumber']},
+            {$element['visitingAddress']['postalCode']}
+            {$element['visitingAddress']['city']}
+            "] = $element['servicePointId'];
+            return $carry;
+        }, []);
     }
 }
