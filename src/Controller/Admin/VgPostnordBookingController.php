@@ -283,7 +283,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
         }
 
         $filename = $this->_getFileName($booking);
-        return $this->json(
+        return new Response(
             base64_decode($booking->getLabelData()),
             Response::HTTP_OK,
             [
