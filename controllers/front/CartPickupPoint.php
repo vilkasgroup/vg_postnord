@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 use Vilkas\Postnord\Client\PostnordClient;
 use Vilkas\Postnord\Entity\VgPostnordCartData;
@@ -56,20 +56,6 @@ class Vg_postnordCartPickupPointModuleFrontController extends ModuleFrontControl
     }
 
     /**
-     * Get carts postnord carrier settings
-     * TODO: this should probably live in a service
-     */
-    private function getCarrierSettingsForCart(Cart $Cart): array
-    {
-        $id_carrier = $Cart->id_carrier;
-        $Carrier = new Carrier($id_carrier);
-        $id_carrier_reference = $Carrier->id_reference;
-        $carrierSettings = $this->module->getCarrierConfigurations();
-
-        return $carrierSettings[$id_carrier_reference];
-    }
-
-    /**
      * Search for pickup points with the cart address.
      *
      * Returns results directly from postnord api or an error
@@ -81,18 +67,19 @@ class Vg_postnordCartPickupPointModuleFrontController extends ModuleFrontControl
         $id_address = $Cart->id_address_delivery;
         $Address = new Address($id_address);
 
-        $carrierSettings = $this->getCarrierSettingsForCart($Cart);
+        $id_carrier_reference = Tools::getValue('carrierIdReference');
+        $carrierSettings = $this->module->getCarrierConfiguration($id_carrier_reference);
 
         $typeId = $carrierSettings['service_codes'];
 
         $id_country = $Address->id_country;
-        $Country = new Country($id_country);
-
         $postalCode = Tools::getValue('zipcode');
 
+        $countryIsoCode = Country::getIsoById($id_country);
+
         $params = [
-            'countryCode' => $Country->iso_code,
-            'agreementCountry' => $Country->iso_code,
+            'countryCode' => $countryIsoCode,
+            'agreementCountry' => $countryIsoCode,
             //'city' => $Address->city,
             'postalCode' => $postalCode,
             //'streetName' => $Address->address1,
@@ -109,8 +96,7 @@ class Vg_postnordCartPickupPointModuleFrontController extends ModuleFrontControl
      */
     private function savePickupPoint(Cart $Cart, $servicepointid)
     {
-        $manager = $this->get('doctrine.orm.entity_manager');
-        $repo = $manager->getRepository(VgPostnordCartData::class);
+        $repo = $this->get('vilkas.postnord.repository.vgpostnordcartdata');
         $repo->upsertCartServicePointId($Cart->id, $servicepointid);
     }
 
