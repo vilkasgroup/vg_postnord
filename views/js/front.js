@@ -126,6 +126,7 @@ $(document).ready(function () {
         let data = {
             'action': 'search',
             'zipcode': $container.find('.vg_postnord_zipcode').val(),
+            'carrierIdReference': $container.find('.carrierIdReference').val(),
         }
 
         // request the pickup points
@@ -143,7 +144,7 @@ $(document).ready(function () {
                 );
                 // and now that we have results rendered, select the first one
                 $resultsDiv.find('.vg_postnord_pickupPoint').first().click();
-            } else if(resp.error) {
+            } else if (resp.error) {
                 $resultsDiv.html('<h3 class="alert alert-warning">' + resp.error + '</h3>');
             } else {
                 $resultsDiv.html('<h3 class="alert alert-warning">Unknown error, please try again later</h3>');
@@ -201,7 +202,7 @@ $(document).ready(function () {
         </div>
         `;
 
-        if (($i+1) % 3 === 0) {
+        if (($i + 1) % 3 === 0) {
             html += '<div class="clearfix visible-xs-block"></div>'
         }
 
