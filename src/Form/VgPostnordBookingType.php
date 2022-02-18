@@ -87,23 +87,31 @@ class VgPostnordBookingType extends TranslatorAwareType
 
         // Only show service point selector when carrier support service point(A7)
         if (in_array('A7', $this->mandatory_service_codes)) {
-            $builder->add('servicepointid', MaterialChoiceTableType::class, [
-                'label' => $this->trans('Service Point', 'Modules.Vgpostnord.Admin'),
-                'help' => $this->trans('Service Point', 'Modules.Vgpostnord.Admin'),
-                'choices' => [],
-                'multiple' => false,
-                'row_attr' => ['class' => 'servicePointIdPicker']
-            ])
-                ->add('service_point_data', HiddenType::class, [
-                    'data' => ' '
+            $builder
+                ->add('current_service_point', TextType::class, [
+                    'label' => $this->trans('Current Service Point', 'Modules.Vgpostnord.Admin'),
+                    'disabled' => true,
                 ])
+                ->add($builder->create('change_service_point', FormType::class, [
+                    'label' => false,
+                    'row_attr' => ['class' => 'changeButton']
+                ])
+                    ->add('button', ButtonType::class, [
+                        'attr' => ['class' => 'search btn-primary float-right col px-md-5'],
+                        'label' => $this->trans('Change Service Point', 'Modules.Vgpostnord.Admin'),
+                    ]))
+                // use this one to get servicepointid 
+                ->add('servicepointid', HiddenType::class)
+                ->add('service_point_data', HiddenType::class)
                 ->add('postcode', TextType::class, [
                     'label' => $this->trans('Postal Code', 'Modules.Vgpostnord.Admin'),
                     'required'   => false,
                     'data' => $postalCode,
+                    'row_attr' => ['class' => 'd-none']
                 ])
                 ->add($builder->create('button', FormType::class, [
-                    'label' => false
+                    'label' => false,
+                    'attr' => ['class' => 'd-none']
                 ])
                     ->add('search', ButtonType::class, [
                         'attr' => ['class' => 'search btn-primary float-right col px-md-5'],
@@ -114,11 +122,29 @@ class VgPostnordBookingType extends TranslatorAwareType
                     $form = $event->getForm();
                     $data = $event->getData();
 
-                    // get form data
-                    $servicePoints = $data['servicepointid'];
-                    $form->add('servicepointidvalue', HiddenType::class, [
-                        'data' => $servicePoints
+                    // get service_point_data
+                    if(!empty($data['service_point_data'])){
+                        $servicePointData = json_decode($data['service_point_data'], true);
+                        // Show the current selected service point
+                        $data['current_service_point'] = "{$servicePointData['name']}. {$servicePointData['visitingAddress']['streetName']} {$servicePointData['visitingAddress']['streetNumber']}, {$servicePointData['visitingAddress']['postalCode']} {$servicePointData['visitingAddress']['city']}";
+                    }
+
+                    // used to compare, then conditional fetching service_point_data 
+                    $form->add('servicepointid_value', HiddenType::class, [
+                        'data' => $data['servicepointid'],
                     ]);
+                    // add servicepointid table. The default choice is the
+                    // current servicepointid to prevent bug when submit
+                    // without changing.
+                    $form->add('servicepointid', MaterialChoiceTableType::class, [
+                        'label' => $this->trans('New Service Point', 'Modules.Vgpostnord.Admin'),
+                        'help' => $this->trans('Change to New Service Point', 'Modules.Vgpostnord.Admin'),
+                        'choices' => [$data['servicepointid'] => $data['servicepointid']],
+                        'multiple' => false,
+                        'row_attr' => ['class' => 'servicePointIdPicker d-none']
+                    ]);
+
+                    $event->setData($data);
                 })
                 ->addEventListener(FormEvents::PRE_SUBMIT, function (FormEvent $event) {
                     // get form, options from event
@@ -126,6 +152,7 @@ class VgPostnordBookingType extends TranslatorAwareType
                     $data = $event->getData();
                     // get submitted form data
                     $servicePoints = $data['servicepointid'];
+                    $currentServicePoint = $data['servicepointid_value'];
                     $idOrder = $data['id_order'];
 
                     // create new choices list
@@ -141,9 +168,12 @@ class VgPostnordBookingType extends TranslatorAwareType
                         }
                     } else {
                         $choices[$servicePoints] = $servicePoints;
-                        $servicePointData = $this->getServicePointData($idOrder, $servicePoints);
-                        $data['service_point_data'] = json_encode($servicePointData);
-                        $event->setData($data);
+                        // only update service_point_data if changed
+                        if ($servicePoints !== $currentServicePoint) {
+                            $servicePointData = $this->getServicePointData($idOrder, $servicePoints);
+                            $data['service_point_data'] = json_encode($servicePointData);
+                            $event->setData($data);
+                        }
                     }
 
                     // Add field with new choices to form

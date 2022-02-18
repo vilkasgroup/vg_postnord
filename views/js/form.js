@@ -1,19 +1,22 @@
 $(document).ready(function () {
-
+    const $servicePointTable = $('body').find('.servicePointIdPicker');
+    const $tableBody = $servicePointTable.find('tbody');
+    const servicePointValue = $('#vg_postnord_booking_servicepointid_value').val();
+    const ajaxurl = $('#vg_postnord_edit_booking').data('ajaxurl');
+    const idOrder = $('#vg_postnord_booking_id_order').val();
+    $servicePointTable.find('thead').remove()
+    
     // dynamic selector for some other modules that show the basket differently
     $('body').on('click', '#vg_postnord_booking_button', function (e) {
         e.preventDefault();
-
+        
         const $button = $(this).find('button');
         const $buttonText = $button.html()
-        const $servicePointTable = $('body').find('.servicePointIdPicker');
-        const $tableBody = $servicePointTable.find('tbody');
         const zipcode = $('#vg_postnord_booking_postcode').val();
-        const ajaxurl = $('#vg_postnord_edit_booking').data('ajaxurl');
-        const idOrder = $('#vg_postnord_booking_id_order').val();
-        const servicePointValue = $('#vg_postnord_booking_servicepointidvalue').val();
 
         $button.prop('disabled', true);
+        $('#save-button').prop('disabled', true);
+
         $button.html(`  
             <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
             <span class="sr-only">Loading...</span>
@@ -30,7 +33,7 @@ $(document).ready(function () {
             // render the results
             try {
                 let servicePoint = resp
-                
+
                 if (typeof resp === 'string') {
                     servicePoint = JSON.parse(resp)
                 }
@@ -49,18 +52,19 @@ $(document).ready(function () {
             $('#save-button').prop('disabled', false);
         }).fail(function (jqXHR, textStatus) {
             console.error(jqXHR);
-            console.log(jqXHR)
+
             const error = jqXHR.responseJSON
             if (error.error) {
                 $tableBody.html('<h3 class="alert alert-warning">' + error.error + '</h3>');
             } else {
                 $tableBody.html('<h3 class="alert alert-warning">' + jqXHR.statusText + '</h3>');
             }
-            $('#save-button').prop('disabled', true);
         }).always(function () {
             $button.prop('disabled', false);
             $button.html($buttonText)
+            $('body').find('.d-none').removeClass('d-none')
         });
+
     });
 
     /**
@@ -86,7 +90,14 @@ $(document).ready(function () {
         return html;
     }
 
-    // on page load trigger search to prefill the results
-    $('#vg_postnord_booking_button_search').click()
+    // trigger search when changing service point to prefill the results
+    $('body').on('click', '#vg_postnord_booking_change_service_point_button', function (e) {
+        e.preventDefault()
+
+        $('#vg_postnord_booking_button_search').click()
+        
+        $('.changeButton').remove()
+    })
+
 
 });
