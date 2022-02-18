@@ -5,25 +5,24 @@ declare(strict_types=1);
 namespace Vilkas\Postnord\Form;
 
 use Exception;
-use Symfony\Component\Form\FormBuilderInterface;
-use Symfony\Component\Form\Extension\Core\Type\TextType;
+use PrestaShop\PrestaShop\Adapter\Entity\Address;
+use PrestaShop\PrestaShop\Adapter\Entity\Configuration;
+use PrestaShop\PrestaShop\Adapter\Entity\Country;
+use PrestaShop\PrestaShop\Adapter\Entity\Order;
+use PrestaShopBundle\Form\Admin\Type\Material\MaterialChoiceTableType;
+use PrestaShopBundle\Form\Admin\Type\TranslatorAwareType;
+
 use Symfony\Component\Form\Extension\Core\Type\ButtonType;
-use Symfony\Component\Form\Extension\Core\Type\FormType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Form\Extension\Core\Type\CollectionType;
+use Symfony\Component\Form\Extension\Core\Type\FormType;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
+use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
 use Symfony\Component\Translation\TranslatorInterface;
 
-use PrestaShop\PrestaShop\Adapter\Entity\Address;
-use PrestaShop\PrestaShop\Adapter\Entity\Configuration;
-use PrestaShop\PrestaShop\Adapter\Entity\Country;
-use PrestaShop\PrestaShop\Adapter\Entity\Db;
-use PrestaShop\PrestaShop\Adapter\Entity\DbQuery;
-use PrestaShop\PrestaShop\Adapter\Entity\Order;
-use PrestaShopBundle\Form\Admin\Type\Material\MaterialChoiceTableType;
-use PrestaShopBundle\Form\Admin\Type\TranslatorAwareType;
-use Symfony\Component\Form\Extension\Core\Type\CollectionType;
 use Vilkas\Postnord\Client\PostnordClient;
 
 class VgPostnordBookingType extends TranslatorAwareType
@@ -56,7 +55,7 @@ class VgPostnordBookingType extends TranslatorAwareType
         // I couldn't find a way to disable the edit button
         // So let settle with disabled form with this instead.
         $builder->setDisabled(!empty($options['data']['finalized']));
-        list($servicePoints, $postalCode) = $this->getServicePoint($options);
+        $postalCode = $this->getPostalCode($options);
 
         $builder
             // Not used yet
@@ -246,7 +245,7 @@ class VgPostnordBookingType extends TranslatorAwareType
             'postalCode' => $postalCode,
             //'streetName' => $address->address1,
             //'streetNumber' => '19',
-            'numberOfServicePoints' => 100, // TODO: this should probably be a setting?
+            'numberOfServicePoints' => 100, 
             'typeId' => $carrierSetting[$idCarrier]['service_codes'] // "type of the service point" or service code, see module configuration page
         ];
         try {
@@ -290,5 +289,14 @@ class VgPostnordBookingType extends TranslatorAwareType
             "] = $element['servicePointId'];
             return $carry;
         }, []);
+    }
+    private function getPostalCode($options): string
+    {
+        $idOrder = (int) $options['data']['id_order'];
+        $order = new Order($idOrder);
+        $idAddress = (int) $order->id_address_delivery;
+        $address = new Address($idAddress);
+        $postalCode = $address->postcode;
+        return $postalCode;
     }
 }

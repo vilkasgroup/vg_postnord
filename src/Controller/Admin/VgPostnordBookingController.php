@@ -5,9 +5,8 @@ declare(strict_types=1);
 namespace Vilkas\Postnord\Controller\Admin;
 
 use Exception;
-use Doctrine\ORM\EntityManager;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
+use iio\libmergepdf\Driver\TcpdiDriver;
+use iio\libmergepdf\Merger;
 
 use PrestaShop\PrestaShop\Adapter\Entity\Address;
 use PrestaShop\PrestaShop\Adapter\Entity\Configuration;
@@ -18,8 +17,9 @@ use PrestaShopBundle\Controller\Admin\FrameworkBundleAdminController;
 use PrestaShopBundle\Security\Annotation\AdminSecurity;
 use PrestaShopBundle\Security\Annotation\ModuleActivated;
 
-use iio\libmergepdf\Merger;
-use iio\libmergepdf\Driver\TcpdiDriver;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+
 use Vilkas\Postnord\Client\PostnordClient;
 use Vilkas\Postnord\Entity\VgPostnordBooking;
 use Vilkas\Postnord\Grid\Filter\VgPostnordBookingQueryFilter;
@@ -29,8 +29,6 @@ use Vilkas\Postnord\Grid\Filter\VgPostnordBookingQueryFilter;
  *
  * @ModuleActivated(moduleName="vg_postnord", redirectRoute="admin_module_manage")
  */
-
-
 class VgPostnordBookingController extends FrameworkBundleAdminController
 {
     public function __construct()
