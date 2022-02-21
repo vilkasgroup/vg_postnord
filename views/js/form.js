@@ -98,6 +98,8 @@ $(document).ready(function () {
         
         $('.changeButton').remove()
     })
-
-
+    
+    if(!servicePointValue){
+        $('#vg_postnord_booking_change_service_point_button').click()
+    }
 });

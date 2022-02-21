@@ -150,7 +150,8 @@ class VgPostnordBookingType extends TranslatorAwareType
                     $form = $event->getForm();
                     $data = $event->getData();
                     // get submitted form data
-                    $servicePoints = $data['servicepointid'];
+
+                    $servicePoints = !empty($data['servicepointid']) ? $data['servicepointid'] : null;
                     $currentServicePoint = $data['servicepointid_value'];
                     $idOrder = $data['id_order'];
 
@@ -170,8 +171,10 @@ class VgPostnordBookingType extends TranslatorAwareType
                         // only update service_point_data if changed
                         if ($servicePoints !== $currentServicePoint) {
                             $servicePointData = $this->getServicePointData($idOrder, $servicePoints);
-                            $data['service_point_data'] = json_encode($servicePointData);
-                            $event->setData($data);
+                            if (empty($servicePointData['error'])) {
+                                $data['service_point_data'] = json_encode($servicePointData);
+                                $event->setData($data);
+                            }
                         }
                     }
 
