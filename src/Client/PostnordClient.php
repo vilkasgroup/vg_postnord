@@ -254,8 +254,6 @@ class PostnordClient
             return $response['servicePointInformationResponse']['servicePoints'][0];
         }
 
-        // TODO: write test
-
         throw new Exception('servicePointInformationResponse missing from response');
     }
 
@@ -410,6 +408,7 @@ class PostnordClient
         object $customerAddress,
         array $order,
         array $shopAddress,
+        array $returnAddress,
         string $country = 'FI',
         array $labelInfo = [],
         array $pickupAddress = []
@@ -422,6 +421,7 @@ class PostnordClient
             $customerAddress,
             $order,
             $shopAddress,
+            $returnAddress,
             $country,
             $pickupAddress
         );
@@ -454,7 +454,7 @@ class PostnordClient
     }
 
     /**
-     * @param string $labelId id of the label (not the id of the booking)
+     * @param string $labelId id of the label or item, they use the same id (not the id of the booking)
      * @param array $labelInfo label printout format (Paper size, number, etc.) from PostNord
      *
      * @return array PDF label from PostNord
@@ -479,6 +479,40 @@ class PostnordClient
         } catch (Exception $e) {
             // TODO: Log error
             $this->logger->error('Error getting label' . $e->getMessage());
+            $error = json_decode($e->getMessage(), true);
+            throw new Exception($error['message']);
+        }
+
+        return $response;
+    }
+
+    /**
+     * @param string $itemId id of the label or item, they use the same id (not the id of the booking)
+     * @param array $labelInfo label printout format (Paper size, number, etc.) from PostNord
+     *
+     * @return array PDF label from PostNord
+     */
+    public function getReturnPDFLabelFromId(string $itemId, array $labelInfo): array
+    {
+        $defaults = [];
+        $parameters = $this->mergeOptions($defaults, $labelInfo);
+        $options['query'] = $parameters;
+        $options['json'] = [['return' => ['id' => $itemId]]];
+        try {
+            $this->logger->debug('Get label with:' . PHP_EOL . json_encode($options, JSON_PRETTY_PRINT));
+            $response = $this->doRequest('POST', '/rest/shipment/v3/returns/ids/labels/pdf', $options);
+            if (isset(
+                $response['labelPrintout'][0]['printout']['data']
+            )) {
+                // remove base64 pdf before logging
+                $responseWithoutBase64 = $response;
+                unset($responseWithoutBase64['labelPrintout'][0]['printout']['data']);
+                $this->logger->debug('Booking created with data:' . PHP_EOL . json_encode($responseWithoutBase64, JSON_PRETTY_PRINT));
+            }
+        } catch (Exception $e) {
+            // TODO: Log error
+            $this->logger->error('Error getting label' . $e->getMessage());
+            var_dump($e->getMessage());
             $error = json_decode($e->getMessage(), true);
             throw new Exception($error['message']);
         }
@@ -521,11 +555,18 @@ class PostnordClient
         object $customerAddress,
         array $order,
         array $shopAddress,
+        array $returnAddress,
         string $country = 'FI',
         array $pickupAddress = []
     ): array {
         $datetime = date(DATE_ISO8601);
-
+        $returnAddress = [
+            'return_name' => !empty($returnAddress['return_name']) ? $returnAddress['return_name'] : $shopAddress['shop_name'],
+            'return_street' => !empty($returnAddress['return_street']) ? $returnAddress['return_street'] : $shopAddress['shop_street'],
+            'return_postcode' => !empty($returnAddress['return_postcode']) ? $returnAddress['return_postcode'] : $shopAddress['shop_postcode'],
+            'return_city' => !empty($returnAddress['return_city']) ? $returnAddress['return_city'] : $shopAddress['shop_city'],
+            'return_country' => !empty($returnAddress['return_country']) ? $returnAddress['return_country'] : $shopAddress['shop_country'],
+        ];
         $body = [
             'messageDate' => $datetime,
             'messageFunction' => 'Instruction',
@@ -571,6 +612,19 @@ class PostnordClient
                                     'postalCode' => $shopAddress['shop_postcode'],
                                     'city' => $shopAddress['shop_city'],
                                     'countryCode' => $shopAddress['shop_country'],
+                                ],
+                            ],
+                        ],
+                        'returnParty' => [
+                            'party' => [
+                                'nameIdentification' => [
+                                    'name' => $returnAddress['return_name'],
+                                ],
+                                'address' => [
+                                    'streets' => [$returnAddress['return_street']],
+                                    'postalCode' => $returnAddress['return_postcode'],
+                                    'city' => $returnAddress['return_city'],
+                                    'countryCode' => $returnAddress['return_country'],
                                 ],
                             ],
                         ],

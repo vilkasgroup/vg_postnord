@@ -124,6 +124,7 @@ class VgPostnordBookingService
         ];
 
         $shop_address  = json_decode(Configuration::get("VG_POSTNORD_SHOP_ADDRESS"), true);
+        $return_address  = json_decode(Configuration::get("VG_POSTNORD_RETURN_ADDRESS"), true);
         $service_point = json_decode($booking->getServicePointData(), true);
 
         $pickup_address = [];
@@ -145,11 +146,12 @@ class VgPostnordBookingService
             $address_invoice,
             $order_data,
             $shop_address,
+            $return_address,
             $customer_country->iso_code,
             $label_info,
             $pickup_address
         );
-
+        
         $bookingResponse = $response["bookingResponse"];
         $labelPrintout   = $response["labelPrintout"];
 

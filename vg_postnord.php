@@ -73,11 +73,13 @@ class Vg_postnord extends CarrierModule
     public function install(): bool
     {
         Configuration::updateValue('VG_POSTNORD_DEBUG_MODE', false);
+        Configuration::updateValue('VG_POSTNORD_DIFFERENT_RETURN_ADDRESS', false);
         Configuration::updateValue('VG_POSTNORD_HOST', '');
         Configuration::updateValue('VG_POSTNORD_APIKEY', '');
         Configuration::updateValue('VG_POSTNORD_ISSUER_COUNTRY', '');
         Configuration::updateValue('VG_POSTNORD_CARRIER_SETTINGS', '[]');
         Configuration::updateValue('VG_POSTNORD_SHOP_ADDRESS', '[]');
+        Configuration::updateValue('VG_POSTNORD_RETURN_ADDRESS', '[]');
 
         return parent::install()
             && $this->installSQL()
@@ -102,11 +104,13 @@ class Vg_postnord extends CarrierModule
     public function uninstall(): bool
     {
         Configuration::deleteByName('VG_POSTNORD_DEBUG_MODE');
+        Configuration::deleteByName('VG_POSTNORD_DIFFERENT_RETURN_ADDRESS');
         Configuration::deleteByName('VG_POSTNORD_HOST');
         Configuration::deleteByName('VG_POSTNORD_APIKEY');
         Configuration::deleteByName('VG_POSTNORD_ISSUER_COUNTRY');
         Configuration::deleteByName('VG_POSTNORD_CARRIER_SETTINGS');
         Configuration::deleteByName('VG_POSTNORD_SHOP_ADDRESS');
+        Configuration::deleteByName('VG_POSTNORD_RETURN_ADDRESS');
 
         return parent::uninstall()
             && $this->uninstallSQL();
@@ -226,16 +230,25 @@ class Vg_postnord extends CarrierModule
 
     protected function getConfigForms(): array
     {
-        return [
+        $form = [
             'general' => $this->getConfigForm(),
             'carriers' => $this->getCarrierConfigForm(),
             'address' => $this->getAddressConfigForm(),
         ];
+        if (Configuration::get('VG_POSTNORD_DIFFERENT_RETURN_ADDRESS')) {
+            $form['return'] = $this->getReturnAddressConfigForm();
+        }
+        return $form;
     }
 
     protected function getAllFormValues(): array
     {
-        return array_merge($this->getConfigFormValues(), $this->getCarrierConfigFormValues(), $this->getAddressConfigFormValues());
+        return array_merge(
+            $this->getConfigFormValues(),
+            $this->getCarrierConfigFormValues(),
+            $this->getAddressConfigFormValues(),
+            Configuration::get('VG_POSTNORD_DIFFERENT_RETURN_ADDRESS') ? $this->getReturnAddressConfigFormValues() : []
+        );
     }
 
     /**
@@ -255,6 +268,25 @@ class Vg_postnord extends CarrierModule
                         'name' => 'VG_POSTNORD_DEBUG_MODE',
                         'label' => $this->trans('Debug mode', [], 'Modules.Vgpostnord.Admin'),
                         'desc' => $this->trans('Write more debug logs', [], 'Modules.Vgpostnord.Admin'),
+                        'is_bool' => true,
+                        'values' => [
+                            [
+                                'id' => 'active_on',
+                                'value' => true,
+                                'label' => $this->trans('Enabled', [], 'Modules.Vgpostnord.Admin'),
+                            ],
+                            [
+                                'id' => 'active_off',
+                                'value' => false,
+                                'label' => $this->trans('Disabled', [], 'Modules.Vgpostnord.Admin'),
+                            ],
+                        ],
+                    ],
+                    [
+                        'type' => 'switch',
+                        'name' => 'VG_POSTNORD_DIFFERENT_RETURN_ADDRESS',
+                        'label' => $this->trans('Different return address', [], 'Modules.Vgpostnord.Admin'),
+                        'desc' => $this->trans('Enable if the return address is different than shop address', [], 'Modules.Vgpostnord.Admin'),
                         'is_bool' => true,
                         'values' => [
                             [
@@ -292,12 +324,14 @@ class Vg_postnord extends CarrierModule
                         'name' => 'VG_POSTNORD_HOST',
                         'label' => $this->trans('Postnord hostname', [], 'Modules.Vgpostnord.Admin'),
                         'desc' => $this->trans('Get this information from Postnord. Usually something like: atapi2.postnord.com', [], 'Modules.Vgpostnord.Admin'),
+                        'required' => true
                     ],
                     [
                         'type' => 'text',
                         'name' => 'VG_POSTNORD_APIKEY',
                         'label' => $this->trans('Postnord apikey', [], 'Modules.Vgpostnord.Admin'),
                         'desc' => $this->trans('Get this information from Postnord. Something like abc123123123123abc123', [], 'Modules.Vgpostnord.Admin'),
+                        'required' => true
                     ],
                 ],
                 'submit' => [
@@ -314,6 +348,7 @@ class Vg_postnord extends CarrierModule
     {
         return [
             'VG_POSTNORD_DEBUG_MODE' => Configuration::get('VG_POSTNORD_DEBUG_MODE'),
+            'VG_POSTNORD_DIFFERENT_RETURN_ADDRESS' => Configuration::get('VG_POSTNORD_DIFFERENT_RETURN_ADDRESS'),
             'VG_POSTNORD_HOST' => Configuration::get('VG_POSTNORD_HOST'),
             'VG_POSTNORD_APIKEY' => Configuration::get('VG_POSTNORD_APIKEY'),
             'VG_POSTNORD_ISSUER_COUNTRY' => Configuration::get('VG_POSTNORD_ISSUER_COUNTRY'),
@@ -411,7 +446,90 @@ class Vg_postnord extends CarrierModule
     }
 
     /**
-     * Creates a form for mapping carriers to pakettikauppa delivery methods.
+     * Create a form to store shop address
+     * address will be stored in VG_POSTNORD_RETURN_ADDRESS as json
+     */
+    protected function getReturnAddressConfigForm(): array
+    {
+        return [
+            'form' => [
+                'legend' => [
+                    'title' => $this->trans('Return Address Setting', [], 'Modules.Vgpostnord.Admin'),
+                    'icon' => 'icon-cogs',
+                ],
+                'input' => [
+                    [
+                        'type' => 'text',
+                        'name' => 'return_name',
+                        'label' => $this->trans('Return name', [], 'Modules.Vgpostnord.Admin'),
+                        'desc' => $this->trans('Sender name', [], 'Modules.Vgpostnord.Admin'),
+                    ],
+                    [
+                        'type' => 'text',
+                        'name' => 'return_street',
+                        'label' => $this->trans('Return street address', [], 'Modules.Vgpostnord.Admin'),
+                        'desc' => $this->trans('Sender street address', [], 'Modules.Vgpostnord.Admin'),
+                    ],
+                    [
+                        'type' => 'text',
+                        'name' => 'return_postcode',
+                        'label' => $this->trans('Return postal code', [], 'Modules.Vgpostnord.Admin'),
+                        'desc' => $this->trans('Sender postal code', [], 'Modules.Vgpostnord.Admin'),
+                    ],
+                    [
+                        'type' => 'text',
+                        'name' => 'return_city',
+                        'label' => $this->trans('Return city', [], 'Modules.Vgpostnord.Admin'),
+                        'desc' => $this->trans('Sender city', [], 'Modules.Vgpostnord.Admin'),
+                    ],
+                    [
+                        'type' => 'select',
+                        'name' => 'return_country',
+                        'label' => $this->trans('Return country', [], 'Modules.Vgpostnord.Admin'),
+                        'options' => [
+                            'query' => [
+                                ['id' => 'FI', 'name' => 'Finland'],
+                                ['id' => 'AX', 'name' => 'Åland'],
+                                ['id' => 'SE', 'name' => 'Sweden'],
+                                ['id' => 'DK', 'name' => 'Denmark'],
+                                ['id' => 'NO', 'name' => 'Norway'],
+                            ],
+                            'id' => 'id',
+                            'name' => 'name',
+                            'default' => null,
+                        ],
+                        'desc' => $this->trans('Sender country', [], 'Modules.Vgpostnord.Admin'),
+                    ],
+                ],
+                'submit' => [
+                    'title' => $this->trans('Save', [], 'Modules.Vgpostnord.Admin'),
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * parse VG_POSTNORD_RETURN_ADDRESS to config form values
+     */
+    public function getReturnAddressConfigFormValues(): array
+    {
+        $address = json_decode(Configuration::get('VG_POSTNORD_RETURN_ADDRESS', true), true);
+
+        if (empty($address)) {
+            return [
+                'return_name' => '',
+                'return_street' => '',
+                'return_postcode' => '',
+                'return_city' => '',
+                'return_country' => '',
+            ];
+        }
+
+        return $address;
+    }
+
+    /**
+     * Creates a form for mapping carriers to Postnord delivery methods.
      *
      * If api connection fails shows a warning message instead of the form
      *
@@ -591,6 +709,15 @@ class Vg_postnord extends CarrierModule
         }
 
         $result &= Configuration::updateValue('VG_POSTNORD_SHOP_ADDRESS', json_encode($address_config));
+
+        // address config into json
+        $return_address_form_values = $this->getReturnAddressConfigFormValues();
+        $return_address_config = [];
+        foreach (array_keys($return_address_form_values) as $key) {
+            $return_address_config[$key] = Tools::getValue($key);
+        }
+
+        $result &= Configuration::updateValue('VG_POSTNORD_RETURN_ADDRESS', json_encode($return_address_config));
 
         // carrier settings into one json
         $carrier_form_values = $this->getCarrierConfigFormValues();
