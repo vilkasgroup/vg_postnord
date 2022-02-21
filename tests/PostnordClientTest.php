@@ -149,14 +149,14 @@ class PostnordClientTest extends TestCase
                 'additionalDescription' => null,
             ],
         ];
-        // extract from VG_POSTNORD_RETURN_ADDRESS
-        $returnAddress = [
-            'return_name' => 'Temp Dev',
-            'return_street' => 'Finlaysoninkuja 19',
-            'return_postcode' => '33210',
-            'return_city' => 'Tamperere',
-            'return_country' => 'FI',
-        ];
+        // extract from VG_POSTNORD_RETURN_ADDRESS can be left empty 
+        // $returnAddress = [
+        //     'return_name' => 'Temp Dev',
+        //     'return_street' => 'Finlaysoninkuja 19',
+        //     'return_postcode' => '33210',
+        //     'return_city' => 'Tamperere',
+        //     'return_country' => 'FI',
+        // ];
         // just customer email
         $email = 'customer@prestashop.com';
         // address is prestashop address object (customer address)
@@ -190,7 +190,7 @@ class PostnordClientTest extends TestCase
             $address,
             $order,
             $shopAddress,
-            $returnAddress,
+            [],
             $country,
             [],
             $pickupAddress
@@ -209,13 +209,6 @@ class PostnordClientTest extends TestCase
             'shop_postcode' => '33210',
             'shop_city' => 'Tamperere',
             'shop_country' => 'FI',
-        ];
-        $returnAddress = [
-            'return_name' => 'Temp Dev',
-            'return_street' => 'Finlaysoninkuja 19',
-            'return_postcode' => '33210',
-            'return_city' => 'Tamperere',
-            'return_country' => 'FI',
         ];
         $pickupAddress = [
             'name' => 'Pn K-supermarket Kuninkaankulma',
@@ -258,7 +251,7 @@ class PostnordClientTest extends TestCase
             $address,
             $order,
             $shopAddress,
-            $returnAddress,
+            [],
             $country,
             $labelInfo,
             $pickupAddress

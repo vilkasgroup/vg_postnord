@@ -408,7 +408,7 @@ class PostnordClient
         object $customerAddress,
         array $order,
         array $shopAddress,
-        array $returnAddress,
+        array $returnAddress = [],
         string $country = 'FI',
         array $labelInfo = [],
         array $pickupAddress = []
@@ -555,7 +555,7 @@ class PostnordClient
         object $customerAddress,
         array $order,
         array $shopAddress,
-        array $returnAddress,
+        array $returnAddress = [],
         string $country = 'FI',
         array $pickupAddress = []
     ): array {
