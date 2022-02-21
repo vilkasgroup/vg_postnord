@@ -73,6 +73,7 @@ class Vg_postnord extends CarrierModule
     public function install(): bool
     {
         Configuration::updateValue('VG_POSTNORD_DEBUG_MODE', false);
+        Configuration::updateValue('VG_POSTNORD_FETCH_BOTH', false);
         Configuration::updateValue('VG_POSTNORD_DIFFERENT_RETURN_ADDRESS', false);
         Configuration::updateValue('VG_POSTNORD_HOST', '');
         Configuration::updateValue('VG_POSTNORD_APIKEY', '');
@@ -104,6 +105,7 @@ class Vg_postnord extends CarrierModule
     public function uninstall(): bool
     {
         Configuration::deleteByName('VG_POSTNORD_DEBUG_MODE');
+        Configuration::deleteByName('VG_POSTNORD_FETCH_BOTH');
         Configuration::deleteByName('VG_POSTNORD_DIFFERENT_RETURN_ADDRESS');
         Configuration::deleteByName('VG_POSTNORD_HOST');
         Configuration::deleteByName('VG_POSTNORD_APIKEY');
@@ -284,6 +286,25 @@ class Vg_postnord extends CarrierModule
                     ],
                     [
                         'type' => 'switch',
+                        'name' => 'VG_POSTNORD_FETCH_BOTH',
+                        'label' => $this->trans('Fetch both label', [], 'Modules.Vgpostnord.Admin'),
+                        'desc' => $this->trans('Fetch shipping label and return label at the same time', [], 'Modules.Vgpostnord.Admin'),
+                        'is_bool' => true,
+                        'values' => [
+                            [
+                                'id' => 'active_on',
+                                'value' => true,
+                                'label' => $this->trans('Enabled', [], 'Modules.Vgpostnord.Admin'),
+                            ],
+                            [
+                                'id' => 'active_off',
+                                'value' => false,
+                                'label' => $this->trans('Disabled', [], 'Modules.Vgpostnord.Admin'),
+                            ],
+                        ],
+                    ],
+                    [
+                        'type' => 'switch',
                         'name' => 'VG_POSTNORD_DIFFERENT_RETURN_ADDRESS',
                         'label' => $this->trans('Different return address', [], 'Modules.Vgpostnord.Admin'),
                         'desc' => $this->trans('Enable if the return address is different than shop address', [], 'Modules.Vgpostnord.Admin'),
@@ -348,6 +369,7 @@ class Vg_postnord extends CarrierModule
     {
         return [
             'VG_POSTNORD_DEBUG_MODE' => Configuration::get('VG_POSTNORD_DEBUG_MODE'),
+            'VG_POSTNORD_FETCH_BOTH' => Configuration::get('VG_POSTNORD_FETCH_BOTH'),
             'VG_POSTNORD_DIFFERENT_RETURN_ADDRESS' => Configuration::get('VG_POSTNORD_DIFFERENT_RETURN_ADDRESS'),
             'VG_POSTNORD_HOST' => Configuration::get('VG_POSTNORD_HOST'),
             'VG_POSTNORD_APIKEY' => Configuration::get('VG_POSTNORD_APIKEY'),
