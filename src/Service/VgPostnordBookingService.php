@@ -106,8 +106,8 @@ class VgPostnordBookingService
         $customer = new Customer($cart->id_customer);
         $carrier  = new Carrier($order->id_carrier);
 
-        $address_invoice  = new Address($order->id_address_invoice);
-        $customer_country = new Country($address_invoice->id_country);
+        $address_delivery = new Address($order->id_address_delivery);
+        $customer_country = new Country($address_delivery->id_country);
 
         $carrier_settings = json_decode(Configuration::get("VG_POSTNORD_CARRIER_SETTINGS"), true);
         $service_code     = explode("_", $carrier_settings[$carrier->id]["service_code_consigneecountry"])[0];
@@ -142,7 +142,7 @@ class VgPostnordBookingService
 
         $response = $this->client->createBooking(
             $customer->email,
-            $address_invoice,
+            $address_delivery,
             $order_data,
             $shop_address,
             $customer_country->iso_code,
