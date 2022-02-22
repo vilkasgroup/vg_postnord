@@ -12,13 +12,13 @@ use PrestaShop\PrestaShop\Adapter\Entity\Address;
 use PrestaShop\PrestaShop\Adapter\Entity\Configuration;
 use PrestaShop\PrestaShop\Adapter\Entity\Country;
 use PrestaShop\PrestaShop\Adapter\Entity\Order;
-use PrestaShop\PrestaShop\Core\Grid\Search\SearchCriteria;
 use PrestaShopBundle\Controller\Admin\FrameworkBundleAdminController;
 use PrestaShopBundle\Security\Annotation\AdminSecurity;
 use PrestaShopBundle\Security\Annotation\ModuleActivated;
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 
 use Vilkas\Postnord\Client\PostnordClient;
 use Vilkas\Postnord\Entity\VgPostnordBooking;
@@ -42,11 +42,9 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
      * @param VgPostnordBookingQueryFilter $filters)
      *
      * @return Response
-     * 
      */
     public function listAction(VgPostnordBookingQueryFilter $filters): Response
     {
-
         $gridFactory = $this->get('vilkas.postnord.grid.vg_postnord_booking_grid_factory');
         $grid = $gridFactory->getGrid($filters);
         return $this->render('@Modules/vg_postnord/views/templates/admin/booking-list.html.twig', [
@@ -60,9 +58,11 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
         $repository = $this->get('vilkas.postnord.repository.vgpostnordbooking');
         $booking = $repository->findOneById($idBooking);
         $idOrder = $booking->getIdOrder();
+
         $bookingFormBuilder = $this->get('vilkas.postnord.form.identifiable_object.builder.vg_postnord_booking_form_builder');
         $bookingForm = $bookingFormBuilder->getFormFor($idBooking);
         $bookingForm->handleRequest($request);
+
         $bookingFormHandler = $this->get('vilkas.postnord.form.identifiable_object.handler.vg_postnord_booking_form_handler');
         $result = $bookingFormHandler->handleFor($idBooking, $bookingForm);
 
@@ -79,13 +79,15 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
             'layoutHeaderToolbarBtn' => $this->getToolbarButtons($idOrder),
         ]);
     }
+
     /**
      * @AdminSecurity("is_granted(['create'], request.get('_legacy_controller'))", message="Access denied.")
      *
      * @param Request $request
      *
      * @return Response
-     * 
+     *
+     * @throws Exception|ExceptionInterface
      */
     public function ajaxServicePointAction(Request $request): Response
     {
@@ -336,7 +338,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
 
         return new Response(
             $merged_raw_labels,
-            200,
+            Response::HTTP_OK,
             [
                 "Content-Type"        => "application/pdf",
                 "Content-Disposition" => "inline;filename=$filename"
@@ -399,9 +401,10 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
     /** 
      * Gets the header toolbar buttons.
      *
+     * @param $id_order
      * @return array
      */
-    private function getToolbarButtons($id_order)
+    private function getToolbarButtons($id_order): array
     {
         $toolbarButtons = [];
         $toolbarButtons['go_to_order'] = [

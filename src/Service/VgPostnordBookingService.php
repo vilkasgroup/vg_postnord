@@ -61,6 +61,8 @@ class VgPostnordBookingService
             $mandatory_services = null;
         }
 
+        /** @var VgPostnordBooking $previousBooking */
+        $previousBooking = $bookingRepository->findOneBy(["id_order" => $id_order]);
 
         /** @var VgPostnordCartData $cartData */
         $cartData = $cartDataRepository->findOneBy(["id_order" => $id_order]);
@@ -71,8 +73,6 @@ class VgPostnordBookingService
                 ->setServicePointData($cartData->getServicePointData());
         } else {
             // if cart data doesn't exist, copy service point & data from previous shipment (if exists)
-            /** @var VgPostnordBooking $previousBooking */
-            $previousBooking = $bookingRepository->findOneBy(["id_order" => $id_order]);
             if ($previousBooking) {
                 $booking
                     ->setServicepointid($previousBooking->getServicePointId())
@@ -80,9 +80,16 @@ class VgPostnordBookingService
             }
         }
 
+        if ($previousBooking) {
+            $parcel_data = $previousBooking->getParcelData();
+        } else {
+            $parcel_data = $this->_generateDefaultParcelData();
+        }
+
         $booking
             ->setIdOrder($id_order)
-            ->setAdditionalServices($mandatory_services);
+            ->setAdditionalServices($mandatory_services)
+            ->setParcelData($parcel_data);
 
         $this->entityManager->persist($booking);
         $this->entityManager->flush();
@@ -105,8 +112,8 @@ class VgPostnordBookingService
         $customer = new Customer($cart->id_customer);
         $carrier  = new Carrier($order->id_carrier);
 
-        $address_invoice  = new Address($order->id_address_delivery);
-        $customer_country = new Country($address_invoice->id_country);
+        $address_delivery = new Address($order->id_address_delivery);
+        $customer_country = new Country($address_delivery->id_country);
 
         $carrier_settings = json_decode(Configuration::get("VG_POSTNORD_CARRIER_SETTINGS"), true);
         $service_code     = explode("_", $carrier_settings[$carrier->id]["service_code_consigneecountry"])[0];
@@ -142,7 +149,7 @@ class VgPostnordBookingService
 
         $response = $this->client->createBooking(
             $customer->email,
-            $address_invoice,
+            $address_delivery,
             $order_data,
             $shop_address,
             $return_address,
@@ -196,5 +203,16 @@ class VgPostnordBookingService
         $this->entityManager->flush();
 
         return $booking;
+    }
+    
+    private function _generateDefaultParcelData(): string
+    {
+        return json_encode(
+            [
+                [
+                    "weight" => 1
+                ]
+            ]
+        );
     }
 }

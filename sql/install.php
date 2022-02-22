@@ -25,6 +25,7 @@ $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'vg_postnord_booking` (
     `additional_services` VARCHAR(255) DEFAULT NULL,
     `id_label_external`   VARCHAR(255) DEFAULT NULL,
     `finalized`           DATETIME     DEFAULT NULL,
+    `parcel_data`         TEXT         NOT NULL,
     PRIMARY KEY (`id_booking`),
     INDEX idx__id_cart_data (id_cart_data)
 ) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8;';

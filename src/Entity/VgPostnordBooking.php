@@ -106,6 +106,13 @@ class VgPostnordBooking
     private $additional_services;
 
     /**
+     * @var string
+     *
+     * @ORM\Column(name="parcel_data", type="text", nullable=false)
+     */
+    private $parcel_data;
+
+    /**
      * @return int
      */
     public function getId(): int
@@ -350,6 +357,26 @@ class VgPostnordBooking
     }
 
     /**
+     * @return string
+     */
+    public function getParcelData(): string
+    {
+        return $this->parcel_data;
+    }
+
+    /**
+     * @param string $parcel_data
+     *
+     * @return $this
+     */
+    public function setParcelData(string $parcel_data): self
+    {
+        $this->parcel_data = $parcel_data;
+
+        return $this;
+    }
+
+    /**
      * @return array
      */
     public function toArray(): array
@@ -367,6 +394,7 @@ class VgPostnordBooking
             'id_label_external' => $this->getIdLabelExternal(),
             'finalized' => $this->getFinalized(),
             'additional_services' => empty($this->getAdditionalServices()) ? [] : explode(', ', $this->getAdditionalServices()),
+            'parcel_data' => $this->getParcelData()
         ];
     }
 
@@ -388,5 +416,6 @@ class VgPostnordBooking
         // $this->setFinalized($data['finalized']);
         // $this->setTrackingUrl($data['tracking_url']);
         $this->setAdditionalServices(implode(', ', $data['additional_services']));
+        $this->setParcelData($data['parcel_data']);
     }
 }

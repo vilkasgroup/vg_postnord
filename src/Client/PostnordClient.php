@@ -100,8 +100,7 @@ class PostnordClient
      *
      * @return array json_decoded response
      *
-     * @throws ExceptionInterface
-     * @throws Exception
+     * @throws Exception|ExceptionInterface
      */
     public function doRequest(string $method, string $endpoint, array $options): array
     {
@@ -121,21 +120,6 @@ class PostnordClient
         try {
             // this will throw for all 300-599 and other errors
             $content = $response->getContent();
-
-            /*
-            if ($response->getStatusCode() === 200) {
-                // try to read the response, it will probably give nice error information
-                $content = $response->getContent(false);
-                $httpLogs = $response->getInfo('debug');
-                // TODO: log the error
-                //var_dump($httpLogs . $content);
-                throw new Exception('Error while calling service http dump: ' . $httpLogs . $content);
-
-                return [];
-            }
-
-            $content = $response->getContent(false);
-            */
         } catch (HttpExceptionInterface $e) {
             // for 400 error we can try to dig up a bit better response from the api
             // and throw it as a new exception for controllers to show
@@ -196,7 +180,7 @@ class PostnordClient
      *
      * https://guides.atdeveloper.postnord.com/#747cfedf-fa97-4145-8a3e-5031c38416f9
      *
-     * @throws Exception with error message from PostNord
+     * @throws Exception
      */
     public function getServicePointsByAddress(array $parameters): array
     {
@@ -232,8 +216,7 @@ class PostnordClient
     /**
      * Get service point information by id
      *
-     * @throws ExceptionInterface
-     * @throws Exception with error message from PostNord
+     * @throws Exception|ExceptionInterface
      */
     public function getServicePointById(array $parameters): array
     {
@@ -247,7 +230,7 @@ class PostnordClient
         try {
             $response = $this->doRequest('GET', '/rest/businesslocation/v5/servicepoints/ids', $options);
         } catch (Exception $e) {
-            $this->logger->error('Error getting Service Point' . $e->getMessage());
+            $this->logger->error('Error getting Service Point', ['exception' => $e]);
 
             return [
                 'error' => $e->getMessage(),
@@ -265,7 +248,8 @@ class PostnordClient
      * Get basic service codes.
      *
      * https://guides.atdeveloper.postnord.com/#0c2721e2-3aa8-4bbb-bf39-049721601c01
-     * @throws Exception with error message from PostNord
+     *
+     * @throws Exception|ExceptionInterface
      */
     public function getBasicServiceCodes(): array
     {
@@ -276,9 +260,8 @@ class PostnordClient
         try {
             $response = $this->doRequest('GET', '/rest/shipment/v3/edi/servicecodes', $options);
         } catch (Exception $e) {
-            $this->logger->error('Error get Basic Service Codes' . $e->getMessage());
-            $error = json_decode($e->getMessage(), true);
-            throw new Exception($error['message']);
+            $this->logger->error('Error get Basic Service Codes', ['exception' => $e]);
+            throw $e;
         }
 
         return $response;
@@ -286,6 +269,8 @@ class PostnordClient
 
     /**
      * Helper for BasicServiceCodes that fetches only the services for one issuerCountry.
+     *
+     * @throws ExceptionInterface
      */
     public function getBasicServiceCodesFilterByIssuerCountryCode(string $countryCode): array
     {
@@ -305,7 +290,8 @@ class PostnordClient
      * Get additional service codes.
      *
      * https://guides.atdeveloper.postnord.com/#ee279552-541c-4220-a843-ccdda8a048f7
-     * @throws Exception with error message from PostNord
+     *
+     * @throws Exception|ExceptionInterface
      */
     public function getAdditionalServiceCodes(): array
     {
@@ -316,9 +302,8 @@ class PostnordClient
         try {
             $response = $this->doRequest('GET', '/rest/shipment/v3/edi/adnlservicecodes', $options);
         } catch (Exception $e) {
-            $this->logger->error('Error getting Additional Service' . $e->getMessage());
-            $error = json_decode($e->getMessage(), true);
-            throw new Exception($error['message']);
+            $this->logger->error('Error getting Additional Service', ['exception' => $e]);
+            throw $e;
         }
 
         return $response;
@@ -328,7 +313,8 @@ class PostnordClient
      * Get Valid Combinations of Service Codes.
      *
      * https://guides.atdeveloper.postnord.com/#479cf9ca-4763-42e5-91ac-ab24812343b4
-     * @throws Exception with error message from PostNord
+     *
+     * @throws Exception|ExceptionInterface
      */
     public function getValidCombinationsOfServiceCodes(): array
     {
@@ -343,16 +329,15 @@ class PostnordClient
                 $options
             );
         } catch (Exception $e) {
-            $this->logger->error('Error getting Service Code Combination' . $e->getMessage());
-            $error = json_decode($e->getMessage(), true);
-            throw new Exception($error['message']);
+            $this->logger->error('Error getting Service Code Combination', ['exception' => $e]);
+            throw $e;
         }
 
         return $response;
     }
 
     /**
-     * Just for testing.. seems to error out on their side atm..
+     * Just for testing, seems to error out on their side atm.
      *
      * https://guides.atdeveloper.postnord.com/#cb2ac083-992b-4a3b-aaec-01ab50ea5654
      * @throws Exception with error message from PostNord
@@ -366,9 +351,8 @@ class PostnordClient
         try {
             $response = $this->doRequest('GET', '/rest/location/v1/surcharge/manage/health', $options);
         } catch (Exception $e) {
-            $this->logger->error('Error geting Surcharge Health Check' . $e->getMessage());
-            $error = json_decode($e->getMessage(), true);
-            throw new Exception($error['message']);
+            $this->logger->error('Error getting Surcharge Health Check', ['exception' => $e]);
+            throw $e;
         }
 
         return $response;
@@ -405,7 +389,8 @@ class PostnordClient
      *
      * @return array PostNord booking confirmation with/without PDF label
      *
-     * @throws Exception with error message from PostNord
+     * @throws Exception
+     * @throws ExceptionInterface with error message from PostNord
      */
     public function createBooking(
         string $customerEmail,
@@ -449,8 +434,7 @@ class PostnordClient
             }
         } catch (Exception $e) {
             $this->logger->error('Error create booking', ["exception" => $e]);
-            $error = json_decode($e->getMessage(), true);
-            throw new Exception($error['message']);
+            throw $e;
         }
 
         return $response;
@@ -461,6 +445,8 @@ class PostnordClient
      * @param array $labelInfo label printout format (Paper size, number, etc.) from PostNord
      *
      * @return array PDF label from PostNord
+     *
+     * @throws Exception|ExceptionInterface
      */
     public function getPDFLabelFromId(string $labelId, array $labelInfo): array
     {
@@ -480,9 +466,8 @@ class PostnordClient
                 $this->logger->debug('Booking created with data:' . PHP_EOL . json_encode($responseWithoutBase64, JSON_PRETTY_PRINT));
             }
         } catch (Exception $e) {
-            $this->logger->error('Error getting label' . $e->getMessage());
-            $error = json_decode($e->getMessage(), true);
-            throw new Exception($error['message']);
+            $this->logger->error('Error getting label', ['exception' => $e]);
+            throw $e;
         }
 
         return $response;
