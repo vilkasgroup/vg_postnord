@@ -53,8 +53,6 @@ class PostnordClientTest extends TestCase
         // check the closest servicePoint country, it should be the same as above
         $firstPoint = $results['servicePoints'][0];
 
-        // var_dump($firstPoint);
-
         $this->assertEquals($params['countryCode'], $firstPoint['visitingAddress']['countryCode']);
     }
 
@@ -180,7 +178,6 @@ class PostnordClientTest extends TestCase
         // 'paperSize' => 'LABEL'
         // ];
         $results = $this->client->createBooking($email, $address, $order, $shopAddress, $country, [], $pickupAddress);
-        var_dump($results);
         $this->assertArrayHasKey('bookingId', $results);
         $this->assertArrayHasKey('value', $results['idInformation'][0]['ids'][0]);
         $this->assertRegExp('/\d{20}/m', $results['idInformation'][0]['ids'][0]['value']);
@@ -241,7 +238,6 @@ class PostnordClientTest extends TestCase
             $labelInfo,
             $pickupAddress
         );
-        // var_dump($results);
         $this->assertArrayHasKey('labelPrintout', $results);
     }
 
