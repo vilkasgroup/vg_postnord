@@ -59,6 +59,8 @@ class VgPostnordBookingService
             $mandatory_services = null;
         }
 
+        /** @var VgPostnordBooking $previousBooking */
+        $previousBooking = $bookingRepository->findOneBy(["id_order" => $id_order]);
 
         /** @var VgPostnordCartData $cartData */
         $cartData = $cartDataRepository->findOneBy(["id_order" => $id_order]);
@@ -70,8 +72,6 @@ class VgPostnordBookingService
             ;
         } else {
             // if cart data doesn't exist, copy service point & data from previous shipment (if exists)
-            /** @var VgPostnordBooking $previousBooking */
-            $previousBooking = $bookingRepository->findOneBy(["id_order" => $id_order]);
             if ($previousBooking) {
                 $booking
                     ->setServicepointid($previousBooking->getServicePointId())
@@ -80,9 +80,16 @@ class VgPostnordBookingService
             }
         }
 
+        if ($previousBooking) {
+            $parcel_data = $previousBooking->getParcelData();
+        } else {
+            $parcel_data = $this->_generateDefaultParcelData();
+        }
+
         $booking
             ->setIdOrder($id_order)
             ->setAdditionalServices($mandatory_services)
+            ->setParcelData($parcel_data)
         ;
 
         $this->entityManager->persist($booking);
@@ -168,5 +175,16 @@ class VgPostnordBookingService
         $this->entityManager->flush();
 
         return $booking;
+    }
+
+    private function _generateDefaultParcelData(): string
+    {
+        return json_encode(
+            [
+                [
+                    "weight" => 1
+                ]
+            ]
+        );
     }
 }
