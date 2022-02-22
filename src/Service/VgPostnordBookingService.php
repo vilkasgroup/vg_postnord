@@ -105,7 +105,7 @@ class VgPostnordBookingService
         $customer = new Customer($cart->id_customer);
         $carrier  = new Carrier($order->id_carrier);
 
-        $address_invoice  = new Address($order->id_address_invoice);
+        $address_invoice  = new Address($order->id_address_delivery);
         $customer_country = new Country($address_invoice->id_country);
 
         $carrier_settings = json_decode(Configuration::get("VG_POSTNORD_CARRIER_SETTINGS"), true);
