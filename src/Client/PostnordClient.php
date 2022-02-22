@@ -215,6 +215,8 @@ class PostnordClient
         try {
             $response = $this->doRequest('GET', '/rest/businesslocation/v5/servicepoints/nearest/byaddress', $options);
         } catch (Exception $e) {
+            $this->logger->error('Error getting Service Point' . $e->getMessage());
+
             return [
                 'error' => $e->getMessage(),
             ];
@@ -245,6 +247,8 @@ class PostnordClient
         try {
             $response = $this->doRequest('GET', '/rest/businesslocation/v5/servicepoints/ids', $options);
         } catch (Exception $e) {
+            $this->logger->error('Error getting Service Point', ['exception' => $e]);
+
             return [
                 'error' => $e->getMessage(),
             ];
@@ -253,8 +257,6 @@ class PostnordClient
         if (array_key_exists('servicePointInformationResponse', $response)) {
             return $response['servicePointInformationResponse']['servicePoints'][0];
         }
-
-        // TODO: write test
 
         throw new Exception('servicePointInformationResponse missing from response');
     }
@@ -273,10 +275,8 @@ class PostnordClient
         try {
             $response = $this->doRequest('GET', '/rest/shipment/v3/edi/servicecodes', $options);
         } catch (Exception $e) {
-            // TODO log the error and do something sane
+            $this->logger->error('Error get Basic Service Codes', ['exception' => $e]);
             throw $e;
-
-            return [];
         }
 
         return $response;
@@ -313,10 +313,8 @@ class PostnordClient
         try {
             $response = $this->doRequest('GET', '/rest/shipment/v3/edi/adnlservicecodes', $options);
         } catch (Exception $e) {
-            // TODO log the error and do something sane
+            $this->logger->error('Error getting Additional Service', ['exception' => $e]);
             throw $e;
-
-            return [];
         }
 
         return $response;
@@ -340,10 +338,8 @@ class PostnordClient
                 $options
             );
         } catch (Exception $e) {
-            // TODO log the error and do something sane
+            $this->logger->error('Error getting Service Code Combination', ['exception' => $e]);
             throw $e;
-
-            return [];
         }
 
         return $response;
@@ -364,9 +360,8 @@ class PostnordClient
             $response = $this->doRequest('GET', '/rest/location/v1/surcharge/manage/health', $options);
         } catch (Exception $e) {
             // TODO log the error and do something sane
+            $this->logger->error('Error geting Surcharge Health Check', ['exception' => $e]);
             throw $e;
-
-            return [];
         }
 
         return $response;
@@ -444,10 +439,8 @@ class PostnordClient
                 $this->logger->debug('Booking created with data:' . PHP_EOL . json_encode($response, JSON_PRETTY_PRINT));
             }
         } catch (Exception $e) {
-            // TODO: Log error
             $this->logger->error('Error create booking', ["exception" => $e]);
-            $error = json_decode($e->getMessage(), true);
-            throw new Exception($error['message']);
+            throw $e;
         }
 
         return $response;
@@ -477,10 +470,8 @@ class PostnordClient
                 $this->logger->debug('Booking created with data:' . PHP_EOL . json_encode($responseWithoutBase64, JSON_PRETTY_PRINT));
             }
         } catch (Exception $e) {
-            // TODO: Log error
-            $this->logger->error('Error getting label' . $e->getMessage());
-            $error = json_decode($e->getMessage(), true);
-            throw new Exception($error['message']);
+            $this->logger->error('Error getting label', ['exception' => $e]);
+            throw $e;
         }
 
         return $response;
