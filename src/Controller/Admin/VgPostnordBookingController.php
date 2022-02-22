@@ -199,9 +199,9 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
     /**
      * Generate filename for label PDF
      */
-    private function _getFileName(VgPostnordBooking $booking): string
+    private function _getFileName(VgPostnordBooking $booking, $return = false): string
     {
-        return  "label_" . $booking->getIdOrder() . "_" . $booking->getId() . ".pdf";
+        return $return ? "return" : "shipping"  . "_label_" . $booking->getIdOrder() . "_" . $booking->getId() . ".pdf";
     }
 
     /**
@@ -219,6 +219,29 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
 
         return new Response(
             base64_decode($booking->getLabelData()),
+            200,
+            [
+                "Content-Type"        => "application/pdf",
+                "Content-Disposition" => "inline;filename=$filename"
+            ]
+        );
+    }
+
+    /**
+     * Generate raw PFD return label data response with related headers
+     */
+    private function _getPDFReturnLabelResponse(VgPostnordBooking $booking): Response
+    {
+        if (!$booking->getReturnLabelData()) {
+            $message = $this->trans("Booking is missing return label data. Something is wrong.", "Modules.Vgpostnord.Admin");
+            $this->addFlash("error", $message);
+            $this->redirectToRoute("admin_orders_view", ["orderId" => $booking->getIdOrder()]);
+        }
+
+        $filename = $this->_getFileName($booking, true);
+
+        return new Response(
+            base64_decode($booking->getReturnLabelData()),
             200,
             [
                 "Content-Type"        => "application/pdf",

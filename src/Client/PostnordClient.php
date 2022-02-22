@@ -196,7 +196,7 @@ class PostnordClient
      *
      * https://guides.atdeveloper.postnord.com/#747cfedf-fa97-4145-8a3e-5031c38416f9
      *
-     * @throws Exception
+     * @throws Exception with error message from PostNord
      */
     public function getServicePointsByAddress(array $parameters): array
     {
@@ -215,6 +215,8 @@ class PostnordClient
         try {
             $response = $this->doRequest('GET', '/rest/businesslocation/v5/servicepoints/nearest/byaddress', $options);
         } catch (Exception $e) {
+            $this->logger->error('Error getting Service Point' . $e->getMessage());
+
             return [
                 'error' => $e->getMessage(),
             ];
@@ -231,7 +233,7 @@ class PostnordClient
      * Get service point information by id
      *
      * @throws ExceptionInterface
-     * @throws Exception
+     * @throws Exception with error message from PostNord
      */
     public function getServicePointById(array $parameters): array
     {
@@ -245,6 +247,8 @@ class PostnordClient
         try {
             $response = $this->doRequest('GET', '/rest/businesslocation/v5/servicepoints/ids', $options);
         } catch (Exception $e) {
+            $this->logger->error('Error getting Service Point' . $e->getMessage());
+
             return [
                 'error' => $e->getMessage(),
             ];
@@ -261,6 +265,7 @@ class PostnordClient
      * Get basic service codes.
      *
      * https://guides.atdeveloper.postnord.com/#0c2721e2-3aa8-4bbb-bf39-049721601c01
+     * @throws Exception with error message from PostNord
      */
     public function getBasicServiceCodes(): array
     {
@@ -271,10 +276,9 @@ class PostnordClient
         try {
             $response = $this->doRequest('GET', '/rest/shipment/v3/edi/servicecodes', $options);
         } catch (Exception $e) {
-            // TODO log the error and do something sane
-            throw $e;
-
-            return [];
+            $this->logger->error('Error get Basic Service Codes' . $e->getMessage());
+            $error = json_decode($e->getMessage(), true);
+            throw new Exception($error['message']);
         }
 
         return $response;
@@ -301,6 +305,7 @@ class PostnordClient
      * Get additional service codes.
      *
      * https://guides.atdeveloper.postnord.com/#ee279552-541c-4220-a843-ccdda8a048f7
+     * @throws Exception with error message from PostNord
      */
     public function getAdditionalServiceCodes(): array
     {
@@ -311,10 +316,9 @@ class PostnordClient
         try {
             $response = $this->doRequest('GET', '/rest/shipment/v3/edi/adnlservicecodes', $options);
         } catch (Exception $e) {
-            // TODO log the error and do something sane
-            throw $e;
-
-            return [];
+            $this->logger->error('Error getting Additional Service' . $e->getMessage());
+            $error = json_decode($e->getMessage(), true);
+            throw new Exception($error['message']);
         }
 
         return $response;
@@ -324,6 +328,7 @@ class PostnordClient
      * Get Valid Combinations of Service Codes.
      *
      * https://guides.atdeveloper.postnord.com/#479cf9ca-4763-42e5-91ac-ab24812343b4
+     * @throws Exception with error message from PostNord
      */
     public function getValidCombinationsOfServiceCodes(): array
     {
@@ -338,10 +343,9 @@ class PostnordClient
                 $options
             );
         } catch (Exception $e) {
-            // TODO log the error and do something sane
-            throw $e;
-
-            return [];
+            $this->logger->error('Error getting Service Code Combination' . $e->getMessage());
+            $error = json_decode($e->getMessage(), true);
+            throw new Exception($error['message']);
         }
 
         return $response;
@@ -351,6 +355,7 @@ class PostnordClient
      * Just for testing.. seems to error out on their side atm..
      *
      * https://guides.atdeveloper.postnord.com/#cb2ac083-992b-4a3b-aaec-01ab50ea5654
+     * @throws Exception with error message from PostNord
      */
     public function getSurchargeHealthCheck(): array
     {
@@ -361,10 +366,9 @@ class PostnordClient
         try {
             $response = $this->doRequest('GET', '/rest/location/v1/surcharge/manage/health', $options);
         } catch (Exception $e) {
-            // TODO log the error and do something sane
-            throw $e;
-
-            return [];
+            $this->logger->error('Error geting Surcharge Health Check' . $e->getMessage());
+            $error = json_decode($e->getMessage(), true);
+            throw new Exception($error['message']);
         }
 
         return $response;
@@ -401,7 +405,7 @@ class PostnordClient
      *
      * @return array PostNord booking confirmation with/without PDF label
      *
-     * @throws ExceptionInterface with error message from PostNord
+     * @throws Exception with error message from PostNord
      */
     public function createBooking(
         string $customerEmail,
@@ -560,13 +564,9 @@ class PostnordClient
         array $pickupAddress = []
     ): array {
         $datetime = date(DATE_ISO8601);
-        $returnAddress = [
-            'return_name' => !empty($returnAddress['return_name']) ? $returnAddress['return_name'] : $shopAddress['shop_name'],
-            'return_street' => !empty($returnAddress['return_street']) ? $returnAddress['return_street'] : $shopAddress['shop_street'],
-            'return_postcode' => !empty($returnAddress['return_postcode']) ? $returnAddress['return_postcode'] : $shopAddress['shop_postcode'],
-            'return_city' => !empty($returnAddress['return_city']) ? $returnAddress['return_city'] : $shopAddress['shop_city'],
-            'return_country' => !empty($returnAddress['return_country']) ? $returnAddress['return_country'] : $shopAddress['shop_country'],
-        ];
+        foreach (['name', 'street', 'postcode', 'city', 'country'] as $key) {
+            $returnAddress["return_{$key}"] = !empty($returnAddress["return_{$key}"]) ? $returnAddress["return_{$key}"] : $shopAddress["shop_{$key}"];
+        }
         $body = [
             'messageDate' => $datetime,
             'messageFunction' => 'Instruction',
