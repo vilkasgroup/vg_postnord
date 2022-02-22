@@ -186,7 +186,7 @@ class VgPostnordBookingService
         ];
 
         $response = $this->client->getReturnPDFLabelFromId(
-            $booking->getIdBookingExternal(),
+            $booking->getIdLabelExternal(),
             $label_info
         );
         $data = array_filter($response['labelPrintout'], function ($element) {

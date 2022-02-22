@@ -233,7 +233,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
             return $this->redirectToRoute("admin_orders_index");
         }
 
-        if ($booking->getFinalized() && $booking->getReturnLabel()) {
+        if ($booking->getFinalized() && $booking->getReturnLabelData()) {
             return $this->_getPDFReturnLabelResponse($booking);
         }
 
