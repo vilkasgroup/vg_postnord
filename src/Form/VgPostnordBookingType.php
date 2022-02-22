@@ -19,6 +19,7 @@ use Symfony\Component\Form\Extension\Core\Type\FormType;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
 use Symfony\Component\Translation\TranslatorInterface;
@@ -122,7 +123,7 @@ class VgPostnordBookingType extends TranslatorAwareType
                     $data = $event->getData();
 
                     // get service_point_data
-                    if(!empty($data['service_point_data'])){
+                    if (!empty($data['service_point_data'])) {
                         $servicePointData = json_decode($data['service_point_data'], true);
                         // Show the current selected service point
                         $data['current_service_point'] = "{$servicePointData['name']}. {$servicePointData['visitingAddress']['streetName']} {$servicePointData['visitingAddress']['streetNumber']}, {$servicePointData['visitingAddress']['postalCode']} {$servicePointData['visitingAddress']['city']}";
@@ -174,14 +175,15 @@ class VgPostnordBookingType extends TranslatorAwareType
                             if (empty($servicePointData['error'])) {
                                 $data['service_point_data'] = json_encode($servicePointData);
                                 $event->setData($data);
+                                // Add field with new choices to form
+                                $form->add('servicepointid', ChoiceType::class, [
+                                    'choices' => $choices
+                                ]);
+                            } else {
+                                $form->addError(new FormError("Error: {$servicePointData['error']}"));
                             }
                         }
                     }
-
-                    // Add field with new choices to form
-                    $form->add('servicepointid', ChoiceType::class, [
-                        'choices' => $choices
-                    ]);
                 });
         }
     }
@@ -248,7 +250,7 @@ class VgPostnordBookingType extends TranslatorAwareType
             'postalCode' => $postalCode,
             //'streetName' => $address->address1,
             //'streetNumber' => '19',
-            'numberOfServicePoints' => 100, 
+            'numberOfServicePoints' => 100,
             'typeId' => $carrierSetting[$idCarrier]['service_codes'] // "type of the service point" or service code, see module configuration page
         ];
         try {
