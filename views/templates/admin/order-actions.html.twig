@@ -61,14 +61,14 @@
 							<td>{{ booking.finalized ? booking.finalized|date('d-m-Y H:i:m') : 'Not sent'|trans({}, 'Modules.Vgpostnord.Admin') }}</td>
 							{% if booking.idLabelExternal or (not booking.finalized and loop.index0 is same as(0)) %}
 								<td>
-									<a href="{{ path('admin_vg_postnord_fetch_label', {'id_booking': booking.id}) }}" target="_blank">{{ booking.idLabelExternal ? booking.idLabelExternal : 'Fetch label'|trans({}, 'Modules.Vgpostnord.Admin') }}</a>
+									<a href="{{ path('admin_vg_postnord_fetch_label', {'id_booking': booking.id}) }}" target="_blank">{{ booking.idLabelExternal ? 'Show Label' : 'Fetch label'|trans({}, 'Modules.Vgpostnord.Admin') }}</a>
 								</td>
 							{% else %}
 								<td>{{ 'No label'|trans({}, 'Modules.Vgpostnord.Admin') }}</td>
 							{% endif %}
 							{% if booking.idLabelExternal or (not booking.finalized and loop.index0 is same as(0)) %}
 								<td>
-									<a href="{{ path('admin_vg_postnord_fetch_return_label', {'id_booking': booking.id}) }}" target="_blank">{{ booking.idLabelExternal ? booking.idLabelExternal : 'Fetch return label'|trans({}, 'Modules.Vgpostnord.Admin') }}</a>
+									<a href="{{ path('admin_vg_postnord_fetch_return_label', {'id_booking': booking.id}) }}" target="_blank">{{ booking.idLabelExternal ? 'Show Return Label' : 'Fetch return label'|trans({}, 'Modules.Vgpostnord.Admin') }}</a>
 								</td>
 							{% else %}
 								<td>{{ 'No return label'|trans({}, 'Modules.Vgpostnord.Admin') }}</td>
@@ -76,6 +76,10 @@
 							{% if not booking.finalized and loop.index0 is same as(0) %}
 								<td>
 									<a href="{{ path('admin_vg_postnord_edit_action', {'bookingId': booking.id}) }}">{{ 'Edit'|trans({}, 'Modules.Vgpostnord.Admin') }}</a>
+								</td>
+							{% elseif booking.labelData and booking.returnLabelData %}
+								<td>
+									<a href="{{ path('admin_vg_postnord_fetch_both_label', {'id_booking': booking.id}) }}" target="_blank">{{ 'Show both labels' |trans({}, 'Modules.Vgpostnord.Admin') }}</a>
 								</td>
 							{% else %}
 								<td>-</td>

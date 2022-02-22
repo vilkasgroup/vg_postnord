@@ -249,6 +249,52 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
         return $this->_getPDFReturnLabelResponse($booking);
     }
 
+    public function getBothLabel(Request $request): Response
+    {
+        $id_booking = $request->get("id_booking");
+        if (!$id_booking) {
+            $message = $this->trans("Missing id_booking in request. Something is wrong.",  "Modules.Vgpostnord.Admin");
+            $this->addFlash("error", $message);
+            return $this->redirectToRoute("admin_orders_index");
+        }
+
+        $repository = $this->get('vilkas.postnord.repository.vgpostnordbooking');
+        $booking = $repository->findOneBy(["id" => $id_booking]);
+        
+        if (!$booking) {
+            $message = $this->trans("Could not find booking with id $id_booking", "Modules.Vgpostnord.Admin");
+            $this->addFlash("error", $message);
+            return $this->redirectToRoute("admin_orders_index");
+        }
+        if (!$booking->getFinalized()) {
+            $message = $this->trans("Shipping Label is missing", "Modules.Vgpostnord.Admin");
+            $this->addFlash("error", $message);
+            return $this->redirectToRoute("admin_orders_index");
+        }
+        if (!$booking->getReturnLabelData()) {
+            $message = $this->trans("Return label is missing", "Modules.Vgpostnord.Admin");
+            $this->addFlash("error", $message);
+            return $this->redirectToRoute("admin_orders_index");
+        }
+
+        $labelData = $booking->getLabelData();
+        $returnLabelData = $booking->getReturnLabelData();
+        $merger = new Merger(new TcpdiDriver());
+        $merger->addRaw(base64_decode($labelData));
+        $merger->addRaw(base64_decode($returnLabelData));
+        $mergedLabel = $merger->merge();
+
+        $filename = "labels_" . time() . ".pdf";
+
+        return new Response(
+            $mergedLabel,
+            200,
+            [
+                "Content-Type"        => "application/pdf",
+                "Content-Disposition" => "inline;filename=$filename"
+            ]
+        );
+    }
     /**
      * Create bookings and fetch labels for orders in bulk
      */
