@@ -250,7 +250,7 @@ class VgPostnordBookingType extends TranslatorAwareType
             'postalCode' => $postalCode,
             //'streetName' => $address->address1,
             //'streetNumber' => '19',
-            'numberOfServicePoints' => 100,
+            'numberOfServicePoints' => 100, 
             'typeId' => $carrierSetting[$idCarrier]['service_codes'] // "type of the service point" or service code, see module configuration page
         ];
         try {
