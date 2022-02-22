@@ -448,7 +448,6 @@ class PostnordClient
                 $this->logger->debug('Booking created with data:' . PHP_EOL . json_encode($response, JSON_PRETTY_PRINT));
             }
         } catch (Exception $e) {
-            // TODO: Log error
             $this->logger->error('Error create booking', ["exception" => $e]);
             $error = json_decode($e->getMessage(), true);
             throw new Exception($error['message']);
@@ -481,7 +480,6 @@ class PostnordClient
                 $this->logger->debug('Booking created with data:' . PHP_EOL . json_encode($responseWithoutBase64, JSON_PRETTY_PRINT));
             }
         } catch (Exception $e) {
-            // TODO: Log error
             $this->logger->error('Error getting label' . $e->getMessage());
             $error = json_decode($e->getMessage(), true);
             throw new Exception($error['message']);

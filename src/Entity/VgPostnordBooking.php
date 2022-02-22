@@ -363,6 +363,7 @@ class VgPostnordBooking
             'label_data' => $this->getLabelData(),
             'return_label_data' => $this->getReturnLabelData(),
             'servicepointid' => $this->getServicepointid(),
+            'service_point_data' => $this->getServicePointData(),
             'id_label_external' => $this->getIdLabelExternal(),
             'finalized' => $this->getFinalized(),
             'additional_services' => empty($this->getAdditionalServices()) ? [] : explode(', ', $this->getAdditionalServices()),
@@ -381,7 +382,8 @@ class VgPostnordBooking
         // $this->setIdBookingExternal($data['id_booking_external']);
         // $this->setLabelData($data['label_data']);
         // $this->setReturnLabelData($data['return_label_data']);
-        // $this->setServicepointid($data['servicepointid']);
+        $this->setServicepointid($data['servicepointid']);
+        $this->setServicePointData($data['service_point_data']);
         // $this->setIdLabelExternal($data['id_label_external']);
         // $this->setFinalized($data['finalized']);
         // $this->setTrackingUrl($data['tracking_url']);

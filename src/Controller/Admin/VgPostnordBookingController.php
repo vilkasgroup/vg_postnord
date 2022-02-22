@@ -4,29 +4,31 @@ declare(strict_types=1);
 
 namespace Vilkas\Postnord\Controller\Admin;
 
-use Doctrine\ORM\EntityManager;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
+use Exception;
+use iio\libmergepdf\Driver\TcpdiDriver;
+use iio\libmergepdf\Merger;
 
+use PrestaShop\PrestaShop\Adapter\Entity\Address;
+use PrestaShop\PrestaShop\Adapter\Entity\Configuration;
+use PrestaShop\PrestaShop\Adapter\Entity\Country;
+use PrestaShop\PrestaShop\Adapter\Entity\Order;
 use PrestaShop\PrestaShop\Core\Grid\Search\SearchCriteria;
 use PrestaShopBundle\Controller\Admin\FrameworkBundleAdminController;
 use PrestaShopBundle\Security\Annotation\AdminSecurity;
 use PrestaShopBundle\Security\Annotation\ModuleActivated;
 
-use iio\libmergepdf\Merger;
-use iio\libmergepdf\Driver\TcpdiDriver;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 
+use Vilkas\Postnord\Client\PostnordClient;
 use Vilkas\Postnord\Entity\VgPostnordBooking;
 use Vilkas\Postnord\Grid\Filter\VgPostnordBookingQueryFilter;
-use Vilkas\Postnord\Form\Data\Provider\VgPostnordBookingFormDataProvider;
 
 /**
  * Class VgPostnordBookingController.
  *
  * @ModuleActivated(moduleName="vg_postnord", redirectRoute="admin_module_manage")
  */
-
-
 class VgPostnordBookingController extends FrameworkBundleAdminController
 {
     public function __construct()
@@ -40,26 +42,29 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
      * @param VgPostnordBookingQueryFilter $filters)
      *
      * @return Response
+     * 
      */
     public function listAction(VgPostnordBookingQueryFilter $filters): Response
     {
 
         $gridFactory = $this->get('vilkas.postnord.grid.vg_postnord_booking_grid_factory');
         $grid = $gridFactory->getGrid($filters);
-
         return $this->render('@Modules/vg_postnord/views/templates/admin/booking-list.html.twig', [
             'vgPostnordBookingsGrid' => $this->presentGrid($grid)
         ]);
     }
 
-    public function editBookingAction(Request $request, $bookingId): Response
+    public function editBookingAction(Request $request,  $bookingId): Response
     {
+        $idBooking = (int) $bookingId;
+        $repository = $this->get('vilkas.postnord.repository.vgpostnordbooking');
+        $booking = $repository->findOneById($idBooking);
+        $idOrder = $booking->getIdOrder();
         $bookingFormBuilder = $this->get('vilkas.postnord.form.identifiable_object.builder.vg_postnord_booking_form_builder');
-        $bookingForm = $bookingFormBuilder->getFormFor((int) $bookingId);
+        $bookingForm = $bookingFormBuilder->getFormFor($idBooking);
         $bookingForm->handleRequest($request);
-
         $bookingFormHandler = $this->get('vilkas.postnord.form.identifiable_object.handler.vg_postnord_booking_form_handler');
-        $result = $bookingFormHandler->handleFor((int) $bookingId, $bookingForm);
+        $result = $bookingFormHandler->handleFor($idBooking, $bookingForm);
 
         if ($result->isSubmitted() && $result->isValid()) {
             $this->addFlash('success', $this->trans('Successful modification.', 'Admin.Notifications.Success'));
@@ -67,12 +72,74 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
             return $this->redirectToRoute('admin_vg_postnord_list_action');
         }
 
-
         return $this->render('@Modules/vg_postnord/views/templates/admin/edit-booking.html.twig', [
             'vgPostnordBookingEditForm' => $bookingForm->createView(),
+            'ajaxurl' => $this->get('router')->generate('admin_vg_postnord_ajax_service_point_action'),
+            'layoutTitle' => $this->trans('Edit Booking', 'Modules.Vgpostnord.Admin'),
+            'layoutHeaderToolbarBtn' => $this->getToolbarButtons($idOrder),
         ]);
     }
+    /**
+     * @AdminSecurity("is_granted(['create'], request.get('_legacy_controller'))", message="Access denied.")
+     *
+     * @param Request $request
+     *
+     * @return Response
+     * 
+     */
+    public function ajaxServicePointAction(Request $request): Response
+    {
+        $client = new PostnordClient(
+            Configuration::get('VG_POSTNORD_HOST'),
+            Configuration::get('VG_POSTNORD_APIKEY')
+        );
+        $carrierSetting = json_decode(Configuration::get('VG_POSTNORD_CARRIER_SETTINGS'), true);
+        $idOrder = (int) $request->request->get('idOrder');
+        $postalCode = $request->request->get('zipcode');
+        $order = new Order($idOrder);
+        $idCarrier = (int) $order->id_carrier;
+        $idAddress = (int) $order->id_address_delivery;
 
+        $address = new Address($idAddress);
+        $countryIsoCode = Country::getIsoById($address->id_country);
+
+        $params = [
+            'countryCode' => $countryIsoCode,
+            'agreementCountry' => $countryIsoCode,
+            //'city' => $address->city,
+            'postalCode' => $postalCode,
+            //'streetName' => $address->address1,
+            //'streetNumber' => '19',
+            'numberOfServicePoints' => 100, // TODO: this should probably be a setting?
+            'typeId' => $carrierSetting[$idCarrier]['service_codes'] // "type of the service point" or service code, see module configuration page
+        ];
+
+        try {
+            $response = $client->getServicePointsByAddress($params);
+
+            if (!empty($response['servicePoints'])) {
+                $servicePoints = $response['servicePoints'];
+                $servicePoints = array_reduce($servicePoints, function ($carry, $element) {
+                    $carry[] = [
+                        'servicePointId' => $element['servicePointId'],
+                        'servicePointDetail' => "{$element['name']}. {$element['visitingAddress']['streetName']} {$element['visitingAddress']['streetNumber']}, {$element['visitingAddress']['postalCode']} {$element['visitingAddress']['city']}"
+                    ];
+                    return $carry;
+                }, []);
+                return $this->json($servicePoints);
+            } else {
+                return $this->returnErrorJsonResponse(
+                    ['error' => $response['error']],
+                    Response::HTTP_BAD_REQUEST
+                );
+            }
+        } catch (Exception $e) {
+            return $this->returnErrorJsonResponse(
+                ['error' => $e->getMessage()],
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
+        }
+    }
     // TODO: logging, I guess
 
     /**
@@ -251,10 +318,9 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
         }
 
         $filename = $this->_getFileName($booking);
-
         return new Response(
             base64_decode($booking->getLabelData()),
-            200,
+            Response::HTTP_OK,
             [
                 "Content-Type"        => "application/pdf",
                 "Content-Disposition" => "inline;filename=$filename"
@@ -283,5 +349,20 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
                 "Content-Disposition" => "inline;filename=$filename"
             ]
         );
+    }
+    /** 
+     * Gets the header toolbar buttons.
+     *
+     * @return array
+     */
+    private function getToolbarButtons($id_order)
+    {
+        $toolbarButtons = [];
+        $toolbarButtons['go_to_order'] = [
+            'href' => $this->generateUrl('admin_orders_view', ["orderId" => $id_order]),
+            'desc' => $this->trans('Go to Order', "Modules.Vgpostnord.Admin"),
+            'icon' => 'arrow_back',
+        ];
+        return $toolbarButtons;
     }
 }
