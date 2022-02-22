@@ -60,6 +60,15 @@ class VgPostnordBooking
      * @ORM\Column(name="label_data", type="text", nullable=true)
      */
     private $label_data;
+    
+    /**
+     * @var string
+     *
+     * Base64 encoded return label PDF
+     *
+     * @ORM\Column(name="return_label_data", type="text", nullable=true)
+     */
+    private $return_label_data;
 
     /**
      * @var string

@@ -10,6 +10,12 @@ admin_vg_postnord_fetch_label:
   defaults:
     _controller: 'Vilkas\Postnord\Controller\Admin\VgPostnordBookingController::sendBookingAction'
 
+admin_vg_postnord_fetch_return_label:
+  path: vg_postnord/fetch_return_label
+  methods: [GET, POST]
+  defaults:
+    _controller: 'Vilkas\Postnord\Controller\Admin\VgPostnordBookingController::getReturnLabel'
+
 admin_vg_postnord_bulk_fetch_label:
   path: vg_postnord/bulk_fetch_label
   methods: [POST]

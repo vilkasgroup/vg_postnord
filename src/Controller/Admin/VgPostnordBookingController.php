@@ -120,9 +120,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
             return $this->redirectToRoute("admin_orders_index");
         }
 
-        /** @var EntityManager $entityManager */
-        $entityManager = $this->container->get('doctrine.orm.entity_manager');
-        $repository = $entityManager->getRepository(VgPostnordBooking::class);
+        $repository = $this->get('vilkas.postnord.repository.vgpostnordbooking');
 
         $booking = $repository->findOneBy(["id" => $id_booking]);
         if (!$booking) {
@@ -145,6 +143,43 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
         }
 
         return $this->_getPDFLabelResponse($booking);
+    }
+
+    /**
+     * Fetch label for an existing (local) booking
+     */
+    public function getReturnLabel(Request $request): Response
+    {
+        $id_booking = $request->get("id_booking");
+        if (!$id_booking) {
+            $message = $this->trans("Missing id_booking in request. Something is wrong.",  "Modules.Vgpostnord.Admin");
+            $this->addFlash("error", $message);
+            return $this->redirectToRoute("admin_orders_index");
+        }
+
+        $repository = $this->get('vilkas.postnord.repository.vgpostnordbooking');
+
+        $booking = $repository->findOneBy(["id" => $id_booking]);
+        if (!$booking) {
+            $message = $this->trans("Could not find booking with id $id_booking", "Modules.Vgpostnord.Admin");
+            $this->addFlash("error", $message);
+            return $this->redirectToRoute("admin_orders_index");
+        }
+
+        if ($booking->getFinalized() && $booking->getReturnLabel()) {
+            return $this->_getPDFReturnLabelResponse($booking);
+        }
+
+        $bookingService = $this->get("vilkas.postnord.service.vgpostnordbookingservice");
+
+        try {
+            $booking = $bookingService->getReturnLabel($booking);
+        } catch (\Throwable $e) {
+            $this->addFlash("error", $e->getMessage());
+            return $this->redirectToRoute("admin_orders_view", ["orderId" => $booking->getIdOrder()]);
+        }
+
+        return $this->_getPDFReturnLabelResponse($booking);
     }
 
     /**

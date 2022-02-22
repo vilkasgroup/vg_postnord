@@ -52,8 +52,10 @@ class VgPostnordBookingService
 
         // grab mandatory additional services from carrier settings
         $carrier_settings = json_decode(Configuration::get("VG_POSTNORD_CARRIER_SETTINGS"), true);
-        if (array_key_exists($order->id_carrier, $carrier_settings)
-            && array_key_exists("mandatory_service_codes", $carrier_settings[$order->id_carrier])) {
+        if (
+            array_key_exists($order->id_carrier, $carrier_settings)
+            && array_key_exists("mandatory_service_codes", $carrier_settings[$order->id_carrier])
+        ) {
             $mandatory_services = implode(",", $carrier_settings[$order->id_carrier]["mandatory_service_codes"]);
         } else {
             $mandatory_services = null;
@@ -66,8 +68,7 @@ class VgPostnordBookingService
             $booking
                 ->setCartData($cartData)
                 ->setServicepointid($cartData->getServicePointId())
-                ->setServicePointData($cartData->getServicePointData())
-            ;
+                ->setServicePointData($cartData->getServicePointData());
         } else {
             // if cart data doesn't exist, copy service point & data from previous shipment (if exists)
             /** @var VgPostnordBooking $previousBooking */
@@ -75,15 +76,13 @@ class VgPostnordBookingService
             if ($previousBooking) {
                 $booking
                     ->setServicepointid($previousBooking->getServicePointId())
-                    ->setServicePointData($previousBooking->getServicePointData())
-                ;
+                    ->setServicePointData($previousBooking->getServicePointData());
             }
         }
 
         $booking
             ->setIdOrder($id_order)
-            ->setAdditionalServices($mandatory_services)
-        ;
+            ->setAdditionalServices($mandatory_services);
 
         $this->entityManager->persist($booking);
         $this->entityManager->flush();
@@ -151,11 +150,11 @@ class VgPostnordBookingService
             $label_info,
             $pickup_address
         );
-        
+
         $bookingResponse = $response["bookingResponse"];
         $labelPrintout   = $response["labelPrintout"];
 
-        $search_result = array_filter($bookingResponse["idInformation"][0]["urls"], function($url) {
+        $search_result = array_filter($bookingResponse["idInformation"][0]["urls"], function ($url) {
             return $url["type"] === "TRACKING";
         });
         $tracking_url = $search_result[0] ?? null;
@@ -167,6 +166,33 @@ class VgPostnordBookingService
             ->setLabelData($labelPrintout[0]["printout"]["data"])
             ->setFinalized(new \DateTime());
 
+        $this->entityManager->flush();
+
+        return $booking;
+    }
+
+    /**
+     * @param VgPostnordBooking $booking
+     *
+     * @return VgPostnordBooking
+     *
+     * @throws PrestaShopException
+     * @throws ExceptionInterface
+     */
+    public function getReturnLabel(VgPostnordBooking $booking): VgPostnordBooking
+    {
+        $label_info = [
+            "paperSize" => "LABEL"
+        ];
+
+        $response = $this->client->getReturnPDFLabelFromId(
+            $booking->getIdBookingExternal(),
+            $label_info
+        );
+        $data = array_filter($response['labelPrintout'], function ($element) {
+            return $element['printout']['labelFormat'] === 'PDF';
+        });
+        $booking->setReturnLabelData($data[0]['printout']['data']);
         $this->entityManager->flush();
 
         return $booking;
