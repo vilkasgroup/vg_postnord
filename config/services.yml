@@ -50,7 +50,7 @@ services:
       - '@vilkas.postnord.grid.vg_postnord_booking_data_factory'              # our data factory
       - '@prestashop.core.grid.filter.form_factory'                            # core service needed by grid factory
       - '@prestashop.core.hook.dispatcher'                                     # core service needed by grid factory
-  
+
   vilkas.postnord.form.identifiable_object.data_provider.vg_postnord_booking_form_data_provider:
     class: 'Vilkas\Postnord\Form\VgPostnordBookingFormDataProvider'
     arguments:
@@ -64,6 +64,15 @@ services:
         - '@=service("prestashop.adapter.multistore_feature").isUsed()'
     tags:
         - { name: form.type }
+
+  vilkas.postnord.form.type.vg_postnord_parcel_type:
+    class: 'Vilkas\Postnord\Form\VgPostnordParcelType'
+    parent: 'form.type.translatable.aware'
+    public: true
+    arguments:
+      - '@=service("prestashop.adapter.multistore_feature").isUsed()'
+    tags:
+      - { name: form.type }
 
   vilkas.postnord.form.identifiable_object.builder.vg_postnord_booking_form_builder:
     class: 'PrestaShop\PrestaShop\Core\Form\IdentifiableObject\Builder\FormBuilder'
