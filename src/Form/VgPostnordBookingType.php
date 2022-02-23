@@ -57,7 +57,7 @@ class VgPostnordBookingType extends TranslatorAwareType
         // So let settle with disabled form with this instead.
         $builder->setDisabled(!empty($options['data']['finalized']));
         $postalCode = $this->getPostalCode($options);
-
+        $additionalServicesChoices = $this->getAdditionalServices($options);
         $builder
             // Not used yet
             // ->add('tracking_url', TextType::class, [
@@ -68,7 +68,7 @@ class VgPostnordBookingType extends TranslatorAwareType
             ->add('additional_services', MaterialChoiceTableType::class, [
                 'label' => $this->trans('Additional Services', 'Modules.Vgpostnord.Admin'),
                 'help' => $this->trans('Enable additional services for the shipment', 'Modules.Vgpostnord.Admin'),
-                'choices' => $this->getAdditionalServices($options),
+                'choices' => $additionalServicesChoices,
                 'choice_attr' => function ($choice) {
                     $disabled = false;
                     // disable editing of mandatory service codes
@@ -83,7 +83,17 @@ class VgPostnordBookingType extends TranslatorAwareType
                 'data' => $this->mandatory_service_codes,
                 'label' => false,
                 'entry_type' => HiddenType::class
-            ]);
+            ])
+            ->addEventListener(FormEvents::PRE_SET_DATA, function (FormEvent $event) use ($additionalServicesChoices) {
+                $form = $event->getForm();
+
+                if (!empty($additionalServicesChoices['error'])) {
+                    $form->addError(new FormError("Error: {$additionalServicesChoices['error']}"));
+                    $form->addError(new FormError("{$additionalServicesChoices['errorMessage']}"));
+                    $form->remove('additional_services');
+                }
+                
+            });
 
         // Only show service point selector when carrier support service point(A7)
         if (in_array('A7', $this->mandatory_service_codes)) {
@@ -200,7 +210,11 @@ class VgPostnordBookingType extends TranslatorAwareType
 
         // Get valid combination from postnord and filter with issuer country, service code and consignee country
         // additional services with mandatory tag are not shown
-        $validCombination = ($this->client->getValidCombinationsOfServiceCodes())['data'];
+        try {
+            $validCombination = ($this->client->getValidCombinationsOfServiceCodes())['data'];
+        } catch (Exception $e) {
+            return ['error' => 'Failed to fetch additional services', 'errorMessage'=> $e->getMessage()];
+        }
         $validIssuerCountryCombination = array_filter($validCombination, function ($element) use (&$issuerCountry) {
             return $element['issuerCountryCode'] === $issuerCountry ? $element : null;
         });
@@ -230,44 +244,7 @@ class VgPostnordBookingType extends TranslatorAwareType
         });
         return $finalCombination;
     }
-    // Only work for PS 1.7.8 
-    // PS 1.7.7 MaterialChoiceTableType does not support radio for some reason 
-    private function getServicePoint($options): array
-    {
-        $carrierSetting = json_decode(Configuration::get('VG_POSTNORD_CARRIER_SETTINGS'), true);
-        $idOrder = (int) $options['data']['id_order'];
-        $order = new Order($idOrder);
-        $idCarrier = (int) $order->id_carrier;
-        $idAddress = (int) $order->id_address_delivery;
-        $address = new Address($idAddress);
-        $postalCode = $address->postcode;
-        $countryIsoCode = Country::getIsoById($address->id_country);
 
-        $params = [
-            'countryCode' => $countryIsoCode,
-            'agreementCountry' => $countryIsoCode,
-            //'city' => $address->city,
-            'postalCode' => $postalCode,
-            //'streetName' => $address->address1,
-            //'streetNumber' => '19',
-            'numberOfServicePoints' => 100, 
-            'typeId' => $carrierSetting[$idCarrier]['service_codes'] // "type of the service point" or service code, see module configuration page
-        ];
-        try {
-            $response = $this->client->getServicePointsByAddress($params);
-            if (!empty($response['servicePoints'])) {
-                $servicePoints = $this->getServicePointOption($response['servicePoints']);
-                return [$servicePoints, $postalCode];
-            } else {
-                return [[$response['error'] => null], $postalCode];
-            }
-        } catch (Exception $e) {
-            return [
-                [$e->getMessage() => null],
-                $postalCode
-            ];
-        }
-    }
     private function getServicePointData($idOrder, $servicePointId): array
     {
         $order = new Order($idOrder);
@@ -283,18 +260,6 @@ class VgPostnordBookingType extends TranslatorAwareType
         return $this->client->getServicePointById($params);
     }
 
-    private function getServicePointOption($servicePoints): array
-    {
-        return array_reduce($servicePoints, function ($carry, $element) {
-            $carry["{$element['name']}. 
-            {$element['visitingAddress']['streetName']}
-            {$element['visitingAddress']['streetNumber']},
-            {$element['visitingAddress']['postalCode']}
-            {$element['visitingAddress']['city']}
-            "] = $element['servicePointId'];
-            return $carry;
-        }, []);
-    }
     private function getPostalCode($options): string
     {
         $idOrder = (int) $options['data']['id_order'];
