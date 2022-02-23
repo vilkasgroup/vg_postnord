@@ -195,6 +195,25 @@ class VgPostnordBookingType extends TranslatorAwareType
                     }
                 });
         }
+
+        $builder
+            ->add('add_parcel_button', ButtonType::class, [
+                'attr' => ['class' => 'vg-postnord-add-parcel btn btn-primary'],
+                'label' => $this->trans('Add parcel', 'Modules.Vgpostnord.Admin')
+            ])
+            ->addEventListener(FormEvents::PRE_SET_DATA, function (FormEvent $event) {
+                $data = $event->getData();
+                $data['parcel_data'] = json_decode($data['parcel_data'], true);
+                $event->setData($data);
+
+                $form = $event->getForm();
+                $form->add('parcel_data', CollectionType::class, [
+                    'data' => $data['parcel_data'],
+                    'label' => $this->trans('Parcel data', 'Modules.Vgpostnord.Admin'),
+                    'entry_type' => VgPostnordParcelType::class
+                ]);
+            })
+        ;
     }
 
     private function getAdditionalServices($options): array
