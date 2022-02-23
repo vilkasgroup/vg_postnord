@@ -23,6 +23,7 @@ use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
 use Symfony\Component\Translation\TranslatorInterface;
+use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 
 use Vilkas\Postnord\Client\PostnordClient;
 
@@ -36,6 +37,8 @@ class VgPostnordBookingType extends TranslatorAwareType
     /**
      * @param TranslatorInterface $translator
      * @param array $locales
+     *
+     * @throws Exception
      */
     public function __construct(TranslatorInterface $translator, array $locales)
     {
@@ -56,14 +59,11 @@ class VgPostnordBookingType extends TranslatorAwareType
         // I couldn't find a way to disable the edit button
         // So let settle with disabled form with this instead.
         $builder->setDisabled(!empty($options['data']['finalized']));
+
         $postalCode = $this->getPostalCode($options);
         $additionalServicesChoices = $this->getAdditionalServices($options);
+
         $builder
-            // Not used yet
-            // ->add('tracking_url', TextType::class, [
-            //     'label' => $this->trans('Tracking URL', 'Modules.Vgpostnord.Admin'),
-            //     'disabled' => empty($options['data']['tracking_url'])
-            // ])
             ->add('id_order', HiddenType::class)
             ->add('additional_services', MaterialChoiceTableType::class, [
                 'label' => $this->trans('Additional Services', 'Modules.Vgpostnord.Admin'),
@@ -92,7 +92,6 @@ class VgPostnordBookingType extends TranslatorAwareType
                     $form->addError(new FormError("{$additionalServicesChoices['errorMessage']}"));
                     $form->remove('additional_services');
                 }
-                
             });
 
         // Only show service point selector when carrier support service point(A7)
@@ -110,7 +109,7 @@ class VgPostnordBookingType extends TranslatorAwareType
                         'attr' => ['class' => 'search btn-primary float-right col px-md-5'],
                         'label' => $this->trans('Change Service Point', 'Modules.Vgpostnord.Admin'),
                     ]))
-                // use this one to get servicepointid 
+                // use this one to get servicepointid
                 ->add('servicepointid', HiddenType::class)
                 ->add('service_point_data', HiddenType::class)
                 ->add('postcode', TextType::class, [
@@ -139,7 +138,7 @@ class VgPostnordBookingType extends TranslatorAwareType
                         $data['current_service_point'] = "{$servicePointData['name']}. {$servicePointData['visitingAddress']['streetName']} {$servicePointData['visitingAddress']['streetNumber']}, {$servicePointData['visitingAddress']['postalCode']} {$servicePointData['visitingAddress']['city']}";
                     }
 
-                    // used to compare, then conditional fetching service_point_data 
+                    // used to compare, then conditional fetching service_point_data
                     $form->add('servicepointid_value', HiddenType::class, [
                         'data' => $data['servicepointid'],
                     ]);
@@ -212,7 +211,7 @@ class VgPostnordBookingType extends TranslatorAwareType
         // additional services with mandatory tag are not shown
         try {
             $validCombination = ($this->client->getValidCombinationsOfServiceCodes())['data'];
-        } catch (Exception $e) {
+        } catch (Exception|ExceptionInterface $e) {
             return ['error' => 'Failed to fetch additional services', 'errorMessage'=> $e->getMessage()];
         }
         $validIssuerCountryCombination = array_filter($validCombination, function ($element) use (&$issuerCountry) {
