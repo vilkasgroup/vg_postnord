@@ -354,7 +354,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
         if (!$booking->getLabelData()) {
             $message = $this->trans("Booking is missing label data. Something is wrong.", "Modules.Vgpostnord.Admin");
             $this->addFlash("error", $message);
-            $this->redirectToRoute("admin_orders_view", ["orderId" => $booking->getIdOrder()]);
+            return $this->redirectToRoute("admin_orders_view", ["orderId" => $booking->getIdOrder()]);
         }
 
         $filename = $this->_getFileName($booking);
@@ -376,7 +376,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
         if (!$booking->getReturnLabelData()) {
             $message = $this->trans("Booking is missing return label data. Something is wrong.", "Modules.Vgpostnord.Admin");
             $this->addFlash("error", $message);
-            $this->redirectToRoute("admin_orders_view", ["orderId" => $booking->getIdOrder()]);
+            return $this->redirectToRoute("admin_orders_view", ["orderId" => $booking->getIdOrder()]);
         }
 
         $filename = $this->_getFileName($booking, true);
