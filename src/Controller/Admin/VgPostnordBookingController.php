@@ -174,6 +174,10 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
             return $this->redirectToRoute("admin_orders_view", ["orderId" => $id_order]);
         }
 
+        if (Configuration::get('VG_POSTNORD_FETCH_BOTH')) {
+            return $this->_getPDFBothLabelsResponse($booking);
+        }
+
         return $this->_getPDFLabelResponse($booking);
     }
 
@@ -279,23 +283,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
             return $this->redirectToRoute("admin_orders_index");
         }
 
-        $labelData = $booking->getLabelData();
-        $returnLabelData = $booking->getReturnLabelData();
-        $merger = new Merger(new TcpdiDriver());
-        $merger->addRaw(base64_decode($labelData));
-        $merger->addRaw(base64_decode($returnLabelData));
-        $mergedLabel = $merger->merge();
-
-        $filename = "labels_" . time() . ".pdf";
-
-        return new Response(
-            $mergedLabel,
-            200,
-            [
-                "Content-Type"        => "application/pdf",
-                "Content-Disposition" => "inline;filename=$filename"
-            ]
-        );
+        return $this->_getPDFBothLabelsResponse($booking);
     }
     /**
      * Create bookings and fetch labels for orders in bulk
@@ -319,6 +307,10 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
             $label_data = $booking->getLabelData();
             if ($label_data) {
                 $data[] = base64_decode($label_data);
+            }
+            $return_label_data = $booking->getReturnLabelData();
+            if ($return_label_data) {
+                $data[] = base64_decode($return_label_data);
             }
         }
 
@@ -391,6 +383,30 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
 
         return new Response(
             base64_decode($booking->getReturnLabelData()),
+            200,
+            [
+                "Content-Type"        => "application/pdf",
+                "Content-Disposition" => "inline;filename=$filename"
+            ]
+        );
+    }
+
+    /**
+     * Generate raw PFD return label data response with related headers
+     */
+    private function _getPDFBothLabelsResponse(VgPostnordBooking $booking): Response
+    {
+        $labelData = $booking->getLabelData();
+        $returnLabelData = $booking->getReturnLabelData();
+        $merger = new Merger(new TcpdiDriver());
+        $merger->addRaw(base64_decode($labelData));
+        $merger->addRaw(base64_decode($returnLabelData));
+        $mergedLabel = $merger->merge();
+
+        $filename = "labels_" . time() . ".pdf";
+
+        return new Response(
+            $mergedLabel,
             200,
             [
                 "Content-Type"        => "application/pdf",

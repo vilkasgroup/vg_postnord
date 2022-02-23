@@ -175,6 +175,10 @@ class VgPostnordBookingService
 
         $this->entityManager->flush();
 
+        if (Configuration::get('VG_POSTNORD_FETCH_BOTH')) {
+            $this->getReturnLabel($booking);
+        }
+
         return $booking;
     }
 
