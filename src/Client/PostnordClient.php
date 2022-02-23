@@ -488,20 +488,20 @@ class PostnordClient
         try {
             $this->logger->debug('Get label with:' . PHP_EOL . json_encode($options, JSON_PRETTY_PRINT));
             $response = $this->doRequest('POST', '/rest/shipment/v3/returns/ids/labels/pdf', $options);
-            if (isset(
-                $response['labelPrintout'][0]['printout']['data']
-            )) {
-                // remove base64 pdf before logging
-                $responseWithoutBase64 = $response;
-                unset($responseWithoutBase64['labelPrintout'][0]['printout']['data']);
-                $this->logger->debug('Booking created with data:' . PHP_EOL . json_encode($responseWithoutBase64, JSON_PRETTY_PRINT));
+            $responseWithoutBase64 = $response;
+            // if (isset(
+            //     $response['labelPrintout'][0]['printout']['data']
+            // )) {
+            //     // remove base64 pdf before logging
+            //     unset($responseWithoutBase64['labelPrintout'][0]['printout']['data']);
+            // }
+            foreach ($responseWithoutBase64['labelPrintout'] as &$printout) {
+                unset($printout['printout']['data']);
             }
+            $this->logger->debug('Booking created with data:' . PHP_EOL . json_encode($responseWithoutBase64, JSON_PRETTY_PRINT));
         } catch (Exception $e) {
-            // TODO: Log error
-            $this->logger->error('Error getting label' . $e->getMessage());
-            var_dump($e->getMessage());
-            $error = json_decode($e->getMessage(), true);
-            throw new Exception($error['message']);
+            $this->logger->error('Error getting label' , ['exception' => $e]);
+            throw $e;
         }
 
         return $response;
