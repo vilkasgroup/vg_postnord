@@ -57,7 +57,7 @@ class VgPostnordBookingType extends TranslatorAwareType
         // So let settle with disabled form with this instead.
         $builder->setDisabled(!empty($options['data']['finalized']));
         $postalCode = $this->getPostalCode($options);
-        $addSerchoices = $this->getAdditionalServices($options);
+        $additionalServicesChoices = $this->getAdditionalServices($options);
         $builder
             // Not used yet
             // ->add('tracking_url', TextType::class, [
@@ -68,7 +68,7 @@ class VgPostnordBookingType extends TranslatorAwareType
             ->add('additional_services', MaterialChoiceTableType::class, [
                 'label' => $this->trans('Additional Services', 'Modules.Vgpostnord.Admin'),
                 'help' => $this->trans('Enable additional services for the shipment', 'Modules.Vgpostnord.Admin'),
-                'choices' => $addSerchoices,
+                'choices' => $additionalServicesChoices,
                 'choice_attr' => function ($choice) {
                     $disabled = false;
                     // disable editing of mandatory service codes
@@ -84,12 +84,12 @@ class VgPostnordBookingType extends TranslatorAwareType
                 'label' => false,
                 'entry_type' => HiddenType::class
             ])
-            ->addEventListener(FormEvents::PRE_SET_DATA, function (FormEvent $event) use ($addSerchoices) {
+            ->addEventListener(FormEvents::PRE_SET_DATA, function (FormEvent $event) use ($additionalServicesChoices) {
                 $form = $event->getForm();
 
-                if (!empty($addSerchoices['error'])) {
-                    $form->addError(new FormError("Error: {$addSerchoices['error']}"));
-                    $form->addError(new FormError("{$addSerchoices['errorMessage']}"));
+                if (!empty($additionalServicesChoices['error'])) {
+                    $form->addError(new FormError("Error: {$additionalServicesChoices['error']}"));
+                    $form->addError(new FormError("{$additionalServicesChoices['errorMessage']}"));
                     $form->remove('additional_services');
                 }
                 
