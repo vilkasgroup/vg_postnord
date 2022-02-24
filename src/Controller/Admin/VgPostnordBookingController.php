@@ -300,6 +300,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
                 $booking = $bookingService->createBlankBooking((int) $id_order);
                 $booking = $bookingService->sendBookingAndGenerateLabel($booking);
             } catch (\Throwable $e) {
+                $this->addFlash("error", "Failed to fetch label for order with id {$id_order}");
                 $this->addFlash("error", $e->getMessage());
                 continue;
             }
