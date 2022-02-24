@@ -541,7 +541,7 @@ class PostnordClient
                         'value' => $order['numberOfPackages'],
                     ],
                     'totalGrossWeight' => [
-                        'value' => $order['grossWeight'], //from data
+                        'value' => $order['totalGrossWeight'], //from data
                         'unit' => 'KGM',
                     ],
                     'parties' => [
@@ -583,23 +583,6 @@ class PostnordClient
                             ],
                         ],
                     ],
-                    'goodsItem' => [
-                        [
-                            'packageTypeCode' => 'PC',
-                            'items' => [
-                                [
-                                    'itemIdentification' => [
-                                        'itemId' => $order['id'],
-                                        'itemIdType' => 'SSCC', //SSCC for Nordic and DPD to other countries
-                                    ],
-                                    'grossWeight' => [
-                                        'value' => $order['grossWeight'],
-                                        'unit' => 'KGM',
-                                    ],
-                                ],
-                            ],
-                        ],
-                    ],
                 ],
             ],
         ];
@@ -621,6 +604,24 @@ class PostnordClient
                         'postalCode' => $pickupAddress['visitingAddress']['postalCode'],
                         'city' => $pickupAddress['visitingAddress']['city'],
                         'countryCode' => $pickupAddress['visitingAddress']['countryCode'],
+                    ],
+                ],
+            ];
+        }
+
+        foreach ($order["items"] as $item) {
+            $body['shipment'][0]['goodsItem'][] = [
+                'packageTypeCode' => 'PC',
+                'items' => [
+                    [
+                        'itemIdentification' => [
+                            'itemId' => $item['id'],
+                            'itemIdType' => 'SSCC', //SSCC for Nordic and DPD to other countries
+                        ],
+                        'grossWeight' => [
+                            'value' => $item['grossWeight'],
+                            'unit' => 'KGM',
+                        ],
                     ],
                 ],
             ];

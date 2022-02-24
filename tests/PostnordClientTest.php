@@ -168,16 +168,19 @@ class PostnordClientTest extends TestCase
             'basicServiceCode' => '19',
             'additionalServiceCode' => ['A3', 'A7'],
             'numberOfPackages' => 1,
-            'grossWeight' => 1.1,
-            // 'itemId'=>'Maybe same as shipmentId?'
+            'totalGrossWeight' => 1.1,
+            'items' => [
+                [
+                    'id' => '0',
+                    'grossWeight' => 1.1,
+                ],
+            ],
         ];
         // Customer country, default is 'FI'
         $country = 'FI';
-        // check $labelInfo format in Post Nord documentation
-        // $labelInfo = [
-        // 'paperSize' => 'LABEL'
-        // ];
+
         $results = $this->client->createBooking($email, $address, $order, $shopAddress, $country, [], $pickupAddress);
+
         $this->assertArrayHasKey('bookingId', $results);
         $this->assertArrayHasKey('value', $results['idInformation'][0]['ids'][0]);
         $this->assertRegExp('/\d{20}/m', $results['idInformation'][0]['ids'][0]['value']);
@@ -190,7 +193,7 @@ class PostnordClientTest extends TestCase
             'shop_party_id' => '1111111111',
             'shop_street' => 'Finlaysoninkuja 19',
             'shop_postcode' => '33210',
-            'shop_city' => 'Tamperere',
+            'shop_city' => 'Tampere',
             'shop_country' => 'FI',
         ];
         $pickupAddress = [
@@ -221,8 +224,13 @@ class PostnordClientTest extends TestCase
             'basicServiceCode' => '19',
             'additionalServiceCode' => ['A3', 'A7'],
             'numberOfPackages' => 1,
-            'grossWeight' => 1.1,
-            // 'itemId'=>'Maybe same as shipmentId?'
+            'totalGrossWeight' => 1.1,
+            'items' => [
+                [
+                    'id' => '0',
+                    'grossWeight' => 1.1,
+                ],
+            ],
         ];
         $country = 'FI';
         // check $labelInfo format in Post Nord documentation
