@@ -266,7 +266,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
 
         $repository = $this->get('vilkas.postnord.repository.vgpostnordbooking');
         $booking = $repository->findOneBy(["id" => $id_booking]);
-        
+
         if (!$booking) {
             $message = $this->trans("Could not find booking with id $id_booking", "Modules.Vgpostnord.Admin");
             $this->addFlash("error", $message);
@@ -300,8 +300,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
                 $booking = $bookingService->createBlankBooking((int) $id_order);
                 $booking = $bookingService->sendBookingAndGenerateLabel($booking);
             } catch (\Throwable $e) {
-                $this->addFlash("error", "Failed to fetch label for order with id {$id_order}");
-                $this->addFlash("error", $e->getMessage());
+                $this->addFlash("error", "Failed to fetch label for order with id {$id_order}. <br> Error: " . $e->getMessage());
                 continue;
             }
 
