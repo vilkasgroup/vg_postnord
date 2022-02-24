@@ -210,7 +210,16 @@ class VgPostnordBookingType extends TranslatorAwareType
                 $form->add('parcel_data', CollectionType::class, [
                     'data' => $data['parcel_data'],
                     'label' => $this->trans('Parcel data', 'Modules.Vgpostnord.Admin'),
-                    'entry_type' => VgPostnordParcelType::class
+                    'entry_type' => VgPostnordParcelType::class,
+                    // new fields are generated/deleted by javascript, so these seem to be needed
+                    'allow_extra_fields' => true,
+                    'allow_add' => true,
+                    'allow_delete' => true
+                ]);
+
+                $parcel_count = count($data['parcel_data']);
+                $form->add('parcel_count', HiddenType::class, [
+                    'data' => $parcel_count
                 ]);
             })
         ;
