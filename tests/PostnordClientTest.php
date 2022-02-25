@@ -343,8 +343,18 @@ class PostnordClientTest extends TestCase
             'basicServiceCode' => '19',
             'additionalServiceCode' => ['A3', 'A7'],
             'numberOfPackages' => 1,
-            'grossWeight' => 1.1,
-            // 'itemId'=>'Maybe same as shipmentId?'
+            'totalGrossWeight' => 1.1,
+            'totalGrossWeight' => 1.1,
+            'items' => [
+                [
+                    'id' => '0',
+                    'grossWeight' => 1.1,
+                ],
+                [
+                    'id' => '0',
+                    'grossWeight' => 1.1,
+                ]
+            ],
         ];
         // Customer country, default is 'FI'
         $country = 'FI';
@@ -363,7 +373,7 @@ class PostnordClientTest extends TestCase
             $pickupAddress
         );
         $this->assertArrayHasKey('bookingId', $results);
-
+        var_dump($results);
         // Postnord use the same id for item and label
         $itemId = $results['idInformation'][0]['ids'][0]['value'];
         $results = $this->client->getPDFLabelFromId($itemId, $labelInfo);
