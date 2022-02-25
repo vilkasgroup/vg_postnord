@@ -120,13 +120,21 @@ class VgPostnordBookingService
 
         $additional_service_codes = explode(",", $booking->getAdditionalServices() ?? []);
 
-        // TODO: id and grossWeight probably belong in a separate array
+        // TODO: generate
+        $items = [
+            [
+                "id"          => "0",
+                "grossWeight" => "1"
+            ]
+        ];
+
         $order_data = [
             "id"                    => "0", // should we generate this or let PostNord handle?
             "basicServiceCode"      => $service_code,
             "additionalServiceCode" => $additional_service_codes,
             "numberOfPackages"      => 1,   // TODO: from booking, probably need parcel "generator" similar to pakettikauppa
-            "grossWeight"           => 1    // TODO: same as above
+            "totalGrossWeight"      => 1,   // TODO: calculate from $items
+            "items"                 => $items
         ];
 
         $shop_address  = json_decode(Configuration::get("VG_POSTNORD_SHOP_ADDRESS"), true);
