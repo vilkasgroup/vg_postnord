@@ -121,20 +121,20 @@ class VgPostnordBookingService
 
         $additional_service_codes = explode(",", $booking->getAdditionalServices() ?? []);
 
-        // TODO: generate
-        $items = [
-            [
-                "id"          => "0",
-                "grossWeight" => "1"
-            ]
-        ];
+        $items = json_decode($booking->getParcelData(), true) ?? [];
+        $totalGrossWeight = 0;
+        foreach ($items as &$item) {
+            $item["id"] = "0";
+            $totalGrossWeight += (float) $item["grossWeight"];
+        }
+        unset($item);
 
         $order_data = [
             "id"                    => "0", // should we generate this or let PostNord handle?
             "basicServiceCode"      => $service_code,
             "additionalServiceCode" => $additional_service_codes,
-            "numberOfPackages"      => 1,   // TODO: from booking, probably need parcel "generator" similar to pakettikauppa
-            "totalGrossWeight"      => 1,   // TODO: calculate from $items
+            "numberOfPackages"      => count($items),
+            "totalGrossWeight"      => $totalGrossWeight,
             "items"                 => $items
         ];
 
