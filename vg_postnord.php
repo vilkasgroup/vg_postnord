@@ -100,7 +100,7 @@ class Vg_postnord extends CarrierModule
             // add service point information to order confirmation template variables
             && $this->registerHook('actionGetExtraMailTemplateVars')
 
-            && $this->registerHook('actionOrderEdited')
+            && $this->registerHook('actionObjectOrderUpdateBefore')
             ;
     }
 
@@ -1259,9 +1259,22 @@ class Vg_postnord extends CarrierModule
         }
     }
 
-    public function hookActionOrderEdited(array $params)
+    public function hookActionObjectOrderUpdateBefore(array $params)
     {
-        var_dump($params['order']->id_order);
-        throw new Exception('adsddadad');
+        $order = $params['object'];
+        $oldCarrier = (int) $order->shipping_number;
+        $submittedData=Tools::getValue('update_order_shipping');
+        $newCarrier=(int) $submittedData['new_carrier_id'];
+        $repo = $this->get('vilkas.postnord.repository.vgpostnordbooking');
+        $booking = $repo->findOneBy(['id_order' => (int) $order->id], ['id' => 'DESC']);
+        if($submittedData){
+            var_dump($submittedData);
+            var_dump($oldCarrier);
+            if($oldCarrier!==$newCarrier){
+                $booking->setServicepointid('');
+                $booking->setServicePointData('');
+            }
+            throw new Exception($booking->  getFinalizeda());
+        }
     }
 }
