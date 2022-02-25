@@ -180,7 +180,7 @@ class PostnordClient
      *
      * https://guides.atdeveloper.postnord.com/#747cfedf-fa97-4145-8a3e-5031c38416f9
      *
-     * @throws Exception
+     * @throws Exception|ExceptionInterface
      */
     public function getServicePointsByAddress(array $parameters): array
     {
@@ -340,7 +340,8 @@ class PostnordClient
      * Just for testing, seems to error out on their side atm.
      *
      * https://guides.atdeveloper.postnord.com/#cb2ac083-992b-4a3b-aaec-01ab50ea5654
-     * @throws Exception with error message from PostNord
+     * @throws Exception|ExceptionInterface with error message from PostNord
+     * 
      */
     public function getSurchargeHealthCheck(): array
     {
@@ -489,26 +490,22 @@ class PostnordClient
             $this->logger->debug('Get label with:' . PHP_EOL . json_encode($options, JSON_PRETTY_PRINT));
             $response = $this->doRequest('POST', '/rest/shipment/v3/returns/ids/labels/pdf', $options);
             $responseWithoutBase64 = $response;
-            // if (isset(
-            //     $response['labelPrintout'][0]['printout']['data']
-            // )) {
-            //     // remove base64 pdf before logging
-            //     unset($responseWithoutBase64['labelPrintout'][0]['printout']['data']);
-            // }
             foreach ($responseWithoutBase64['labelPrintout'] as &$printout) {
                 unset($printout['printout']['data']);
             }
             $this->logger->debug('Booking created with data:' . PHP_EOL . json_encode($responseWithoutBase64, JSON_PRETTY_PRINT));
         } catch (Exception $e) {
-            $this->logger->error('Error getting label' , ['exception' => $e]);
+            $this->logger->error('Error getting label', ['exception' => $e]);
             throw $e;
         }
 
         return $response;
     }
-
-    // Just to get issuer code
-    // Z11=PostNord Denmark, Z12=PostNord Sweden, Z13=PostNord Norway, Z14=PostNord Finland
+    /**
+     * Just to get issuer code
+     * Z11=PostNord Denmark, Z12=PostNord Sweden, Z13=PostNord Norway, Z14=PostNord Finland
+     * 
+     */
     private function getIssuerCode(string $country): string
     {
         switch ($country) {
