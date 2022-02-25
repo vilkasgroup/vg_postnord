@@ -120,20 +120,20 @@ class VgPostnordBookingService
 
         $additional_service_codes = explode(",", $booking->getAdditionalServices() ?? []);
 
-        // TODO: generate
-        $items = [
-            [
-                "id"          => "0",
-                "grossWeight" => "1"
-            ]
-        ];
+        $items = json_decode($booking->getParcelData(), true) ?? [];
+        $totalGrossWeight = 0;
+        foreach ($items as &$item) {
+            $item["id"] = "0";
+            $totalGrossWeight += (float) $item["grossWeight"];
+        }
+        unset($item);
 
         $order_data = [
             "id"                    => "0", // should we generate this or let PostNord handle?
             "basicServiceCode"      => $service_code,
             "additionalServiceCode" => $additional_service_codes,
-            "numberOfPackages"      => 1,   // TODO: from booking, probably need parcel "generator" similar to pakettikauppa
-            "totalGrossWeight"      => 1,   // TODO: calculate from $items
+            "numberOfPackages"      => count($items),
+            "totalGrossWeight"      => $totalGrossWeight,
             "items"                 => $items
         ];
 
@@ -169,17 +169,25 @@ class VgPostnordBookingService
         $bookingResponse = $response["bookingResponse"];
         $labelPrintout   = $response["labelPrintout"];
 
-        $search_result = array_filter($bookingResponse["idInformation"][0]["urls"], function ($url) {
+        // find all tracking urls in response
+        $search_result = array_filter($bookingResponse["idInformation"][0]["urls"], function($url) {
             return $url["type"] === "TRACKING";
         });
-        $tracking_url = $search_result[0] ?? null;
+        $tracking_urls = array_column($search_result, "url") ?? null;
+
+        $label_ids = $label_data = [];
+        foreach ($labelPrintout as $lp) {
+            $label_ids[] = $lp["itemIds"][0]["itemIds"];
+            $label_data[] = $lp["printout"]["data"];
+        }
 
         $booking
             ->setIdBookingExternal($bookingResponse["bookingId"])
-            ->setTrackingUrl($tracking_url["url"])
-            ->setIdLabelExternal($labelPrintout[0]["itemIds"][0]["itemIds"]) // TODO: can this return an array of labels and ids?
-            ->setLabelData($labelPrintout[0]["printout"]["data"])
-            ->setFinalized(new \DateTime());
+            ->setTrackingUrl(json_encode($tracking_urls, JSON_UNESCAPED_SLASHES))
+            ->setIdLabelExternal(json_encode($label_ids))
+            ->setLabelData(json_encode($label_data))
+            ->setFinalized(new \DateTime())
+        ;
 
         $this->entityManager->flush();
 
@@ -222,7 +230,10 @@ class VgPostnordBookingService
         return json_encode(
             [
                 [
-                    "weight" => 1
+                    "weight" => 1,
+                    "height" => "",
+                    "width"  => "",
+                    "length" => ""
                 ]
             ]
         );

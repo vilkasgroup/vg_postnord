@@ -426,9 +426,12 @@ class PostnordClient
             if (isset(
                 $response['labelPrintout'][0]['printout']['data']
             )) {
-                // remove base64 pdf
+                // remove label data from response for logging purpose
                 $responseWithoutBase64 = $response;
-                unset($responseWithoutBase64['labelPrintout'][0]['printout']['data']);
+                foreach ($responseWithoutBase64['labelPrintout'] as &$labelPrintout) {
+                    $labelPrintout['printout']['data'] = "<snip>";
+                }
+                unset($labelPrintout);
                 $this->logger->debug('Booking created with data:' . PHP_EOL . json_encode($responseWithoutBase64, JSON_PRETTY_PRINT));
             } else {
                 $this->logger->debug('Booking created with data:' . PHP_EOL . json_encode($response, JSON_PRETTY_PRINT));
@@ -657,7 +660,7 @@ class PostnordClient
         }
 
         foreach ($order["items"] as $item) {
-            $body['shipment'][0]['goodsItem'][] = [
+            $goodsItem = [
                 'packageTypeCode' => 'PC',
                 'items' => [
                     [
@@ -672,6 +675,25 @@ class PostnordClient
                     ],
                 ],
             ];
+
+            if (!empty($item['height']) && !empty($item['width']) && !empty($item['length'])) {
+                $goodsItem['items'][0]['dimensions'] = [
+                    'height' => [
+                        'value' => (float) $item['height'],
+                        'unit' => 'CMT'
+                    ],
+                    'width' => [
+                        'value' => (float) $item['width'],
+                        'unit' => 'CMT'
+                    ],
+                    'length' => [
+                        'value' => (float) $item['length'],
+                        'unit' => 'CMT'
+                    ],
+                ];
+            }
+
+            $body['shipment'][0]['goodsItem'][] = $goodsItem;
         }
 
         return $body;
