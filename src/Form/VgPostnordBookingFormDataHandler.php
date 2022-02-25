@@ -52,6 +52,8 @@ final class VgPostnordBookingFormDataHandler implements FormDataHandlerInterface
         // merge mandatory service codes from hidden inputs with additional services
         $data["additional_services"] = array_unique(array_merge($data["additional_services"], $data["mandatory_service_codes"]));
 
+        $data["parcel_data"] = json_encode(array_values($data["parcel_data"]));
+
         $booking->fromArray($data);
 
         $this->entityManager->flush();
