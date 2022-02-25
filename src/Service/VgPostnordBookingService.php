@@ -168,17 +168,25 @@ class VgPostnordBookingService
         $bookingResponse = $response["bookingResponse"];
         $labelPrintout   = $response["labelPrintout"];
 
+        // find all tracking urls in response
         $search_result = array_filter($bookingResponse["idInformation"][0]["urls"], function($url) {
             return $url["type"] === "TRACKING";
         });
-        $tracking_url = $search_result[0] ?? null;
+        $tracking_urls = array_column($search_result, "url") ?? null;
+
+        $label_ids = $label_data = [];
+        foreach ($labelPrintout as $lp) {
+            $label_ids[] = $lp["itemIds"][0]["itemIds"];
+            $label_data[] = $lp["printout"]["data"];
+        }
 
         $booking
             ->setIdBookingExternal($bookingResponse["bookingId"])
-            ->setTrackingUrl($tracking_url["url"])
-            ->setIdLabelExternal($labelPrintout[0]["itemIds"][0]["itemIds"]) // TODO: can this return an array of labels and ids?
-            ->setLabelData($labelPrintout[0]["printout"]["data"])
-            ->setFinalized(new \DateTime());
+            ->setTrackingUrl(json_encode($tracking_urls, JSON_UNESCAPED_SLASHES))
+            ->setIdLabelExternal(json_encode($label_ids))
+            ->setLabelData(json_encode($label_data))
+            ->setFinalized(new \DateTime())
+        ;
 
         $this->entityManager->flush();
 
