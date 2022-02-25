@@ -14,13 +14,13 @@ admin_vg_postnord_fetch_return_label:
   path: vg_postnord/fetch_return_label
   methods: [GET, POST]
   defaults:
-    _controller: 'Vilkas\Postnord\Controller\Admin\VgPostnordBookingController::getReturnLabel'
+    _controller: 'Vilkas\Postnord\Controller\Admin\VgPostnordBookingController::getReturnLabelAction'
 
 admin_vg_postnord_fetch_both_label:
   path: vg_postnord/fetch_both_label
   methods: [GET, POST]
   defaults:
-    _controller: 'Vilkas\Postnord\Controller\Admin\VgPostnordBookingController::getBothLabel'
+    _controller: 'Vilkas\Postnord\Controller\Admin\VgPostnordBookingController::getBothLabelAction'
 
 admin_vg_postnord_bulk_fetch_label:
   path: vg_postnord/bulk_fetch_label

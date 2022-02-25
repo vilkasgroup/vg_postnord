@@ -479,6 +479,8 @@ class PostnordClient
      * @param array $labelInfo label printout format (Paper size, number, etc.) from PostNord
      *
      * @return array PDF label from PostNord
+     * 
+     * @throws Exception|ExceptionInterface
      */
     public function getReturnPDFLabelFromId(string $itemId, array $labelInfo): array
     {

@@ -221,7 +221,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
     /**
      * Fetch label for an existing (local) booking
      */
-    public function getReturnLabel(Request $request): Response
+    public function getReturnLabelAction(Request $request): Response
     {
         $id_booking = $request->get("id_booking");
         if (!$id_booking) {
@@ -240,7 +240,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
         }
 
         if ($booking->getFinalized() && $booking->getReturnLabelData()) {
-            return $this->_getPDFReturnLabelResponse($booking);
+            return $this->_getPDFLabelResponse($booking, true);
         }
 
         $bookingService = $this->get("vilkas.postnord.service.vgpostnordbookingservice");
@@ -252,10 +252,10 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
             return $this->redirectToRoute("admin_orders_view", ["orderId" => $booking->getIdOrder()]);
         }
 
-        return $this->_getPDFReturnLabelResponse($booking);
+        return $this->_getPDFLabelResponse($booking, true);
     }
 
-    public function getBothLabel(Request $request): Response
+    public function getBothLabelAction(Request $request): Response
     {
         $id_booking = $request->get("id_booking");
         if (!$id_booking) {
@@ -275,12 +275,12 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
         if (!$booking->getFinalized()) {
             $message = $this->trans("Shipping Label is missing", "Modules.Vgpostnord.Admin");
             $this->addFlash("error", $message);
-            return $this->redirectToRoute("admin_orders_index");
+            return $this->redirectToRoute("admin_orders_view", ["orderId" => $booking->getIdOrder()]);
         }
         if (!$booking->getReturnLabelData()) {
             $message = $this->trans("Return label is missing", "Modules.Vgpostnord.Admin");
             $this->addFlash("error", $message);
-            return $this->redirectToRoute("admin_orders_index");
+            return $this->redirectToRoute("admin_orders_view", ["orderId" => $booking->getIdOrder()]);
         }
 
         return $this->_getPDFBothLabelsResponse($booking);
@@ -307,10 +307,10 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
             $label_data = $booking->getLabelData();
             if ($label_data) {
                 $data[] = base64_decode($label_data);
-            }
-            $return_label_data = $booking->getReturnLabelData();
-            if ($return_label_data) {
-                $data[] = base64_decode($return_label_data);
+                $return_label_data = $booking->getReturnLabelData();
+                if ($return_label_data) {
+                    $data[] = base64_decode($return_label_data);
+                }
             }
         }
 
@@ -349,41 +349,18 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
     /**
      * Generate raw PFD label data response with related headers
      */
-    private function _getPDFLabelResponse(VgPostnordBooking $booking): Response
+    private function _getPDFLabelResponse(VgPostnordBooking $booking, $return = false): Response
     {
-        if (!$booking->getLabelData()) {
-            $message = $this->trans("Booking is missing label data. Something is wrong.", "Modules.Vgpostnord.Admin");
-            $this->addFlash("error", $message);
-            return $this->redirectToRoute("admin_orders_view", ["orderId" => $booking->getIdOrder()]);
+        if ($return) {
+            $filename = $this->_getFileName($booking, true);
+            $data = $booking->getReturnLabelData();
+        } else {
+            $filename = $this->_getFileName($booking);
+            $data = $booking->getLabelData();
         }
-
-        $filename = $this->_getFileName($booking);
         return new Response(
-            base64_decode($booking->getLabelData()),
+            base64_decode($data),
             Response::HTTP_OK,
-            [
-                "Content-Type"        => "application/pdf",
-                "Content-Disposition" => "inline;filename=$filename"
-            ]
-        );
-    }
-
-    /**
-     * Generate raw PFD return label data response with related headers
-     */
-    private function _getPDFReturnLabelResponse(VgPostnordBooking $booking): Response
-    {
-        if (!$booking->getReturnLabelData()) {
-            $message = $this->trans("Booking is missing return label data. Something is wrong.", "Modules.Vgpostnord.Admin");
-            $this->addFlash("error", $message);
-            return $this->redirectToRoute("admin_orders_view", ["orderId" => $booking->getIdOrder()]);
-        }
-
-        $filename = $this->_getFileName($booking, true);
-
-        return new Response(
-            base64_decode($booking->getReturnLabelData()),
-            200,
             [
                 "Content-Type"        => "application/pdf",
                 "Content-Disposition" => "inline;filename=$filename"
@@ -396,14 +373,12 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
      */
     private function _getPDFBothLabelsResponse(VgPostnordBooking $booking): Response
     {
-        $labelData = $booking->getLabelData();
-        $returnLabelData = $booking->getReturnLabelData();
-        $merger = new Merger(new TcpdiDriver());
-        $merger->addRaw(base64_decode($labelData));
-        $merger->addRaw(base64_decode($returnLabelData));
-        $mergedLabel = $merger->merge();
-
         $filename = "labels_" . time() . ".pdf";
+
+        $merger = new Merger(new TcpdiDriver());
+        $merger->addRaw(base64_decode($booking->getLabelData()));
+        $merger->addRaw(base64_decode($booking->getReturnLabelData()));
+        $mergedLabel = $merger->merge();
 
         return new Response(
             $mergedLabel,
