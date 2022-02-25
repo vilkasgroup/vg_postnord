@@ -373,7 +373,6 @@ class PostnordClientTest extends TestCase
             $pickupAddress
         );
         $this->assertArrayHasKey('bookingId', $results);
-        var_dump($results);
         // Postnord use the same id for item and label
         $itemId = $results['idInformation'][0]['ids'][0]['value'];
         $results = $this->client->getPDFLabelFromId($itemId, $labelInfo);
