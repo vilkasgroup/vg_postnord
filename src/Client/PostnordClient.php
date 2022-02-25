@@ -340,8 +340,8 @@ class PostnordClient
      * Just for testing, seems to error out on their side atm.
      *
      * https://guides.atdeveloper.postnord.com/#cb2ac083-992b-4a3b-aaec-01ab50ea5654
-     * @throws Exception|ExceptionInterface with error message from PostNord
      * 
+     * @throws Exception|ExceptionInterface with error message from PostNord
      */
     public function getSurchargeHealthCheck(): array
     {
