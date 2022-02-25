@@ -373,11 +373,16 @@ class PostnordClientTest extends TestCase
             $pickupAddress
         );
         $this->assertArrayHasKey('bookingId', $results);
+
+        foreach ($results["idInformation"][0]["ids"] as $id) {
+            $labelIds[] = $id["value"];
+        }
         // Postnord use the same id for item and label
-        $itemId = $results['idInformation'][0]['ids'][0]['value'];
-        $results = $this->client->getPDFLabelFromId($itemId, $labelInfo);
-        $this->assertArrayHasKey('printout', $results[0]);
-        $results = $this->client->getReturnPDFLabelFromId($itemId, $labelInfo);
-        $this->assertArrayHasKey('bookingResponse', $results);
+        foreach ($labelIds as $itemId) {
+            $results = $this->client->getPDFLabelFromId($itemId, $labelInfo);
+            $this->assertArrayHasKey('printout', $results[0]);
+            $results = $this->client->getReturnPDFLabelFromId($itemId, $labelInfo);
+            $this->assertArrayHasKey('bookingResponse', $results);
+        }
     }
 }

@@ -212,14 +212,20 @@ class VgPostnordBookingService
             "paperSize" => "LABEL"
         ];
 
-        $response = $this->client->getReturnPDFLabelFromId(
-            $booking->getIdLabelExternal(),
-            $label_info
-        );
-        $data = array_filter($response['labelPrintout'], function ($element) {
-            return $element['printout']['labelFormat'] === 'PDF';
-        });
-        $booking->setReturnLabelData($data[0]['printout']['data']);
+        $itemIds = json_decode($booking->getIdLabelExternal(), true);
+
+        foreach ($itemIds as $id) {
+            $response = $this->client->getReturnPDFLabelFromId(
+                $booking->getIdLabelExternal(),
+                $label_info
+            );
+            $data = array_filter($response['labelPrintout'], function ($element) {
+                return $element['printout']['labelFormat'] === 'PDF';
+            });
+            $returnLabel[] = $data[0]['printout']['data'];
+        }
+
+        $booking->setReturnLabelData(json_encode($returnLabel));
         $this->entityManager->flush();
 
         return $booking;
