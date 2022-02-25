@@ -99,6 +99,8 @@ class Vg_postnord extends CarrierModule
 
             // add service point information to order confirmation template variables
             && $this->registerHook('actionGetExtraMailTemplateVars')
+
+            && $this->registerHook('actionOrderEdited')
             ;
     }
 
@@ -1255,5 +1257,11 @@ class Vg_postnord extends CarrierModule
                 "id_order"  => $id_order,
             ]);
         }
+    }
+
+    public function hookActionOrderEdited(array $params)
+    {
+        var_dump($params['order']->id_order);
+        throw new Exception('adsddadad');
     }
 }
