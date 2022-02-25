@@ -233,9 +233,11 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
                 continue;
             }
 
-            $label_data = $booking->getLabelData();
+            $label_data = json_decode($booking->getLabelData(), true);
             if ($label_data) {
-                $data[] = base64_decode($label_data);
+                foreach ($label_data as $datum) {
+                    $data[] = base64_decode($datum);
+                }
             }
         }
 
@@ -283,8 +285,21 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
         }
 
         $filename = $this->_getFileName($booking);
+
+        $label_data = json_decode($booking->getLabelData(), true);
+        if (count($label_data) > 1) {
+            $merger = new Merger(new TcpdiDriver());
+            foreach ($label_data as $datum) {
+                $raw_label = base64_decode($datum);
+                $merger->addRaw($raw_label);
+            }
+            $raw_label_data = $merger->merge();
+        } else {
+            $raw_label_data = base64_decode($label_data[0]);
+        }
+
         return new Response(
-            base64_decode($booking->getLabelData()),
+            $raw_label_data,
             Response::HTTP_OK,
             [
                 "Content-Type"        => "application/pdf",
