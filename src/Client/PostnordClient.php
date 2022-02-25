@@ -613,7 +613,7 @@ class PostnordClient
         }
 
         foreach ($order["items"] as $item) {
-            $body['shipment'][0]['goodsItem'][] = [
+            $goodsItem = [
                 'packageTypeCode' => 'PC',
                 'items' => [
                     [
@@ -628,6 +628,25 @@ class PostnordClient
                     ],
                 ],
             ];
+
+            if (!empty($item['height']) && !empty($item['width']) && !empty($item['length'])) {
+                $goodsItem['items'][0]['dimensions'] = [
+                    'height' => [
+                        'value' => (float) $item['height'],
+                        'unit' => 'CMT'
+                    ],
+                    'width' => [
+                        'value' => (float) $item['width'],
+                        'unit' => 'CMT'
+                    ],
+                    'length' => [
+                        'value' => (float) $item['length'],
+                        'unit' => 'CMT'
+                    ],
+                ];
+            }
+
+            $body['shipment'][0]['goodsItem'][] = $goodsItem;
         }
 
         return $body;

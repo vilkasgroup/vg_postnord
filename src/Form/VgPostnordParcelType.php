@@ -6,7 +6,7 @@ namespace Vilkas\Postnord\Form;
 
 use PrestaShopBundle\Form\Admin\Type\TranslatorAwareType;
 use Symfony\Component\Form\Extension\Core\Type\ButtonType;
-use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\Form\Extension\Core\Type\NumberType;
 use Symfony\Component\Form\FormBuilderInterface;
 
 class VgPostnordParcelType extends TranslatorAwareType
@@ -17,8 +17,18 @@ class VgPostnordParcelType extends TranslatorAwareType
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         $builder
-            ->add('weight', TextType::class, [
-                'label' => $this->trans('Weight', 'Modules.Vgpostnord.Admin')
+            ->add('grossWeight', NumberType::class, [
+                'label' => $this->trans('Weight', 'Modules.Vgpostnord.Admin'),
+                'required' => false
+            ])->add('height', NumberType::class, [
+                'label' => $this->trans('Height', 'Modules.Vgpostnord.Admin'),
+                'required' => false
+            ])->add('width', NumberType::class, [
+                'label' => $this->trans('Width', 'Modules.Vgpostnord.Admin'),
+                'required' => false
+            ])->add('length', NumberType::class, [
+                'label' => $this->trans('Length', 'Modules.Vgpostnord.Admin'),
+                'required' => false
             ])
             ->add('remove_parcel_button', ButtonType::class, [
                 'attr' => ['class' => 'vg-postnord-remove-parcel btn btn-primary'],
