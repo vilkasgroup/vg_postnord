@@ -398,7 +398,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
             $return_label_data = json_decode($booking->getReturnLabelData(), true);
             if ($return_label_data) {
                 foreach ($return_label_data as $datum) {
-                    $data[] = base64_decode($return_label_data);
+                    $data[] = base64_decode($datum);
                 }
             }
         }
