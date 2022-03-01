@@ -496,7 +496,7 @@ class PostnordClient
             $response = $this->doRequest('POST', '/rest/shipment/v3/returns/ids/labels/pdf', $options);
             $responseWithoutBase64 = $response;
             foreach ($responseWithoutBase64['labelPrintout'] as &$printout) {
-                unset($printout['printout']['data']);
+                $printout['printout']['data'] = '<snip>';
             }
             $this->logger->debug('Booking created with data:' . PHP_EOL . json_encode($responseWithoutBase64, JSON_PRETTY_PRINT));
         } catch (Exception $e) {
@@ -507,9 +507,9 @@ class PostnordClient
         return $response;
     }
     /**
-     * Just to get issuer code
-     * Z11=PostNord Denmark, Z12=PostNord Sweden, Z13=PostNord Norway, Z14=PostNord Finland
-     * 
+     * Map country code to issuer code
+     *
+     * Z11 = PostNord Denmark, Z12 = PostNord Sweden, Z13 = PostNord Norway, Z14 = PostNord Finland
      */
     private function getIssuerCode(string $country): string
     {
