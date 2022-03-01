@@ -239,7 +239,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
             return $this->redirectToRoute("admin_orders_index");
         }
 
-        if ($booking->getFinalized() && $booking->getReturnLabelData()) {
+        if ($booking->getFinalized()) {
             return $this->_getPDFLabelResponse($booking, true);
         }
 
@@ -345,9 +345,19 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
     private function _getPDFLabelResponse(VgPostnordBooking $booking, $return = false): Response
     {
         if ($return) {
+            if (!$booking->getReturnLabelData()) {
+                $message = $this->trans("Booking is missing return label data. Something is wrong.", "Modules.Vgpostnord.Admin");
+                $this->addFlash("error", $message);
+                $this->redirectToRoute("admin_orders_view", ["orderId" => $booking->getIdOrder()]);
+            }
             $filename = $this->_getFileName($booking, true);
             $label_data = json_decode($booking->getReturnLabelData(), true);
         } else {
+            if (!$booking->getLabelData()) {
+                $message = $this->trans("Booking is missing label data. Something is wrong.", "Modules.Vgpostnord.Admin");
+                $this->addFlash("error", $message);
+                $this->redirectToRoute("admin_orders_view", ["orderId" => $booking->getIdOrder()]);
+            }
             $filename = $this->_getFileName($booking);
             $label_data = json_decode($booking->getLabelData(), true);
         }
