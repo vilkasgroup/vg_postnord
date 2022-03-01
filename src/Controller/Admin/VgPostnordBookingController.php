@@ -379,7 +379,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
     {
         $filename = "labels_" . time() . ".pdf";
         $merger = new Merger(new TcpdiDriver());
-        
+        $data = [];
         if (!$booking->getLabelData()) {
             $message = $this->trans("No label data", "Modules.Vgpostnord.Admin");
             $this->addFlash("error", $message);
@@ -401,8 +401,10 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
                 $data[] = base64_decode($datum);
             }
         }
-        foreach ($data as $value) {
-            $merger->addRaw($value);
+        if (!empty($data)) {
+            foreach ($data as $value) {
+                $merger->addRaw($value);
+            }
         }
         $mergedLabel = $merger->merge();
 

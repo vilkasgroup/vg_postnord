@@ -377,9 +377,11 @@ class PostnordClientTest extends TestCase
             $labelIds[] = $id["value"];
         }
 
-        $this->assertEquals(2, count($labelIds), 'Missing label ids');
+        $this->assertTrue(!empty($labelIds), 'Missing label ids');
         
-        if(!empty($labelIds)){
+        // Postnord use the same id for item and label
+        if (!empty($labelIds)) {
+            $this->assertEquals(2, count($labelIds), 'Not enough label ids');
             foreach ($labelIds as $itemId) {
                 $results = $this->client->getPDFLabelFromId($itemId, $labelInfo);
                 $this->assertArrayHasKey('printout', $results[0]);
@@ -387,6 +389,5 @@ class PostnordClientTest extends TestCase
                 $this->assertArrayHasKey('bookingResponse', $results);
             }
         }
-        // Postnord use the same id for item and label
     }
 }
