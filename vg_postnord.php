@@ -100,8 +100,7 @@ class Vg_postnord extends CarrierModule
             // add service point information to order confirmation template variables
             && $this->registerHook('actionGetExtraMailTemplateVars')
 
-            && $this->registerHook('actionObjectOrderUpdateBefore')
-            ;
+            && $this->registerHook('actionObjectOrderUpdateBefore');
     }
 
     public function uninstall(): bool
@@ -1259,22 +1258,72 @@ class Vg_postnord extends CarrierModule
         }
     }
 
-    public function hookActionObjectOrderUpdateBefore(array $params)
+    /**
+     * Update additional service, service point when changing carrier
+     */
+    public function hookActionObjectOrderUpdateBefore(array $params): void
     {
+        /** @var EntityManager $entityManager */
+        $entityManager = $this->get("doctrine.orm.entity_manager");
+        $repository = $entityManager->getRepository(VgPostnordBooking::class);
+
         $order = $params['object'];
-        $oldCarrier = (int) $order->shipping_number;
-        $submittedData=Tools::getValue('update_order_shipping');
-        $newCarrier=(int) $submittedData['new_carrier_id'];
-        $repo = $this->get('vilkas.postnord.repository.vgpostnordbooking');
-        $booking = $repo->findOneBy(['id_order' => (int) $order->id], ['id' => 'DESC']);
-        if($submittedData){
-            var_dump($submittedData);
-            var_dump($oldCarrier);
-            if($oldCarrier!==$newCarrier){
-                $booking->setServicepointid('');
-                $booking->setServicePointData('');
+        $submittedData = Tools::getValue('update_order_shipping');
+        $newCarrier = (int) $submittedData['new_carrier_id'];
+        $host = Configuration::get('VG_POSTNORD_HOST');
+        $apikey = Configuration::get('VG_POSTNORD_APIKEY');
+        $issuerCountry = Configuration::get('VG_POSTNORD_ISSUER_COUNTRY');
+        $mandatory = [];
+        $booking = $repository->findOneBy(['id_order' => (int) $order->id], ['id' => 'DESC']);
+        $client = new PostnordClient($host, $apikey);
+
+        if ($submittedData) {
+            $carrierSetting = json_decode(Configuration::get('VG_POSTNORD_CARRIER_SETTINGS'), true);
+
+            // split carrierSetting into ['servicecode', 'consigneeCountry']
+            $carrierSetting = explode('_', $carrierSetting[$newCarrier]["service_code_consigneecountry"]);
+
+            // Get valid combination from postnord and filter with issuer country, service code and consignee country
+            // additional services with mandatory tag are not shown
+            try {
+                $validCombination = ($client->getValidCombinationsOfServiceCodes())['data'];
+            } catch (Exception $e) {
+                throw $e;
             }
-            throw new Exception($booking->  getFinalizeda());
+
+            $currentServiceCodes = explode(', ', $booking->getAdditionalServices());
+            $validIssuerCountryCombination = array_filter($validCombination, function ($element) use (&$issuerCountry) {
+                return $element['issuerCountryCode'] === $issuerCountry ? $element : null;
+            });
+            $serviceCodeCombination = array_reduce(
+                $validIssuerCountryCombination['adnlServiceCodeCombDetails'],
+                function ($carry, $element) use (&$carrierSetting, &$mandatory) {
+                    if (
+                        $element['serviceCode'] === $carrierSetting[0]
+                        && $element['allowedConsigneeCountry'] === $carrierSetting[1]
+                    ) {
+                        $carry[] = $element['adnlServiceCode'];
+                        if ($element['mandatory'] === true) {
+                            $mandatory[] = $element['adnlServiceCode'];
+                        }
+                    }
+                    return $carry;
+                },
+                []
+            );
+
+            // Remove service point info if service point is not supported
+            if (!in_array('A7', $serviceCodeCombination) && !$booking->getFinalized()) {
+                $booking->setServicepointid(null);
+                $booking->setServicePointData(null);
+            }
+
+            // keep service codes if new carrier support all the current one
+            // if not, then register new mandatory
+            if (empty(array_diff($serviceCodeCombination, $currentServiceCodes))) {
+                $booking->setAdditionalServices(implode(", ", $mandatory));
+            }
+            $entityManager->flush();
         }
     }
 }
