@@ -343,8 +343,7 @@ class PostnordClientTest extends TestCase
             'basicServiceCode' => '19',
             'additionalServiceCode' => ['A3', 'A7'],
             'numberOfPackages' => 1,
-            'totalGrossWeight' => 1.1,
-            'totalGrossWeight' => 1.1,
+            'totalGrossWeight' => 2.2,
             'items' => [
                 [
                     'id' => '0',
@@ -377,12 +376,17 @@ class PostnordClientTest extends TestCase
         foreach ($results["idInformation"][0]["ids"] as $id) {
             $labelIds[] = $id["value"];
         }
-        // Postnord use the same id for item and label
-        foreach ($labelIds as $itemId) {
-            $results = $this->client->getPDFLabelFromId($itemId, $labelInfo);
-            $this->assertArrayHasKey('printout', $results[0]);
-            $results = $this->client->getReturnPDFLabelFromId($itemId, $labelInfo);
-            $this->assertArrayHasKey('bookingResponse', $results);
+
+        $this->assertEquals(2, count($labelIds), 'Missing label ids');
+        
+        if(!empty($labelIds)){
+            foreach ($labelIds as $itemId) {
+                $results = $this->client->getPDFLabelFromId($itemId, $labelInfo);
+                $this->assertArrayHasKey('printout', $results[0]);
+                $results = $this->client->getReturnPDFLabelFromId($itemId, $labelInfo);
+                $this->assertArrayHasKey('bookingResponse', $results);
+            }
         }
+        // Postnord use the same id for item and label
     }
 }

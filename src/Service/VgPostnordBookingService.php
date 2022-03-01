@@ -2,20 +2,21 @@
 
 namespace Vilkas\Postnord\Service;
 
+use Address;
+use Carrier;
+use Cart;
+use Configuration;
+use Country;
+use Customer;
+use Exception;
+use Order;
+
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
+
 use Vilkas\Postnord\Client\PostnordClient;
 use Vilkas\Postnord\Entity\VgPostnordBooking;
 use Vilkas\Postnord\Entity\VgPostnordCartData;
-use Exception;
-use Cart;
-use Customer;
-use Address;
-use Order;
-use Configuration;
-use Country;
-use PrestaShopException;
-use Carrier;
 
 class VgPostnordBookingService
 {
@@ -102,7 +103,6 @@ class VgPostnordBookingService
      *
      * @return VgPostnordBooking
      *
-     * @throws PrestaShopException
      * @throws ExceptionInterface
      */
     public function sendBookingAndGenerateLabel(VgPostnordBooking $booking): VgPostnordBooking
@@ -170,7 +170,7 @@ class VgPostnordBookingService
         $labelPrintout   = $response["labelPrintout"];
 
         // find all tracking urls in response
-        $search_result = array_filter($bookingResponse["idInformation"][0]["urls"], function($url) {
+        $search_result = array_filter($bookingResponse["idInformation"][0]["urls"], function ($url) {
             return $url["type"] === "TRACKING";
         });
         $tracking_urls = array_column($search_result, "url") ?? null;
@@ -186,8 +186,7 @@ class VgPostnordBookingService
             ->setTrackingUrl(json_encode($tracking_urls, JSON_UNESCAPED_SLASHES))
             ->setIdLabelExternal(json_encode($label_ids))
             ->setLabelData(json_encode($label_data))
-            ->setFinalized(new \DateTime())
-        ;
+            ->setFinalized(new \DateTime());
 
         $this->entityManager->flush();
 
@@ -203,7 +202,6 @@ class VgPostnordBookingService
      *
      * @return VgPostnordBooking
      *
-     * @throws PrestaShopException
      * @throws ExceptionInterface
      */
     public function getReturnLabel(VgPostnordBooking $booking): VgPostnordBooking
@@ -224,13 +222,14 @@ class VgPostnordBookingService
             });
             $returnLabel[] = $data[0]['printout']['data'];
         }
-
-        $booking->setReturnLabelData(json_encode($returnLabel));
-        $this->entityManager->flush();
+        if (!empty($returnLabel)) {
+            $booking->setReturnLabelData(json_encode($returnLabel));
+            $this->entityManager->flush();
+        }
 
         return $booking;
     }
-    
+
     private function _generateDefaultParcelData(): string
     {
         return json_encode(

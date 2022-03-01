@@ -76,10 +76,15 @@
               {% endif %}
               {% if booking.idLabelExternal or (not booking.finalized and loop.index0 is same as(0)) %}
                 <td>
-                  <a href="{{ path('admin_vg_postnord_fetch_return_label', {'id_booking': booking.id}) }}" target="_blank">
-                    {{ booking.idLabelExternal ? 
+                  {% if booking.idLabelExternal %}
+                    <a href="{{ path('admin_vg_postnord_fetch_return_label', {'id_booking': booking.id}) }}" target="_blank">
+                      {{ booking.idLabelExternal ? 
                         'Show' : 
-                        'Fetch label'|trans({}, 'Modules.Vgpostnord.Admin') }}</a>
+                        'Fetch label'|trans({}, 'Modules.Vgpostnord.Admin') }}
+                    </a>
+                    {% else %}
+                          -
+                    {% endif %}
                 </td>
               {% else %}
                 <td>{{ 'No return label'|trans({}, 'Modules.Vgpostnord.Admin') }}</td>
