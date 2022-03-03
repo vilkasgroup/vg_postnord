@@ -340,8 +340,8 @@ class PostnordClient
      * Just for testing, seems to error out on their side atm.
      *
      * https://guides.atdeveloper.postnord.com/#cb2ac083-992b-4a3b-aaec-01ab50ea5654
-     *
-     * @throws Exception|ExceptionInterface
+     * 
+     * @throws Exception|ExceptionInterface with error message from PostNord
      */
     public function getSurchargeHealthCheck(): array
     {
@@ -398,6 +398,7 @@ class PostnordClient
         object $customerAddress,
         array $order,
         array $shopAddress,
+        array $returnAddress = [],
         string $country = 'FI',
         array $labelInfo = [],
         array $pickupAddress = []
@@ -410,6 +411,7 @@ class PostnordClient
             $customerAddress,
             $order,
             $shopAddress,
+            $returnAddress,
             $country,
             $pickupAddress
         );
@@ -443,7 +445,7 @@ class PostnordClient
     }
 
     /**
-     * @param string $labelId id of the label (not the id of the booking)
+     * @param string $labelId id of the label or item, they use the same id (not the id of the booking)
      * @param array $labelInfo label printout format (Paper size, number, etc.) from PostNord
      *
      * @return array PDF label from PostNord
@@ -475,6 +477,35 @@ class PostnordClient
         return $response;
     }
 
+    /**
+     * @param string $itemId id of the label or item, they use the same id (not the id of the booking)
+     * @param array $labelInfo label printout format (Paper size, number, etc.) from PostNord
+     *
+     * @return array PDF label from PostNord
+     * 
+     * @throws Exception|ExceptionInterface
+     */
+    public function getReturnPDFLabelFromId(string $itemId, array $labelInfo): array
+    {
+        $defaults = [];
+        $parameters = $this->mergeOptions($defaults, $labelInfo);
+        $options['query'] = $parameters;
+        $options['json'] = [['return' => ['id' => $itemId]]];
+        try {
+            $this->logger->debug('Get label with:' . PHP_EOL . json_encode($options, JSON_PRETTY_PRINT));
+            $response = $this->doRequest('POST', '/rest/shipment/v3/returns/ids/labels/pdf', $options);
+            $responseWithoutBase64 = $response;
+            foreach ($responseWithoutBase64['labelPrintout'] as &$printout) {
+                $printout['printout']['data'] = '<snip>';
+            }
+            $this->logger->debug('Booking created with data:' . PHP_EOL . json_encode($responseWithoutBase64, JSON_PRETTY_PRINT));
+        } catch (Exception $e) {
+            $this->logger->error('Error getting label', ['exception' => $e]);
+            throw $e;
+        }
+
+        return $response;
+    }
     /**
      * Map country code to issuer code
      *
@@ -513,11 +544,14 @@ class PostnordClient
         object $customerAddress,
         array $order,
         array $shopAddress,
+        array $returnAddress = [],
         string $country = 'FI',
         array $pickupAddress = []
     ): array {
         $datetime = date(DATE_ISO8601);
-
+        foreach (['name', 'street', 'postcode', 'city', 'country'] as $key) {
+            $returnAddress["return_{$key}"] = !empty($returnAddress["return_{$key}"]) ? $returnAddress["return_{$key}"] : $shopAddress["shop_{$key}"];
+        }
         $body = [
             'messageDate' => $datetime,
             'messageFunction' => 'Instruction',
@@ -563,6 +597,19 @@ class PostnordClient
                                     'postalCode' => $shopAddress['shop_postcode'],
                                     'city' => $shopAddress['shop_city'],
                                     'countryCode' => $shopAddress['shop_country'],
+                                ],
+                            ],
+                        ],
+                        'returnParty' => [
+                            'party' => [
+                                'nameIdentification' => [
+                                    'name' => $returnAddress['return_name'],
+                                ],
+                                'address' => [
+                                    'streets' => [$returnAddress['return_street']],
+                                    'postalCode' => $returnAddress['return_postcode'],
+                                    'city' => $returnAddress['return_city'],
+                                    'countryCode' => $returnAddress['return_country'],
                                 ],
                             ],
                         ],

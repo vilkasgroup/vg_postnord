@@ -96,7 +96,8 @@ class Vg_postnordCartPickupPointModuleFrontController extends ModuleFrontControl
      */
     private function savePickupPoint(Cart $Cart, $servicepointid)
     {
-        $repo = $this->get('vilkas.postnord.repository.vgpostnordcartdata');
+        $manager = $this->get('doctrine.orm.entity_manager');
+        $repo = $manager->getRepository(VgPostnordCartData::class);
         $repo->upsertCartServicePointId($Cart->id, $servicepointid);
     }
 

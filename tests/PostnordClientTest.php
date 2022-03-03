@@ -149,6 +149,14 @@ class PostnordClientTest extends TestCase
                 'additionalDescription' => null,
             ],
         ];
+        // extract from VG_POSTNORD_RETURN_ADDRESS can be left empty 
+        // $returnAddress = [
+        //     'return_name' => 'Temp Dev',
+        //     'return_street' => 'Finlaysoninkuja 19',
+        //     'return_postcode' => '33210',
+        //     'return_city' => 'Tamperere',
+        //     'return_country' => 'FI',
+        // ];
         // just customer email
         $email = 'customer@prestashop.com';
         // address is prestashop address object (customer address)
@@ -178,8 +186,20 @@ class PostnordClientTest extends TestCase
         ];
         // Customer country, default is 'FI'
         $country = 'FI';
-
-        $results = $this->client->createBooking($email, $address, $order, $shopAddress, $country, [], $pickupAddress);
+        // check $labelInfo format in Post Nord documentation
+        // $labelInfo = [
+        // 'paperSize' => 'LABEL'
+        // ];
+        $results = $this->client->createBooking(
+            $email,
+            $address,
+            $order,
+            $shopAddress,
+            [],
+            $country,
+            [],
+            $pickupAddress
+        );
 
         $this->assertArrayHasKey('bookingId', $results);
         $this->assertArrayHasKey('value', $results['idInformation'][0]['ids'][0]);
@@ -242,6 +262,7 @@ class PostnordClientTest extends TestCase
             $address,
             $order,
             $shopAddress,
+            [],
             $country,
             $labelInfo,
             $pickupAddress
@@ -257,5 +278,116 @@ class PostnordClientTest extends TestCase
         $labelId = '00364300432996651506';
         $results = $this->client->getPDFLabelFromId($labelId, $labelInfo);
         $this->assertArrayHasKey('printout', $results[0]);
+    }
+
+
+    public function testGetReturnPDFLabelFromId(): void
+    {
+        $labelInfo = [
+            'paperSize' => 'LABEL',
+        ];
+        $itemId = '00364300432996662601';
+        $results = $this->client->getReturnPDFLabelFromId($itemId, $labelInfo);
+        $this->assertArrayHasKey('bookingResponse', $results);
+    }
+
+    public function testCreateBookingAndGetBothLabel(): void
+    {
+        // extract from VG_POSTNORD_SHOP_ADDRESS
+        $shopAddress = [
+            'shop_name' => 'Temp Dev',
+            'shop_party_id' => '1111111111',
+            'shop_street' => 'Finlaysoninkuja 19',
+            'shop_postcode' => '33210',
+            'shop_city' => 'Tamperere',
+            'shop_country' => 'FI',
+        ];
+        // extract from VG_POSTNORD_RETURN_ADDRESS
+        $returnAddress = [
+            'return_name' => 'Temp Dev',
+            'return_street' => 'Finlaysoninkuja 19',
+            'return_postcode' => '33210',
+            'return_city' => 'Tamperere',
+            'return_country' => 'FI',
+        ];
+        // Come from front office
+        // The data follows the format from Postnord
+        $pickupAddress = [
+            'name' => 'Pn K-supermarket Kuninkaankulma',
+            'servicePointId' => '9325',
+            'visitingAddress' => [
+                'countryCode' => 'FI',
+                'city' => 'TAMPERE',
+                'streetName' => 'Kuninkaankatu',
+                'streetNumber' => '14',
+                'postalCode' => '33210',
+                'additionalDescription' => null,
+            ],
+        ];
+        // just customer email
+        $email = 'customer@prestashop.com';
+        // address is prestashop address object (customer address)
+        $address = (object) [
+            'firstname' => 'first',
+            'lastname' => 'last',
+            'address1' => 'Venuksenkuja 5',
+            'address2' => 'M',
+            'phone' => '0123456789',
+            'postcode' => '01480',
+            'city' => 'Vantaa',
+            'country' => 'FI',
+        ];
+        // It would be nice if the $order follow this format
+        $order = [
+            'id' => '0',
+            'basicServiceCode' => '19',
+            'additionalServiceCode' => ['A3', 'A7'],
+            'numberOfPackages' => 1,
+            'totalGrossWeight' => 2.2,
+            'items' => [
+                [
+                    'id' => '0',
+                    'grossWeight' => 1.1,
+                ],
+                [
+                    'id' => '0',
+                    'grossWeight' => 1.1,
+                ]
+            ],
+        ];
+        // Customer country, default is 'FI'
+        $country = 'FI';
+        // check $labelInfo format in Post Nord documentation
+        $labelInfo = [
+            'paperSize' => 'LABEL'
+        ];
+        $results = $this->client->createBooking(
+            $email,
+            $address,
+            $order,
+            $shopAddress,
+            $returnAddress,
+            $country,
+            [],
+            $pickupAddress
+        );
+        $this->assertArrayHasKey('bookingId', $results);
+
+        foreach ($results["idInformation"][0]["ids"] as $id) {
+            $labelIds[] = $id["value"];
+        }
+
+        $this->assertTrue(!empty($labelIds), 'Missing label ids');
+        
+        // Postnord use the same id for item and label
+        if (!empty($labelIds)) {
+            $this->assertEquals(2, count($labelIds), 'Not enough label ids');
+            foreach ($labelIds as $itemId) {
+                $results = $this->client->getPDFLabelFromId($itemId, $labelInfo);
+                $this->assertArrayHasKey('printout', $results[0]);
+                $results = $this->client->getReturnPDFLabelFromId($itemId, $labelInfo);
+                $this->assertArrayHasKey('bookingResponse', $results);
+            }
+        }
     }
 }

@@ -60,6 +60,15 @@ class VgPostnordBooking
      * @ORM\Column(name="label_data", type="text", nullable=true)
      */
     private $label_data;
+    
+    /**
+     * @var string
+     *
+     * Base64 encoded return label PDF
+     *
+     * @ORM\Column(name="return_label_data", type="text", nullable=true)
+     */
+    private $return_label_data;
 
     /**
      * @var string
@@ -226,6 +235,26 @@ class VgPostnordBooking
     /**
      * @return string|null
      */
+    public function getReturnLabelData(): ?string
+    {
+        return $this->return_label_data;
+    }
+
+    /**
+     * @param string $return_label_data
+     *
+     * @return $this
+     */
+    public function setReturnLabelData(string $return_label_data): self
+    {
+        $this->return_label_data = $return_label_data;
+
+        return $this;
+    }
+
+    /**
+     * @return string|null
+     */
     public function getServicepointid(): ?string
     {
         return $this->servicepointid;
@@ -359,6 +388,7 @@ class VgPostnordBooking
             'id_booking_external' => $this->getIdBookingExternal(),
             'tracking_url' => $this->getTrackingUrl(),
             'label_data' => $this->getLabelData(),
+            'return_label_data' => $this->getReturnLabelData(),
             'servicepointid' => $this->getServicepointid(),
             'service_point_data' => $this->getServicePointData(),
             'id_label_external' => $this->getIdLabelExternal(),
@@ -379,6 +409,7 @@ class VgPostnordBooking
         // $this->setCartData($data['cart_data']);
         // $this->setIdBookingExternal($data['id_booking_external']);
         // $this->setLabelData($data['label_data']);
+        // $this->setReturnLabelData($data['return_label_data']);
         $this->setServicepointid($data['servicepointid']);
         $this->setServicePointData($data['service_point_data']);
         // $this->setIdLabelExternal($data['id_label_external']);

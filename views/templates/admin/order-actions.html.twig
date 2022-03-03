@@ -34,7 +34,9 @@
       <div class="vg-postnord-booking-list">
         <table>
           <tr>
-            <td class="vg-postnord-table-sub-heading" colspan="3">{{ 'Booking information'|trans({}, 'Modules.Vgpostnord.Admin') }}</td>
+            <td class="vg-postnord-table-sub-heading" colspan="3">
+              {{ 'Booking information'|trans({}, 'Modules.Vgpostnord.Admin') }}
+            </td>
           </tr>
           {% if bookings|length is same as(0) %}
             <tr>
@@ -44,7 +46,9 @@
           {% for booking in bookings %}
             {% if loop.index0 is same as(1) %}
               <tr>
-                <td class="vg-postnord-table-sub-heading" colspan="3">{{ 'Past bookings'|trans({}, 'Modules.Vgpostnord.Admin') }}</td>
+                <td class="vg-postnord-table-sub-heading" colspan="3">
+                  {{ 'Past bookings'|trans({}, 'Modules.Vgpostnord.Admin') }}
+                </td>
               </tr>
             {% endif %}
             {% if loop.index0 in [0, 1] %}
@@ -52,12 +56,17 @@
                 <th>{{ 'ID'|trans({}, 'Modules.Vgpostnord.Admin') }}</th>
                 <th>{{ 'Finalized'|trans({}, 'Modules.Vgpostnord.Admin') }}</th>
                 <th>{{ 'Label'|trans({}, 'Modules.Vgpostnord.Admin') }}</th>
+                <th>{{ 'Return Label'|trans({}, 'Modules.Vgpostnord.Admin') }}</th>
                 <th>{{ 'Actions'|trans({}, 'Modules.Vgpostnord.Admin') }}</th>
               </tr>
             {% endif %}
             <tr>
               <td>{{ booking.id }}</td>
-              <td>{{ booking.finalized ? booking.finalized|date('d-m-Y H:i:m') : 'Not sent'|trans({}, 'Modules.Vgpostnord.Admin') }}</td>
+              <td>
+                {{ booking.finalized ? 
+                booking.finalized|date('d-m-Y H:i:m') :
+               'Not sent'|trans({}, 'Modules.Vgpostnord.Admin') }}
+              </td>
               {% if booking.idLabelExternal or (not booking.finalized and loop.index0 is same as(0)) %}
                 <td><a href="{{ path('admin_vg_postnord_fetch_label', {'id_booking': booking.id}) }}"
                        target="_blank">{{ booking.idLabelExternal ? 'Show'|trans({}, 'Modules.Vgpostnord.Admin') : 'Fetch label'|trans({}, 'Modules.Vgpostnord.Admin') }}</a>
@@ -65,8 +74,33 @@
               {% else %}
                 <td>{{ 'No label'|trans({}, 'Modules.Vgpostnord.Admin') }}</td>
               {% endif %}
+              {% if booking.idLabelExternal or (not booking.finalized and loop.index0 is same as(0)) %}
+                <td>
+                  {% if booking.idLabelExternal %}
+                    <a href="{{ path('admin_vg_postnord_fetch_return_label', {'id_booking': booking.id}) }}" target="_blank">
+                      {{ booking.idLabelExternal ? 
+                        'Show' : 
+                        'Fetch label'|trans({}, 'Modules.Vgpostnord.Admin') }}
+                    </a>
+                    {% else %}
+                          -
+                    {% endif %}
+                </td>
+              {% else %}
+                <td>{{ 'No return label'|trans({}, 'Modules.Vgpostnord.Admin') }}</td>
+              {% endif %}
               {% if not booking.finalized and loop.index0 is same as(0) %}
-                <td><a href="{{ path('admin_vg_postnord_edit_action', {'bookingId': booking.id}) }}">{{ 'Edit'|trans({}, 'Modules.Vgpostnord.Admin') }}</a></td>
+                <td>
+                  <a href="{{ path('admin_vg_postnord_edit_action', {'bookingId': booking.id}) }}">
+                    {{ 'Edit'|trans({}, 'Modules.Vgpostnord.Admin') }}
+                  </a>
+                </td>
+              {% elseif booking.labelData and booking.returnLabelData %}
+                <td>
+                  <a href="{{ path('admin_vg_postnord_fetch_both_label', {'id_booking': booking.id}) }}" target="_blank">
+                    {{ 'Show both labels' |trans({}, 'Modules.Vgpostnord.Admin') }}
+                  </a>
+                </td>
               {% else %}
                 <td>-</td>
               {% endif %}
@@ -76,12 +110,10 @@
       </div>
     </div>
     <div class="vg-postnord-action-buttons">
-      <button type="button" class="btn btn-primary" name="vg-postnord-create-booking-button"
-              onclick="location.href='{{ path('admin_vg_postnord_create_booking', {'id_order': id_order, 'generate_label': false}) }}';">
+      <button type="button" class="btn btn-primary" name="vg-postnord-create-booking-button" onclick="location.href='{{ path('admin_vg_postnord_create_booking', {'id_order': id_order, 'generate_label': false}) }}';">
         {{ 'Create booking'|trans({}, 'Modules.Vgpostnord.Admin') }}
       </button>
-      <button type="button" class="btn btn-primary" name="vg-postnord-create-booking-button"
-              onclick="window.open('{{ path('admin_vg_postnord_create_booking', {'id_order': id_order, 'generate_label': true}) }}', '_blank')">
+      <button type="button" class="btn btn-primary" name="vg-postnord-create-booking-button" onclick="window.open('{{ path('admin_vg_postnord_create_booking', {'id_order': id_order, 'generate_label': true}) }}', '_blank')">
         {{ 'Create booking and fetch label'|trans({}, 'Modules.Vgpostnord.Admin') }}
       </button>
     </div>
