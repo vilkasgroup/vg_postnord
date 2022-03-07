@@ -100,7 +100,8 @@ class Vg_postnord extends CarrierModule
             // add service point information to order confirmation template variables
             && $this->registerHook('actionGetExtraMailTemplateVars')
 
-            && $this->registerHook('actionObjectOrderUpdateBefore');
+            && $this->registerHook('actionObjectOrderUpdateBefore')
+            ;
     }
 
     public function uninstall(): bool
