@@ -63,7 +63,7 @@ class VgPostnordBookingService
         }
 
         /** @var VgPostnordBooking $previousBooking */
-        $previousBooking = $bookingRepository->findOneBy(["id_order" => $id_order]);
+        $previousBooking = $bookingRepository->findOneBy(["id_order" => $id_order], ["id" => "DESC"]);
 
         /** @var VgPostnordCartData $cartData */
         $cartData = $cartDataRepository->findOneBy(["id_order" => $id_order]);
