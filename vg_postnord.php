@@ -1264,10 +1264,13 @@ class Vg_postnord extends CarrierModule
      */
     public function hookActionObjectOrderUpdateBefore(array $params): void
     {
-        
-
         $order = $params['object'];
         $submittedData = Tools::getValue('update_order_shipping');
+        
+        if (!$submittedData) {
+            return;
+        }
+        
         $newCarrier = (int) $submittedData['new_carrier_id'];
         $issuerCountry = Configuration::get('VG_POSTNORD_ISSUER_COUNTRY');
         $mandatory = [];
@@ -1292,7 +1295,6 @@ class Vg_postnord extends CarrierModule
             return;
         }
 
-        if ($submittedData) {
             $carrierSetting = json_decode(Configuration::get('VG_POSTNORD_CARRIER_SETTINGS'), true);
 
             // split carrierSetting into ['servicecode', 'consigneeCountry']
@@ -1349,6 +1351,5 @@ class Vg_postnord extends CarrierModule
                 $booking->setAdditionalServices(implode(", ", $mandatory));
             }
             $entityManager->flush();
-        }
     }
 }
