@@ -1264,19 +1264,33 @@ class Vg_postnord extends CarrierModule
      */
     public function hookActionObjectOrderUpdateBefore(array $params): void
     {
-        /** @var EntityManager $entityManager */
-        $entityManager = $this->get("doctrine.orm.entity_manager");
-        $repository = $entityManager->getRepository(VgPostnordBooking::class);
+        
 
         $order = $params['object'];
         $submittedData = Tools::getValue('update_order_shipping');
         $newCarrier = (int) $submittedData['new_carrier_id'];
-        $host = Configuration::get('VG_POSTNORD_HOST');
-        $apikey = Configuration::get('VG_POSTNORD_APIKEY');
         $issuerCountry = Configuration::get('VG_POSTNORD_ISSUER_COUNTRY');
         $mandatory = [];
+
+        try {
+            /** @var EntityManager $entityManager */
+            $entityManager = $this->get("doctrine.orm.entity_manager");
+            $repository = $entityManager->getRepository(VgPostnordBooking::class);
+        } catch (Exception $e) {
+            $this->logger->error("Error getting entity manager or repository", [
+                "exception" => $e,
+                "hook"      => "actionObjectOrderUpdateBefore",
+                "id_order"  => $order->id
+            ]);
+
+            return;
+        }
+
         $booking = $repository->findOneBy(['id_order' => (int) $order->id], ['id' => 'DESC']);
-        $client = new PostnordClient($host, $apikey);
+
+        if (!$booking || $booking->getFinalized()) {
+            return;
+        }
 
         if ($submittedData) {
             $carrierSetting = json_decode(Configuration::get('VG_POSTNORD_CARRIER_SETTINGS'), true);
@@ -1287,9 +1301,19 @@ class Vg_postnord extends CarrierModule
             // Get valid combination from postnord and filter with issuer country, service code and consignee country
             // additional services with mandatory tag are not shown
             try {
+                $client = new PostnordClient(
+                    Configuration::get("VG_POSTNORD_HOST"),
+                    Configuration::get("VG_POSTNORD_APIKEY")
+                );
                 $validCombination = ($client->getValidCombinationsOfServiceCodes())['data'];
             } catch (Exception $e) {
-                throw $e;
+                $this->logger->error('Error getting service code combination', [
+                    'hook' => 'actionObjectOrderUpdateBefore',
+                    'exception' => $e,
+                    'id_order' => $order->id
+                ]);
+
+                return;
             }
 
             $currentServiceCodes = explode(', ', $booking->getAdditionalServices());
@@ -1314,7 +1338,7 @@ class Vg_postnord extends CarrierModule
             );
 
             // Remove service point info if service point is not supported
-            if (!in_array('A7', $serviceCodeCombination) && !$booking->getFinalized()) {
+            if (!in_array('A7', $serviceCodeCombination)) {
                 $booking->setServicepointid(null);
                 $booking->setServicePointData(null);
             }
