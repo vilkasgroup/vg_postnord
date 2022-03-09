@@ -599,6 +599,7 @@ class PostnordClient
                                     'postalCode' => $shopAddress['shop_postcode'],
                                     'city' => $shopAddress['shop_city'],
                                     'countryCode' => $shopAddress['shop_country'],
+                                    'phoneNo' => $shopAddress['shop_phone'],
                                 ],
                             ],
                         ],
@@ -630,7 +631,7 @@ class PostnordClient
                                 'contact' => [
                                     'contactName' => "{$customerAddress->firstname} {$customerAddress->lastname}",
                                     'emailAddress' => $customerEmail,
-                                    'smsNo' => $customerAddress->phone,
+                                    'phoneNo' => $customerAddress->phone,
                                 ],
                             ],
                         ],
