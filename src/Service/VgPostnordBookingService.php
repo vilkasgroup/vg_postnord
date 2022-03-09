@@ -10,6 +10,7 @@ use Country;
 use Customer;
 use Exception;
 use Order;
+use PrestaShopException;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
@@ -71,26 +72,33 @@ class VgPostnordBookingService
             $booking
                 ->setCartData($cartData)
                 ->setServicepointid($cartData->getServicePointId())
-                ->setServicePointData($cartData->getServicePointData());
+                ->setServicePointData($cartData->getServicePointData())
+            ;
         } else {
             // if cart data doesn't exist, copy service point & data from previous shipment (if exists)
             if ($previousBooking) {
                 $booking
                     ->setServicepointid($previousBooking->getServicePointId())
-                    ->setServicePointData($previousBooking->getServicePointData());
+                    ->setServicePointData($previousBooking->getServicePointData())
+                ;
             }
         }
 
         if ($previousBooking) {
-            $parcel_data = $previousBooking->getParcelData();
+            $booking
+                ->setParcelData($previousBooking->getParcelData())
+                ->setCustomsDeclaration($previousBooking->hasCustomsDeclaration())
+                ->setCustomsDeclarationData($previousBooking->getCustomsDeclarationData())
+                ->setDetailedDescription($previousBooking->getDetailedDescription());
+            ;
         } else {
-            $parcel_data = $this->_generateDefaultParcelData();
+            $booking->setParcelData($this->_generateDefaultParcelData());
         }
 
         $booking
             ->setIdOrder($id_order)
             ->setAdditionalServices($mandatory_services)
-            ->setParcelData($parcel_data);
+        ;
 
         $this->entityManager->persist($booking);
         $this->entityManager->flush();
@@ -103,6 +111,7 @@ class VgPostnordBookingService
      *
      * @return VgPostnordBooking
      *
+     * @throws PrestaShopException
      * @throws ExceptionInterface
      */
     public function sendBookingAndGenerateLabel(VgPostnordBooking $booking): VgPostnordBooking
@@ -128,13 +137,30 @@ class VgPostnordBookingService
         }
         unset($item);
 
+        $detailedDescription    = json_decode($booking->getDetailedDescription(), true) ?? [];
+        $customsDeclarationData = json_decode($booking->getCustomsDeclarationData(), true) ?? [];
+
+        $customsTotalGrossWeight = $customsTotalValue = 0;
+        foreach ($detailedDescription as $dd) {
+            $customsTotalGrossWeight += (float) $dd["grossWeight"];
+            $customsTotalValue       += (float) $dd["value"];
+        }
+
         $order_data = [
-            "id"                    => "0", // should we generate this or let PostNord handle?
-            "basicServiceCode"      => $service_code,
-            "additionalServiceCode" => $additional_service_codes,
-            "numberOfPackages"      => count($items),
-            "totalGrossWeight"      => $totalGrossWeight,
-            "items"                 => $items
+            "id"                      => "0", // should we generate this or let PostNord handle?
+            "basicServiceCode"        => $service_code,
+            "additionalServiceCode"   => $additional_service_codes,
+            "numberOfPackages"        => count($items),
+            "totalGrossWeight"        => $totalGrossWeight,
+            "items"                   => $items,
+            "hasCustomsDeclaration"   => $booking->hasCustomsDeclaration(),
+            "customsDeclarationData"  => $customsDeclarationData,
+            "detailedDescription"     => $detailedDescription,
+            "EORINumber"              => Configuration::get("VG_POSTNORD_EORI_NUMBER"),
+            "customsTotalGrossWeight" => $customsTotalGrossWeight,
+            "customsTotalValue"       => $customsTotalValue,
+            "postalCharge"            => (float) $order->total_shipping_tax_incl,
+            "orderCurrency"           => \Currency::getIsoCodeById($order->id_currency)
         ];
 
         $shop_address  = json_decode(Configuration::get("VG_POSTNORD_SHOP_ADDRESS"), true);
@@ -177,7 +203,7 @@ class VgPostnordBookingService
 
         $label_ids = $label_data = [];
         foreach ($labelPrintout as $lp) {
-            $label_ids[] = $lp["itemIds"][0]["itemIds"];
+            $label_ids[]  = $lp["itemIds"][0]["itemIds"];
             $label_data[] = $lp["printout"]["data"];
         }
 
@@ -186,9 +212,8 @@ class VgPostnordBookingService
             ->setTrackingUrl(json_encode($tracking_urls, JSON_UNESCAPED_SLASHES))
             ->setIdLabelExternal(json_encode($label_ids))
             ->setLabelData(json_encode($label_data))
-            ->setFinalized(new \DateTime());
-
-        $this->entityManager->flush();
+            ->setFinalized(new \DateTime())
+        ;
 
         if (Configuration::get('VG_POSTNORD_FETCH_BOTH')) {
             $this->getReturnLabel($booking);
@@ -235,7 +260,7 @@ class VgPostnordBookingService
         return json_encode(
             [
                 [
-                    "weight" => 1,
+                    "weight" => "",
                     "height" => "",
                     "width"  => "",
                     "length" => ""
