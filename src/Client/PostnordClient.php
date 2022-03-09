@@ -701,6 +701,59 @@ class PostnordClient
             $body['shipment'][0]['goodsItem'][] = $goodsItem;
         }
 
+        if ($order['hasCustomsDeclaration']) {
+            $detailedDescription = $commercialItems = [];
+            foreach ($order['detailedDescription'] as $dd) {
+                $detailedDescription[] = [
+                    'content' => $dd['content'],
+                    'quantity' => [
+                        'value' => $dd['quantity'],
+                    ],
+                    'grossWeight' => [
+                        'value' => $dd['grossWeight'],
+                        'unit' => 'KGM',
+                    ],
+                    'value' => [
+                        'amount' => $dd['value'],
+                        'currency' => $order['customsDeclarationData']['currency'],
+                    ],
+                ];
+                $commercialItems[] = [
+                    'hsTariffNumber' => $dd['tariffNumber'],
+                    'countryCode' => $dd['countryCode'],
+                ];
+            }
+
+            $customsDeclaration = [
+                'EORIorPersonalIdNumber' => $order['EORINumber'],
+                'detailedDescription' => $detailedDescription,
+                'commercialItems' => $commercialItems,
+                'totalGrossWeight' => [
+                    'value' => $order['customsTotalGrossWeight'],
+                    'unit' => 'KGM',
+                ],
+                'totalValue' => [
+                    'amount' => $order['customsTotalValue'],
+                    'currency' => $order['customsDeclarationData']['currency'],
+                ],
+                'postalCharges' => [
+                    'amount' => $order['postalCharge'],
+                    'currency' => $order['orderCurrency'],
+                ],
+            ];
+
+            if ($order['customsDeclarationData']['categoryOfItem']) {
+                $customsDeclaration['categoryOfItem'] = [
+                    'categoryType' => [
+                        $order['customsDeclarationData']['categoryOfItem'],
+                    ],
+                    'explanation' => $order['customsDeclarationData']['categoryExplanation'] ?? '',
+                ];
+            }
+
+            $body['shipment'][0]['customsDeclarationCN23'] = $customsDeclaration;
+        }
+
         return $body;
     }
 }
