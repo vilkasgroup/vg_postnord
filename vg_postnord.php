@@ -78,6 +78,8 @@ class Vg_postnord extends CarrierModule
         Configuration::updateValue('VG_POSTNORD_HOST', '');
         Configuration::updateValue('VG_POSTNORD_APIKEY', '');
         Configuration::updateValue('VG_POSTNORD_ISSUER_COUNTRY', '');
+        Configuration::updateValue('VG_POSTNORD_EORI_NUMBER', '');
+        Configuration::updateValue('VG_POSTNORD_DEFAULT_TARIFF_NUMBER', '');
         Configuration::updateValue('VG_POSTNORD_CARRIER_SETTINGS', '[]');
         Configuration::updateValue('VG_POSTNORD_SHOP_ADDRESS', '[]');
         Configuration::updateValue('VG_POSTNORD_RETURN_ADDRESS', '[]');
@@ -110,6 +112,8 @@ class Vg_postnord extends CarrierModule
         Configuration::deleteByName('VG_POSTNORD_HOST');
         Configuration::deleteByName('VG_POSTNORD_APIKEY');
         Configuration::deleteByName('VG_POSTNORD_ISSUER_COUNTRY');
+        Configuration::deleteByName('VG_POSTNORD_EORI_NUMBER');
+        Configuration::deleteByName('VG_POSTNORD_DEFAULT_TARIFF_NUMBER');
         Configuration::deleteByName('VG_POSTNORD_CARRIER_SETTINGS');
         Configuration::deleteByName('VG_POSTNORD_SHOP_ADDRESS');
         Configuration::deleteByName('VG_POSTNORD_RETURN_ADDRESS');
@@ -287,7 +291,7 @@ class Vg_postnord extends CarrierModule
                     [
                         'type' => 'switch',
                         'name' => 'VG_POSTNORD_FETCH_BOTH',
-                        'label' => $this->trans('Fetch both label', [], 'Modules.Vgpostnord.Admin'),
+                        'label' => $this->trans('Fetch both labels', [], 'Modules.Vgpostnord.Admin'),
                         'desc' => $this->trans('Fetch shipping label and return label at the same time', [], 'Modules.Vgpostnord.Admin'),
                         'is_bool' => true,
                         'values' => [
@@ -325,7 +329,7 @@ class Vg_postnord extends CarrierModule
                     [
                         'type' => 'select',
                         'name' => 'VG_POSTNORD_ISSUER_COUNTRY',
-                        'label' => $this->trans('Postnord issuer Country', [], 'Modules.Vgpostnord.Admin'),
+                        'label' => $this->trans('Postnord issuer country', [], 'Modules.Vgpostnord.Admin'),
                         'options' => [
                             'query' => [
                                 ['id' => 'FI', 'name' => 'FI'],
@@ -354,6 +358,18 @@ class Vg_postnord extends CarrierModule
                         'desc' => $this->trans('Get this information from Postnord. Something like abc123123123123abc123', [], 'Modules.Vgpostnord.Admin'),
                         'required' => true
                     ],
+                    [
+                        'type' => 'text',
+                        'name' => 'VG_POSTNORD_EORI_NUMBER',
+                        'label' => $this->trans('EORI number', [], 'Modules.Vgpostnord.Admin'),
+                        'desc' => $this->trans('Required for all customs declarations', [], 'Modules.Vgpostnord.Admin'),
+                    ],
+                    [
+                        'type' => 'text',
+                        'name' => 'VG_POSTNORD_DEFAULT_TARIFF_NUMBER',
+                        'label' => $this->trans('Default tariff number', [], 'Modules.Vgpostnord.Admin'),
+                        'desc' => $this->trans('Default HS tariff number (see: tulltaxan.tullverket.se). Used to prefill tariff number for customs declarations.', [], 'Modules.Vgpostnord.Admin'),
+                    ],
                 ],
                 'submit' => [
                     'title' => $this->trans('Save', [], 'Modules.Vgpostnord.Admin'),
@@ -374,6 +390,8 @@ class Vg_postnord extends CarrierModule
             'VG_POSTNORD_HOST' => Configuration::get('VG_POSTNORD_HOST'),
             'VG_POSTNORD_APIKEY' => Configuration::get('VG_POSTNORD_APIKEY'),
             'VG_POSTNORD_ISSUER_COUNTRY' => Configuration::get('VG_POSTNORD_ISSUER_COUNTRY'),
+            'VG_POSTNORD_EORI_NUMBER' => Configuration::get('VG_POSTNORD_EORI_NUMBER'),
+            'VG_POSTNORD_DEFAULT_TARIFF_NUMBER' => Configuration::get('VG_POSTNORD_DEFAULT_TARIFF_NUMBER'),
         ];
     }
 
@@ -438,6 +456,12 @@ class Vg_postnord extends CarrierModule
                         ],
                         'desc' => $this->trans('Sender country', [], 'Modules.Vgpostnord.Admin'),
                     ],
+                    [
+                        'type' => 'text',
+                        'name' => 'shop_phone',
+                        'label' => $this->trans('Shop phone', [], 'Modules.Vgpostnord.Admin'),
+                        'desc' => $this->trans('Sender phone', [], 'Modules.Vgpostnord.Admin'),
+                    ],
                 ],
                 'submit' => [
                     'title' => $this->trans('Save', [], 'Modules.Vgpostnord.Admin'),
@@ -461,6 +485,7 @@ class Vg_postnord extends CarrierModule
                 'shop_postcode' => '',
                 'shop_city' => '',
                 'shop_country' => '',
+                'shop_phone' => '',
             ];
         }
 
@@ -598,7 +623,7 @@ class Vg_postnord extends CarrierModule
             $client = new PostnordClient($host, $apikey);
             $BasicServiceCodes = $client->getBasicServiceCodesFilterByIssuerCountryCode($issuerCountry);
 
-            // sort by id and name and consignee country to have some resemblance of login in the list
+            // sort by id and name and consignee country to have some resemblance of logic in the list
             array_multisort(
                 array_column($BasicServiceCodes, 'serviceCode'),
                 array_column($BasicServiceCodes, 'serviceName'),
@@ -764,7 +789,7 @@ class Vg_postnord extends CarrierModule
                 Configuration::get("VG_POSTNORD_APIKEY")
             );
             $valid_combinations = $client->getValidCombinationsOfServiceCodes()["data"];
-        } catch (Exception $e) {
+        } catch (Exception|ExceptionInterface $e) {
             $msg = $this->trans("Error fetching service code combinations: %error%", ["%error%" => $e->getMessage()], "Modules.Vgpostnord.Admin");
             $this->context->controller->errors[] = $msg;
             return false;
