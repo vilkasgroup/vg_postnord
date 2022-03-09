@@ -184,6 +184,7 @@ class PostnordClientTest extends TestCase
                     'grossWeight' => 1.1,
                 ],
             ],
+            'hasCustomsDeclaration' => false // TODO: test with hasCustomsDeclaration => true
         ];
         // Customer country, default is 'FI'
         $country = 'FI';
@@ -253,6 +254,7 @@ class PostnordClientTest extends TestCase
                     'grossWeight' => 1.1,
                 ],
             ],
+            'hasCustomsDeclaration' => false // TODO: test with hasCustomsDeclaration => true
         ];
         $country = 'FI';
         // check $labelInfo format in Post Nord documentation
@@ -357,6 +359,7 @@ class PostnordClientTest extends TestCase
                     'grossWeight' => 1.1,
                 ]
             ],
+            'hasCustomsDeclaration' => false // TODO: test with hasCustomsDeclaration => true
         ];
         // Customer country, default is 'FI'
         $country = 'FI';
