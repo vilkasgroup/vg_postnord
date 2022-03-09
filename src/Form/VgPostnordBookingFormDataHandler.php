@@ -52,7 +52,22 @@ final class VgPostnordBookingFormDataHandler implements FormDataHandlerInterface
         // merge mandatory service codes from hidden inputs with additional services
         $data["additional_services"] = array_unique(array_merge($data["additional_services"], $data["mandatory_service_codes"]));
 
+        // encode JSON-based fields back into JSON for storage
         $data["parcel_data"] = json_encode(array_values($data["parcel_data"]));
+        $data["detailed_description"] = json_encode(array_values($data["customs_declaration"]["detailed_description"]));
+
+        // grab customs declaration data and encode back into JSON for storage
+        unset($data["customs_declaration"]["customs_declaration_data"]);
+        unset($data["customs_declaration"]["detailed_description"]);
+        $customs_declaration_data = [];
+        foreach (array_keys($data["customs_declaration"]) as $key) {
+            $customs_declaration_data[$key] = $data["customs_declaration"][$key];
+        }
+        ksort($customs_declaration_data);
+        $data["customs_declaration_data"] = json_encode($customs_declaration_data);
+
+        // store checkbox state as customs declaration
+        $data["customs_declaration"] = $data["customs_declaration_checkbox"];
 
         $booking->fromArray($data);
 

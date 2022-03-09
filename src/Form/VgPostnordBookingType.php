@@ -13,6 +13,7 @@ use PrestaShopBundle\Form\Admin\Type\Material\MaterialChoiceTableType;
 use PrestaShopBundle\Form\Admin\Type\TranslatorAwareType;
 
 use Symfony\Component\Form\Extension\Core\Type\ButtonType;
+use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\CollectionType;
 use Symfony\Component\Form\Extension\Core\Type\FormType;
@@ -162,6 +163,9 @@ class VgPostnordBookingType extends TranslatorAwareType
                     // get submitted form data
 
                     $servicePoints = !empty($data['servicepointid']) ? $data['servicepointid'] : null;
+                    // TODO: if service point fetching fails due to API error (like 502), this might prevent the form form being saved ('servicepointid_value' is not found in data)
+                    // TODO: I actually somehow ended up with empty service point id, data and additional services, simulate an api error and test this out
+                    //       (they probably shouldn't be changed if the widget can't be loaded)
                     $currentServicePoint = $data['servicepointid_value'];
                     $idOrder = $data['id_order'];
 
@@ -203,24 +207,54 @@ class VgPostnordBookingType extends TranslatorAwareType
             ])
             ->addEventListener(FormEvents::PRE_SET_DATA, function (FormEvent $event) {
                 $data = $event->getData();
-                $data['parcel_data'] = json_decode($data['parcel_data'], true);
+                $form = $event->getForm();
+
+                // decode JSON-based fields
+                $decode = ['parcel_data', 'detailed_description', 'customs_declaration_data'];
+                foreach ($decode as $key) {
+                    $data[$key] = !empty($data[$key]) ? json_decode($data[$key], true) : null;
+                }
                 $event->setData($data);
 
-                $form = $event->getForm();
-                $form->add('parcel_data', CollectionType::class, [
-                    'data' => $data['parcel_data'],
-                    'label' => $this->trans('Parcel data', 'Modules.Vgpostnord.Admin'),
-                    'entry_type' => VgPostnordParcelType::class,
-                    // new fields are generated/deleted by javascript, so these seem to be needed
-                    'allow_extra_fields' => true,
-                    'allow_add' => true,
-                    'allow_delete' => true
-                ]);
+                $parcel_count          = count($data['parcel_data']);
+                $content_line_count    = count($data['detailed_description']);
+                $default_tariff_number = Configuration::get('VG_POSTNORD_DEFAULT_TARIFF_NUMBER');
 
-                $parcel_count = count($data['parcel_data']);
-                $form->add('parcel_count', HiddenType::class, [
-                    'data' => $parcel_count
-                ]);
+                $customs_declaration = [
+                    'customs_declaration_data' => $data['customs_declaration_data'],
+                    'detailed_description'     => $data['detailed_description']
+                ];
+
+                $form
+                    ->add('parcel_data', CollectionType::class, [
+                        'data' => $data['parcel_data'],
+                        'label' => $this->trans('Parcel data', 'Modules.Vgpostnord.Admin'),
+                        'entry_type' => VgPostnordParcelType::class,
+                        // new fields are generated/deleted by javascript, so these seem to be needed
+                        'allow_extra_fields' => true,
+                        'allow_add' => true,
+                        'allow_delete' => true
+                    ])
+                    ->add('parcel_count', HiddenType::class, [
+                        'data' => $parcel_count
+                    ])
+                    ->add('customs_declaration_checkbox', CheckboxType::class, [
+                        'data' => $data['customs_declaration'],
+                        'attr' => ['class' => 'vg-postnord-customs-declaration-checkbox'],
+                        'label' => $this->trans('Customs declaration', 'Modules.Vgpostnord.Admin'),
+                        'required' => false
+                    ])
+                    ->add('customs_declaration', VgPostnordCustomsDeclarationType::class, [
+                        'data' => $customs_declaration,
+                        'label' => false
+                    ])
+                    ->add('content_line_count', HiddenType::class, [
+                        'data' => $content_line_count
+                    ])
+                    ->add('default_tariff_number', HiddenType::class, [
+                        'data' => $default_tariff_number
+                    ])
+                ;
             })
         ;
     }
