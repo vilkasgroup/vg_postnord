@@ -134,6 +134,7 @@ class PostnordClientTest extends TestCase
             'shop_postcode' => '33210',
             'shop_city' => 'Tamperere',
             'shop_country' => 'FI',
+            'shop_phone' => '+358123456789',
         ];
         // Come from front office
         // The data follows the format from Postnord
@@ -149,7 +150,7 @@ class PostnordClientTest extends TestCase
                 'additionalDescription' => null,
             ],
         ];
-        // extract from VG_POSTNORD_RETURN_ADDRESS can be left empty 
+        // extract from VG_POSTNORD_RETURN_ADDRESS can be left empty
         // $returnAddress = [
         //     'return_name' => 'Temp Dev',
         //     'return_street' => 'Finlaysoninkuja 19',
@@ -215,6 +216,7 @@ class PostnordClientTest extends TestCase
             'shop_postcode' => '33210',
             'shop_city' => 'Tampere',
             'shop_country' => 'FI',
+            'shop_phone' => '+358123456789',
         ];
         $pickupAddress = [
             'name' => 'Pn K-supermarket Kuninkaankulma',
@@ -301,6 +303,7 @@ class PostnordClientTest extends TestCase
             'shop_postcode' => '33210',
             'shop_city' => 'Tamperere',
             'shop_country' => 'FI',
+            'shop_phone' => '+358123456789',
         ];
         // extract from VG_POSTNORD_RETURN_ADDRESS
         $returnAddress = [
@@ -378,7 +381,7 @@ class PostnordClientTest extends TestCase
         }
 
         $this->assertTrue(!empty($labelIds), 'Missing label ids');
-        
+
         // Postnord use the same id for item and label
         if (!empty($labelIds)) {
             $this->assertEquals(2, count($labelIds), 'Not enough label ids');
