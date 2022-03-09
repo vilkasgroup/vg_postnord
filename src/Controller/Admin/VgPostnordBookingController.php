@@ -215,6 +215,10 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
             return $this->redirectToRoute("admin_orders_view", ["orderId" => $booking->getIdOrder()]);
         }
 
+        if (Configuration::get('VG_POSTNORD_FETCH_BOTH')) {
+            return $this->_getPDFBothLabelsResponse($booking);
+        }
+
         return $this->_getPDFLabelResponse($booking);
     }
 
@@ -275,6 +279,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
 
         return $this->_getPDFBothLabelsResponse($booking);
     }
+
     /**
      * Create bookings and fetch labels for orders in bulk
      */
@@ -306,31 +311,32 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
                     }
                 }
             }
-
-            if (!count($data)) {
-                $message = $this->trans("No label data", "Modules.Vgpostnord.Admin");
-                $this->addFlash("error", $message);
-                return $this->redirectToRoute("admin_orders_index");
-            }
-
-            $merger = new Merger(new TcpdiDriver());
-            foreach ($data as $raw_label) {
-                $merger->addRaw($raw_label);
-            }
-            $merged_raw_labels = $merger->merge();
-
-            $filename = "labels_" . time() . ".pdf";
-
-            return new Response(
-                $merged_raw_labels,
-                Response::HTTP_OK,
-                [
-                    "Content-Type"        => "application/pdf",
-                    "Content-Disposition" => "inline;filename=$filename"
-                ]
-            );
         }
+
+        if (!count($data)) {
+            $message = $this->trans("No label data", "Modules.Vgpostnord.Admin");
+            $this->addFlash("error", $message);
+            return $this->redirectToRoute("admin_orders_index");
+        }
+
+        $merger = new Merger(new TcpdiDriver());
+        foreach ($data as $raw_label) {
+            $merger->addRaw($raw_label);
+        }
+        $merged_raw_labels = $merger->merge();
+
+        $filename = "labels_" . time() . ".pdf";
+
+        return new Response(
+            $merged_raw_labels,
+            Response::HTTP_OK,
+            [
+                "Content-Type"        => "application/pdf",
+                "Content-Disposition" => "inline;filename=$filename"
+            ]
+        );
     }
+
     /**
      * Generate filename for label PDF
      */
@@ -427,7 +433,8 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
             ]
         );
     }
-    /** 
+
+    /**
      * Gets the header toolbar buttons.
      *
      * @param $id_order
