@@ -42,7 +42,7 @@ class VgPostnordBookingService
      *
      * Grabs service point from cart data if it exists
      *
-     * @throws Exception|ExceptionInterface
+     * @throws Exception
      */
     public function createBlankBooking(int $id_order): VgPostnordBooking
     {
@@ -89,7 +89,7 @@ class VgPostnordBookingService
                 ->setParcelData($previousBooking->getParcelData())
                 ->setCustomsDeclaration($previousBooking->hasCustomsDeclaration())
                 ->setCustomsDeclarationData($previousBooking->getCustomsDeclarationData())
-                ->setDetailedDescription($previousBooking->getDetailedDescription());
+                ->setDetailedDescription($previousBooking->getDetailedDescription())
             ;
         } else {
             $booking->setParcelData($this->_generateDefaultParcelData());
