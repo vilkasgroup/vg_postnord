@@ -60,7 +60,7 @@ class VgPostnordBooking
      * @ORM\Column(name="label_data", type="text", nullable=true)
      */
     private $label_data;
-    
+
     /**
      * @var string
      *
@@ -111,6 +111,27 @@ class VgPostnordBooking
      * @ORM\Column(name="parcel_data", type="text", nullable=false)
      */
     private $parcel_data;
+
+    /**
+     * @var bool
+     *
+     * @ORM\Column(name="customs_declaration", type="boolean", nullable=true)
+     */
+    private $customs_declaration;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="customs_declaration_data", type="text", nullable=true)
+     */
+    private $customs_declaration_data;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="detailed_description", type="text", nullable=true)
+     */
+    private $detailed_description;
 
     /**
      * @return int
@@ -377,6 +398,66 @@ class VgPostnordBooking
     }
 
     /**
+     * @return bool|null
+     */
+    public function hasCustomsDeclaration(): ?bool
+    {
+        return $this->customs_declaration;
+    }
+
+    /**
+     * @param bool|null $customs_declaration
+     *
+     * @return $this
+     */
+    public function setCustomsDeclaration(?bool $customs_declaration): self
+    {
+        $this->customs_declaration = $customs_declaration;
+
+        return $this;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getCustomsDeclarationData(): ?string
+    {
+        return $this->customs_declaration_data;
+    }
+
+    /**
+     * @param string|null $customs_declaration_data
+     *
+     * @return $this
+     */
+    public function setCustomsDeclarationData(?string $customs_declaration_data): self
+    {
+        $this->customs_declaration_data = $customs_declaration_data;
+
+        return $this;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getDetailedDescription(): ?string
+    {
+        return $this->detailed_description;
+    }
+
+    /**
+     * @param string|null $detailed_description
+     *
+     * @return $this
+     */
+    public function setDetailedDescription(?string $detailed_description): self
+    {
+        $this->detailed_description = $detailed_description;
+
+        return $this;
+    }
+
+    /**
      * @return array
      */
     public function toArray(): array
@@ -394,7 +475,10 @@ class VgPostnordBooking
             'id_label_external' => $this->getIdLabelExternal(),
             'finalized' => $this->getFinalized(),
             'additional_services' => empty($this->getAdditionalServices()) ? [] : explode(', ', $this->getAdditionalServices()),
-            'parcel_data' => $this->getParcelData()
+            'parcel_data' => $this->getParcelData(),
+            'customs_declaration' => $this->hasCustomsDeclaration(),
+            'customs_declaration_data' => $this->getCustomsDeclarationData(),
+            'detailed_description' => $this->getDetailedDescription(),
         ];
     }
 
@@ -417,5 +501,8 @@ class VgPostnordBooking
         // $this->setTrackingUrl($data['tracking_url']);
         $this->setAdditionalServices(implode(', ', $data['additional_services']));
         $this->setParcelData($data['parcel_data']);
+        $this->setCustomsDeclaration($data['customs_declaration']);
+        $this->setCustomsDeclarationData($data['customs_declaration_data']);
+        $this->setDetailedDescription($data['detailed_description']);
     }
 }
