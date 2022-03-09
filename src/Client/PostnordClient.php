@@ -340,7 +340,7 @@ class PostnordClient
      * Just for testing, seems to error out on their side atm.
      *
      * https://guides.atdeveloper.postnord.com/#cb2ac083-992b-4a3b-aaec-01ab50ea5654
-     * 
+     *
      * @throws Exception|ExceptionInterface with error message from PostNord
      */
     public function getSurchargeHealthCheck(): array
@@ -380,13 +380,14 @@ class PostnordClient
      * can return ZPL as well, it's not that different
      * Check the testCreateBooking for the correct data format.
      *
-     * @param string $customerEmail email of customer
+     * @param string $customerEmail   Customer's email address
      * @param object $customerAddress Prestashop address object (customer address)
-     * @param array $order information about an order
-     * @param array $shopAddress Merchant address, in module settings
-     * @param string $country customer's country
-     * @param array $labelInfo label printout format (Paper size, number, etc.) from PostNord
-     * @param array $pickupAddress information about a pickup point, comes from PostNord
+     * @param array  $order           Information about an order
+     * @param array  $shopAddress     Merchant address, in module settings
+     * @param array  $returnAddress   Return address, defaults to shopAddress if empty
+     * @param string $country         Customer's country
+     * @param array  $labelInfo       Label printout format (Paper size, number, etc.) from PostNord
+     * @param array  $pickupAddress   Information about a pickup point, comes from PostNord
      *
      * @return array PostNord booking confirmation with/without PDF label
      *
@@ -482,7 +483,7 @@ class PostnordClient
      * @param array $labelInfo label printout format (Paper size, number, etc.) from PostNord
      *
      * @return array PDF label from PostNord
-     * 
+     *
      * @throws Exception|ExceptionInterface
      */
     public function getReturnPDFLabelFromId(string $itemId, array $labelInfo): array
@@ -506,6 +507,7 @@ class PostnordClient
 
         return $response;
     }
+
     /**
      * Map country code to issuer code
      *
@@ -527,15 +529,15 @@ class PostnordClient
     }
 
     /**
-     * generate request body for booking
-     * params is the same as createBooking.
+     * Generate request body for booking
      *
-     * @param string $customerEmail
+     * @param string $customerEmail   Customer's email address
      * @param object $customerAddress Prestashop address object (customer address)
-     * @param array $order information about an order
-     * @param array $shopAddress Merchant address, in the setting
-     * @param string $country customer's country
-     * @param array $pickupAddress information about a pickup point, comes from PostNord
+     * @param array  $order           Information about an order
+     * @param array  $shopAddress     Merchant address, in the setting
+     * @param array  $returnAddress   Return address, defaults to shopAddress if empty
+     * @param string $country         Customer's country
+     * @param array  $pickupAddress   Information about a pickup point, comes from PostNord
      *
      * @return array request body to create booking
      */
@@ -560,25 +562,25 @@ class PostnordClient
                 'name' => 'vg_postnord',
                 'version' => '0.0.1',
             ],
-            'updateIndicator' => 'Original', //enum: Original, Update, Deletion
+            'updateIndicator' => 'Original', // enum: Original, Update, Deletion
             'shipment' => [
                 [
                     'shipmentIdentification' => [
-                        'shipmentId' => $order['id'], //from data?
+                        'shipmentId' => $order['id'],
                     ],
                     'dateAndTimes' => [
                         'loadingDate' => $datetime,
                     ],
                     'service' => [
-                        'basicServiceCode' => $order['basicServiceCode'], //from data
-                        'additionalServiceCode' => $order['additionalServiceCode'], //from data
+                        'basicServiceCode' => $order['basicServiceCode'],
+                        'additionalServiceCode' => $order['additionalServiceCode'],
                     ],
-                    'freeText' => [], //from data
+                    'freeText' => [],
                     'numberOfPackages' => [
                         'value' => $order['numberOfPackages'],
                     ],
                     'totalGrossWeight' => [
-                        'value' => $order['totalGrossWeight'], //from data
+                        'value' => $order['totalGrossWeight'],
                         'unit' => 'KGM',
                     ],
                     'parties' => [
@@ -666,7 +668,7 @@ class PostnordClient
                     [
                         'itemIdentification' => [
                             'itemId' => $item['id'],
-                            'itemIdType' => 'SSCC', //SSCC for Nordic and DPD to other countries
+                            'itemIdType' => 'SSCC', // SSCC for Nordic and DPD to other countries
                         ],
                         'grossWeight' => [
                             'value' => $item['grossWeight'],
@@ -680,15 +682,15 @@ class PostnordClient
                 $goodsItem['items'][0]['dimensions'] = [
                     'height' => [
                         'value' => (float) $item['height'],
-                        'unit' => 'CMT'
+                        'unit' => 'CMT',
                     ],
                     'width' => [
                         'value' => (float) $item['width'],
-                        'unit' => 'CMT'
+                        'unit' => 'CMT',
                     ],
                     'length' => [
                         'value' => (float) $item['length'],
-                        'unit' => 'CMT'
+                        'unit' => 'CMT',
                     ],
                 ];
             }
