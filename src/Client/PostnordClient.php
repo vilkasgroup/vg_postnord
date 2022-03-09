@@ -671,10 +671,6 @@ class PostnordClient
                             'itemId' => $item['id'],
                             'itemIdType' => 'SSCC', // SSCC for Nordic and DPD to other countries
                         ],
-                        'grossWeight' => [
-                            'value' => $item['grossWeight'],
-                            'unit' => 'KGM',
-                        ],
                     ],
                 ],
             ];
@@ -693,6 +689,12 @@ class PostnordClient
                         'value' => (float) $item['length'],
                         'unit' => 'CMT',
                     ],
+                ];
+            }
+            if (!empty($item['grossWeight'])) {
+                $goodsItem['items'][0]['grossWeight'] = [
+                    'value' => $item['grossWeight'],
+                    'unit' => 'KGM',
                 ];
             }
 
