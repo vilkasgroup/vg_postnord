@@ -38,7 +38,7 @@ class VgPostnordBooking extends AbstractDoctrineQueryBuilder
         $qb = $this->getBaseQuery();
 
         // order and pagination
-        $qb->select('vpb.id_booking, vpb.tracking_url, vpb.servicepointid, vpb.additional_services')
+        $qb->select('vpb.id_booking, vpb.id_order, vpb.finalized, vpb.servicepointid, vpb.additional_services')
             ->orderBy(
                 $searchCriteria->getOrderBy(),
                 $searchCriteria->getOrderWay()
@@ -59,7 +59,7 @@ class VgPostnordBooking extends AbstractDoctrineQueryBuilder
     public function getCountQueryBuilder(SearchCriteriaInterface $searchCriteria): QueryBuilder
     {
         // base query
-        $qb = $this->getBaseQuery($searchCriteria);
+        $qb = $this->getBaseQuery();
 
         // just select for now
         $qb->select('COUNT(id_booking)');
