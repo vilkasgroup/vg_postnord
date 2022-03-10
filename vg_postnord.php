@@ -101,6 +101,8 @@ class Vg_postnord extends CarrierModule
 
             // add service point information to order confirmation template variables
             && $this->registerHook('actionGetExtraMailTemplateVars')
+
+            && $this->registerHook('actionObjectOrderUpdateBefore')
             ;
     }
 
@@ -1279,6 +1281,68 @@ class Vg_postnord extends CarrierModule
                 "hook"      => "actionGetExtraMailTemplateVars",
                 "id_order"  => $id_order,
             ]);
+        }
+    }
+
+    /**
+     * Update additional service, service point when changing carrier
+     * 
+     * @throws Exception
+     */
+    public function hookActionObjectOrderUpdateBefore(array $params): void
+    {
+        $order = $params['object'];
+        $updateOrderShipping = Tools::getValue('update_order_shipping');
+        
+        if (!$updateOrderShipping) {
+            return;
+        }
+        
+        $orderCurrent = new Order($order->id);
+        
+        if($orderCurrent->id_carrier===$order->id_carrier){
+            return;
+        }
+
+        $newCarrier = (int) $updateOrderShipping['new_carrier_id'];
+
+        try {
+            /** @var EntityManager $entityManager */
+            $entityManager = $this->get("doctrine.orm.entity_manager");
+            $repository = $entityManager->getRepository(VgPostnordBooking::class);
+        } catch (Exception $e) {
+            $this->logger->error("Error getting entity manager or repository", [
+                "exception" => $e,
+                "hook"      => "actionObjectOrderUpdateBefore",
+                "id_order"  => $order->id
+            ]);
+
+            return;
+        }
+
+        $booking = $repository->findOneBy(['id_order' => (int) $order->id], ['id' => 'DESC']);
+
+        if (!$booking || $booking->getFinalized()) {
+            return;
+        }
+
+        // Get mandatory service codes
+        $carrierSetting = json_decode(Configuration::get('VG_POSTNORD_CARRIER_SETTINGS'), true);
+        $mandatory = $carrierSetting[$newCarrier]['mandatory_service_codes'] ?? [];
+
+        // Remove service point info if service point is not mandatory
+        if (!in_array('A7', $mandatory)) {
+            $booking->setServicepointid(null);
+            $booking->setServicePointData(null);
+        }
+
+        // Register new mandatory
+        $booking->setAdditionalServices(implode(", ", $mandatory));
+        try {
+            $entityManager->flush();
+        } catch (Exception $e) {
+            $this->logger->error('Failed to update booking', ['exception' => $e]);
+            throw $e;
         }
     }
 }
