@@ -1261,17 +1261,25 @@ class Vg_postnord extends CarrierModule
 
     /**
      * Update additional service, service point when changing carrier
+     * 
+     * @throws Exception
      */
     public function hookActionObjectOrderUpdateBefore(array $params): void
     {
         $order = $params['object'];
-        $submittedData = Tools::getValue('update_order_shipping');
-
-        if (!$submittedData) {
+        $updateOrderShipping = Tools::getValue('update_order_shipping');
+        
+        if (!$updateOrderShipping) {
+            return;
+        }
+        
+        $orderCurrent = new Order($order->id);
+        
+        if($orderCurrent->id_carrier===$order->id_carrier){
             return;
         }
 
-        $newCarrier = (int) $submittedData['new_carrier_id'];
+        $newCarrier = (int) $updateOrderShipping['new_carrier_id'];
 
         try {
             /** @var EntityManager $entityManager */
@@ -1305,7 +1313,11 @@ class Vg_postnord extends CarrierModule
 
         // Register new mandatory
         $booking->setAdditionalServices(implode(", ", $mandatory));
-
-        $entityManager->flush();
+        try {
+            $entityManager->flush();
+        } catch (Exception $e) {
+            $this->logger->error('Failed to update booking', ['exception' => $e]);
+            throw $e;
+        }
     }
 }
