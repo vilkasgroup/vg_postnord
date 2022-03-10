@@ -973,13 +973,13 @@ class Vg_postnord extends CarrierModule
         $cartData = $cartDataRepository->findOneBy(['id_order' => $id_order]);
         $bookings = $bookingRepository->findBy(['id_order' => $id_order], ['id' => 'DESC']);
 
-        // get service point data from cart data or the latest booking
+        // get service point data from the latest booking or cart data
         $service_point_data = null;
-        if ($cartData) {
-            $service_point_data = json_decode($cartData->getServicePointData(), true);
+        if (count($bookings)) {
+            $service_point_data = json_decode($bookings[0]->getServicePointData(), true);
         } else {
-            if (count($bookings)) {
-                $service_point_data = json_decode($bookings[0]->getServicePointData(), true);
+            if ($cartData) {
+                $service_point_data = json_decode($cartData->getServicePointData(), true);
             }
         }
 
