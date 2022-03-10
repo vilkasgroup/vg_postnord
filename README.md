@@ -1,6 +1,6 @@
 # Postnord shipping
 
-TODO
+[Postnord](https://developer.postnord.com/) integration for PrestaShop.
 
 ## Developing
 
@@ -15,6 +15,17 @@ composer dump-autoload --optimize --no-dev --classmap-authoritative
 This module adds a `{postnord_service_point}` placeholder to the order confirmation template variables,
 which contains information about the selected pickup point for the order. If you want to display the information,
 you will have to add the placeholder to the template manually.
+
+## Creating a new release
+Remember to:
+- Up the version number in the main module file
+- Update CHANGELOG
+
+Releases are triggered by tags matching vx.x.x being pushed, for example:
+```
+git tag v1.0.0
+git push --tags
+```
 
 ## Running tests
 
