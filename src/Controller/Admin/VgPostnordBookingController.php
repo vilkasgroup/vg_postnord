@@ -8,6 +8,7 @@ use Exception;
 use iio\libmergepdf\Driver\TcpdiDriver;
 use iio\libmergepdf\Merger;
 
+use Monolog\Logger;
 use PrestaShop\PrestaShop\Adapter\Entity\Address;
 use PrestaShop\PrestaShop\Adapter\Entity\Configuration;
 use PrestaShop\PrestaShop\Adapter\Entity\Country;
@@ -31,9 +32,16 @@ use Vilkas\Postnord\Grid\Filter\VgPostnordBookingQueryFilter;
  */
 class VgPostnordBookingController extends FrameworkBundleAdminController
 {
+    /**
+     * @var Logger
+     */
+    private $logger;
+
     public function __construct()
     {
         parent::__construct();
+
+        $this->logger = \Vg_postnord::getLogger();
     }
 
     /**
@@ -109,10 +117,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
         $params = [
             'countryCode' => $countryIsoCode,
             'agreementCountry' => $countryIsoCode,
-            //'city' => $address->city,
             'postalCode' => $postalCode,
-            //'streetName' => $address->address1,
-            //'streetNumber' => '19',
             'numberOfServicePoints' => 100, // TODO: this should probably be a setting?
             'typeId' => $carrierSetting[$idCarrier]['service_codes'] // "type of the service point" or service code, see module configuration page
         ];
@@ -143,7 +148,6 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
             );
         }
     }
-    // TODO: logging, I guess
 
     /**
      * Create a new booking, and fetch label if specified (generate_label = true)
@@ -159,8 +163,14 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
         $generate_label = $request->get("generate_label");
 
         $bookingService = $this->get("vilkas.postnord.service.vgpostnordbookingservice");
-        $booking = $bookingService->createBlankBooking((int) $id_order);
-        // TODO: the above function can probably throw something
+        try {
+            $booking = $bookingService->createBlankBooking((int) $id_order);
+        } catch (Exception $e) {
+            $message = $this->trans("Could not create booking: %e%", "Modules.Vgpostnord.Admin", ["%e%" => $e->getMessage()]);
+            $this->addFlash("error", $message);
+            $this->logger->error("Could not create booking", ["exception" => $e]);
+            return $this->redirectToRoute("admin_orders_view", ["orderId" => $id_order]);
+        }
 
         if (!$generate_label) {
             $message = $this->trans("New booking created successfully", "Modules.Vgpostnord.Admin");
@@ -172,6 +182,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
             $booking = $bookingService->sendBookingAndGenerateLabel($booking);
         } catch (\Throwable $e) {
             $this->addFlash("error", $e->getMessage());
+            $this->logger->error("Error fetching label", ["exception" => $e]);
             return $this->redirectToRoute("admin_orders_view", ["orderId" => $id_order]);
         }
 
@@ -204,6 +215,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
             $booking = $bookingService->sendBookingAndGenerateLabel($booking);
         } catch (\Throwable $e) {
             $this->addFlash("error", $e->getMessage());
+            $this->logger->error("Error fetching label", ["exception" => $e]);
             return $this->redirectToRoute("admin_orders_view", ["orderId" => $booking->getIdOrder()]);
         }
 
@@ -215,7 +227,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
     }
 
     /**
-     * Fetch label for an existing (local) booking
+     * Fetch return label for an existing (local) booking
      */
     public function getReturnLabelAction(Request $request): Response
     {
@@ -236,6 +248,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
             $booking = $bookingService->getReturnLabel($booking);
         } catch (\Throwable $e) {
             $this->addFlash("error", $e->getMessage());
+            $this->logger->error("Error fetching return label", ["exception" => $e]);
             return $this->redirectToRoute("admin_orders_view", ["orderId" => $booking->getIdOrder()]);
         }
 
@@ -272,6 +285,10 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
                 $booking = $bookingService->sendBookingAndGenerateLabel($booking);
             } catch (\Throwable $e) {
                 $this->addFlash("error", "Failed to fetch label for order with id {$id_order}. <br> Error: " . $e->getMessage());
+                $this->logger->error("Error fetching label (in bulk)", [
+                    "exception" => $e,
+                    "id_order" => $id_order
+                ]);
                 continue;
             }
 
@@ -330,6 +347,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
             if (!$booking->getReturnLabelData()) {
                 $message = $this->trans("Booking is missing return label data. Something is wrong.", "Modules.Vgpostnord.Admin");
                 $this->addFlash("error", $message);
+                $this->logger->error("Booking is missing return label data", ["id_booking" => $booking->getId()]);
                 $this->redirectToRoute("admin_orders_view", ["orderId" => $booking->getIdOrder()]);
             }
             $filename = $this->_getFileName($booking, true);
@@ -338,6 +356,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
             if (!$booking->getLabelData()) {
                 $message = $this->trans("Booking is missing label data. Something is wrong.", "Modules.Vgpostnord.Admin");
                 $this->addFlash("error", $message);
+                $this->logger->error("Booking is missing label data", ["id_booking" => $booking->getId()]);
                 $this->redirectToRoute("admin_orders_view", ["orderId" => $booking->getIdOrder()]);
             }
             $filename = $this->_getFileName($booking);
@@ -369,19 +388,20 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
      */
     private function _getPDFBothLabelsResponse(VgPostnordBooking $booking): Response
     {
-        $filename = "labels_" . time() . ".pdf";
-        $merger = new Merger(new TcpdiDriver());
-        $data = [];
         if (!$booking->getLabelData()) {
             $message = $this->trans("No label data", "Modules.Vgpostnord.Admin");
             $this->addFlash("error", $message);
+            $this->logger->error("No label data", ["id_booking" => $booking->getId()]);
             return $this->redirectToRoute("admin_orders_view", ["orderId" => (int) $booking->getIdOrder()]);
         }
         if (!$booking->getReturnLabelData()) {
-            $message = $this->trans("No label data", "Modules.Vgpostnord.Admin");
+            $message = $this->trans("No return label data", "Modules.Vgpostnord.Admin");
             $this->addFlash("error", $message);
+            $this->logger->error("No return label data", ["id_booking" => $booking->getId()]);
             return $this->redirectToRoute("admin_orders_view", ["orderId" => (int) $booking->getIdOrder()]);
         }
+
+        $data = [];
 
         $label_data = json_decode($booking->getLabelData(), true);
         foreach ($label_data as $datum) {
@@ -393,12 +413,21 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
                 $data[] = base64_decode($datum);
             }
         }
+
         if (!empty($data)) {
+            $merger = new Merger(new TcpdiDriver());
             foreach ($data as $value) {
                 $merger->addRaw($value);
             }
+            $mergedLabel = $merger->merge();
+        } else {
+            $message = $this->trans("No label data", "Modules.Vgpostnord.Admin");
+            $this->addFlash("error", $message);
+            $this->logger->error("No label data", ["id_booking" => $booking->getId()]);
+            return $this->redirectToRoute("admin_orders_view", ["orderId" => (int) $booking->getIdOrder()]);
         }
-        $mergedLabel = $merger->merge();
+
+        $filename = "labels_" . time() . ".pdf";
 
         return new Response(
             $mergedLabel,
@@ -439,6 +468,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
         if (!$id_booking) {
             $message = $this->trans("Missing id_booking in request. Something is wrong.",  "Modules.Vgpostnord.Admin");
             $this->addFlash("error", $message);
+            $this->logger->error("Missing id_booking in request");
 
             return null;
         }
@@ -449,6 +479,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
         if (!$booking) {
             $message = $this->trans("Could not find booking with id $id_booking", "Modules.Vgpostnord.Admin");
             $this->addFlash("error", $message);
+            $this->logger->error("Could not find booking", ["id_booking" => $id_booking]);
 
             return null;
         }
