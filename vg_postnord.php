@@ -32,7 +32,7 @@ class Vg_postnord extends CarrierModule
     {
         $this->name = 'vg_postnord';
         $this->tab = 'shipping_logistics';
-        $this->version = '0.0.1';
+        $this->version = '0.9.0';
         $this->author = 'Vilkas Group Oy';
         $this->need_instance = 0;
 
@@ -102,6 +102,7 @@ class Vg_postnord extends CarrierModule
             // add service point information to order confirmation template variables
             && $this->registerHook('actionGetExtraMailTemplateVars')
 
+            // update booking when changing order carrier
             && $this->registerHook('actionObjectOrderUpdateBefore')
             ;
     }
@@ -1286,21 +1287,20 @@ class Vg_postnord extends CarrierModule
 
     /**
      * Update additional service, service point when changing carrier
-     * 
+     *
      * @throws Exception
      */
     public function hookActionObjectOrderUpdateBefore(array $params): void
     {
         $order = $params['object'];
         $updateOrderShipping = Tools::getValue('update_order_shipping');
-        
+
         if (!$updateOrderShipping) {
             return;
         }
-        
+
         $orderCurrent = new Order($order->id);
-        
-        if($orderCurrent->id_carrier===$order->id_carrier){
+        if ($orderCurrent->id_carrier === $order->id_carrier){
             return;
         }
 
