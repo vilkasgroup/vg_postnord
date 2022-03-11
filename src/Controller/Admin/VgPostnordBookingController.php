@@ -47,6 +47,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
     {
         $gridFactory = $this->get('vilkas.postnord.grid.vg_postnord_booking_grid_factory');
         $grid = $gridFactory->getGrid($filters);
+
         return $this->render('@Modules/vg_postnord/views/templates/admin/booking-list.html.twig', [
             'vgPostnordBookingsGrid' => $this->presentGrid($grid)
         ]);
@@ -186,22 +187,13 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
      */
     public function sendBookingAction(Request $request): Response
     {
-        $id_booking = $request->get("id_booking");
-        if (!$id_booking) {
-            $message = $this->trans("Missing id_booking in request. Something is wrong.",  "Modules.Vgpostnord.Admin");
-            $this->addFlash("error", $message);
-            return $this->redirectToRoute("admin_orders_index");
-        }
-
-        $repository = $this->get('vilkas.postnord.repository.vgpostnordbooking');
-
-        $booking = $repository->findOneBy(["id" => $id_booking]);
+        $id_booking = (int) $request->get("id_booking");
+        $booking = $this->_getBooking($id_booking);
         if (!$booking) {
-            $message = $this->trans("Could not find booking with id $id_booking", "Modules.Vgpostnord.Admin");
-            $this->addFlash("error", $message);
             return $this->redirectToRoute("admin_orders_index");
         }
 
+        // already fetched, just show the label
         if ($booking->getFinalized()) {
             return $this->_getPDFLabelResponse($booking);
         }
@@ -227,22 +219,13 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
      */
     public function getReturnLabelAction(Request $request): Response
     {
-        $id_booking = $request->get("id_booking");
-        if (!$id_booking) {
-            $message = $this->trans("Missing id_booking in request. Something is wrong.",  "Modules.Vgpostnord.Admin");
-            $this->addFlash("error", $message);
-            return $this->redirectToRoute("admin_orders_index");
-        }
-
-        $repository = $this->get('vilkas.postnord.repository.vgpostnordbooking');
-
-        $booking = $repository->findOneBy(["id" => $id_booking]);
+        $id_booking = (int) $request->get("id_booking");
+        $booking = $this->_getBooking($id_booking);
         if (!$booking) {
-            $message = $this->trans("Could not find booking with id $id_booking", "Modules.Vgpostnord.Admin");
-            $this->addFlash("error", $message);
             return $this->redirectToRoute("admin_orders_index");
         }
 
+        // already fetched, just show the label
         if ($booking->getFinalized()) {
             return $this->_getPDFLabelResponse($booking, true);
         }
@@ -259,21 +242,14 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
         return $this->_getPDFLabelResponse($booking, true);
     }
 
+    /**
+     * Merge and show both labels
+     */
     public function getBothLabelAction(Request $request): Response
     {
-        $id_booking = $request->get("id_booking");
-        if (!$id_booking) {
-            $message = $this->trans("Missing id_booking in request. Something is wrong.",  "Modules.Vgpostnord.Admin");
-            $this->addFlash("error", $message);
-            return $this->redirectToRoute("admin_orders_index");
-        }
-
-        $repository = $this->get('vilkas.postnord.repository.vgpostnordbooking');
-        $booking = $repository->findOneBy(["id" => $id_booking], ['id' => 'DESC']);
-
+        $id_booking = (int) $request->get("id_booking");
+        $booking = $this->_getBooking($id_booking);
         if (!$booking) {
-            $message = $this->trans("Could not find booking with id $id_booking", "Modules.Vgpostnord.Admin");
-            $this->addFlash("error", $message);
             return $this->redirectToRoute("admin_orders_index");
         }
 
@@ -449,5 +425,34 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
             'icon' => 'arrow_back',
         ];
         return $toolbarButtons;
+    }
+
+    /**
+     * Get booking from repository by id (and generate and show any errors)
+     *
+     * @param int|null $id_booking
+     *
+     * @return VgPostnordBooking|null Booking or null on error
+     */
+    private function _getBooking(?int $id_booking): ?VgPostnordBooking
+    {
+        if (!$id_booking) {
+            $message = $this->trans("Missing id_booking in request. Something is wrong.",  "Modules.Vgpostnord.Admin");
+            $this->addFlash("error", $message);
+
+            return null;
+        }
+
+        $repository = $this->get("vilkas.postnord.repository.vgpostnordbooking");
+
+        $booking = $repository->findOneBy(["id" => $id_booking], ["id" => "DESC"]);
+        if (!$booking) {
+            $message = $this->trans("Could not find booking with id $id_booking", "Modules.Vgpostnord.Admin");
+            $this->addFlash("error", $message);
+
+            return null;
+        }
+
+        return $booking;
     }
 }
