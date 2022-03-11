@@ -320,14 +320,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
 
         $filename = "labels_" . time() . ".pdf";
 
-        return new Response(
-            $merged_raw_labels,
-            Response::HTTP_OK,
-            [
-                "Content-Type"        => "application/pdf",
-                "Content-Disposition" => "inline;filename=$filename"
-            ]
-        );
+        return $this->_getRawPDFLabelResponse($merged_raw_labels, $filename);
     }
 
     /**
@@ -339,7 +332,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
     }
 
     /**
-     * Generate raw PFD label data response with related headers
+     * Generate raw PFD label data for either label (shipping or return) and return response
      */
     private function _getPDFLabelResponse(VgPostnordBooking $booking, $return = false): Response
     {
@@ -362,6 +355,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
             $filename = $this->_getFileName($booking);
             $label_data = json_decode($booking->getLabelData(), true);
         }
+
         if (count($label_data) > 1) {
             $merger = new Merger(new TcpdiDriver());
             foreach ($label_data as $datum) {
@@ -373,18 +367,11 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
             $raw_label_data = base64_decode($label_data[0]);
         }
 
-        return new Response(
-            $raw_label_data,
-            Response::HTTP_OK,
-            [
-                "Content-Type"        => "application/pdf",
-                "Content-Disposition" => "inline;filename=$filename"
-            ]
-        );
+        return $this->_getRawPDFLabelResponse($raw_label_data, $filename);
     }
 
     /**
-     * Generate raw PDF return labels data response with related headers
+     * Generate raw PDF labels data for both labels (shipping and return) and return response
      */
     private function _getPDFBothLabelsResponse(VgPostnordBooking $booking): Response
     {
@@ -429,8 +416,21 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
 
         $filename = "labels_" . time() . ".pdf";
 
+        return $this->_getRawPDFLabelResponse($mergedLabel, $filename);
+    }
+
+    /**
+     * Generate raw PDF data response with required headers
+     *
+     * @param string $label_data  Raw label data
+     * @param string $filename    Filename
+     *
+     * @return Response
+     */
+    private function _getRawPDFLabelResponse(string $label_data, string $filename): Response
+    {
         return new Response(
-            $mergedLabel,
+            $label_data,
             Response::HTTP_OK,
             [
                 "Content-Type"        => "application/pdf",
