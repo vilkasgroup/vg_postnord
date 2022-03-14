@@ -336,7 +336,7 @@ class VgPostnordBooking
     /**
      * @return DateTime|null
      */
-    public function getFinalized(): ?DateTime
+    public function isFinalized(): ?DateTime
     {
         return $this->finalized;
     }
@@ -473,7 +473,7 @@ class VgPostnordBooking
             'servicepointid' => $this->getServicepointid(),
             'service_point_data' => $this->getServicePointData(),
             'id_label_external' => $this->getIdLabelExternal(),
-            'finalized' => $this->getFinalized(),
+            'finalized' => $this->isFinalized(),
             'additional_services' => empty($this->getAdditionalServices()) ? [] : explode(', ', $this->getAdditionalServices()),
             'parcel_data' => $this->getParcelData(),
             'customs_declaration' => $this->hasCustomsDeclaration(),

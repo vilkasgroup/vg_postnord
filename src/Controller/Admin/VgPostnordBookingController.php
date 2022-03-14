@@ -205,7 +205,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
         }
 
         // already fetched, just show the label
-        if ($booking->getFinalized()) {
+        if ($booking->isFinalized()) {
             return $this->_getPDFLabelResponse($booking);
         }
 
@@ -238,7 +238,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
         }
 
         // already fetched, just show the label
-        if ($booking->getFinalized()) {
+        if ($booking->isFinalized()) {
             return $this->_getPDFLabelResponse($booking, true);
         }
 

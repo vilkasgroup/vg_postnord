@@ -1323,7 +1323,7 @@ class Vg_postnord extends CarrierModule
 
         $booking = $repository->findOneBy(['id_order' => (int) $order->id], ['id' => 'DESC']);
 
-        if (!$booking || $booking->getFinalized()) {
+        if (!$booking || $booking->isFinalized()) {
             return;
         }
 
