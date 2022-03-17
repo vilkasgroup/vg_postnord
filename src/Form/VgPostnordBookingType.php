@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Vilkas\Postnord\Form;
 
 use Address;
+use Carrier;
 use Configuration;
 use Country;
 use Exception;
