@@ -809,7 +809,7 @@ class Vg_postnord extends CarrierModule
 
             // TODO: swear there's a better way to do whatever the following lines do
 
-            if ($oneconfig["service_code_consigneecountry"] === "0") {
+            if ($oneconfig["service_code_consigneecountry"] == false) {
                 $oneconfig["mandatory_service_codes"] = [];
                 continue;
             }
