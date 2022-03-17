@@ -1,3 +1,13 @@
+20220317 - sauli
+========
+* Bump version to 0.9.1
+* Fix the way carrier settings are accessed in some places
+* Remove some useless files
+* Some refactoring and cleanup in general
+* Fix a conditional causing errors before the first 'actual' saving of carrier settings
+* Add custom choice table extension that skips disabled inputs
+* Add base grid and form extension bundles (and required configurations)
+
 20220311 - sauli & dat & tsw
 ========
 * Bump version to 0.9.0
