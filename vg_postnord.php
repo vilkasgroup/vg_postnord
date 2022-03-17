@@ -1294,18 +1294,19 @@ class Vg_postnord extends CarrierModule
     public function hookActionObjectOrderUpdateBefore(array $params): void
     {
         $order = $params['object'];
-        $updateOrderShipping = Tools::getValue('update_order_shipping');
 
-        if (!$updateOrderShipping) {
+        $update_order_shipping = Tools::getValue('update_order_shipping');
+        if (!$update_order_shipping) {
             return;
         }
 
+        // don't do anything if carrier hasn't changed
         $orderCurrent = new Order($order->id);
         if ($orderCurrent->id_carrier === $order->id_carrier){
             return;
         }
 
-        $newCarrier = (int) $updateOrderShipping['new_carrier_id'];
+        $new_carrier_id = (int) $update_order_shipping['new_carrier_id'];
 
         try {
             /** @var EntityManager $entityManager */
@@ -1327,9 +1328,12 @@ class Vg_postnord extends CarrierModule
             return;
         }
 
+        $carrier = new Carrier($new_carrier_id);
+        $id_reference = $carrier->id_reference;
+
         // Get mandatory service codes
         $carrierSetting = json_decode(Configuration::get('VG_POSTNORD_CARRIER_SETTINGS'), true);
-        $mandatory = $carrierSetting[$newCarrier]['mandatory_service_codes'] ?? [];
+        $mandatory = $carrierSetting[$id_reference]['mandatory_service_codes'] ?? [];
 
         // Remove service point info if service point is not mandatory
         if (!in_array('A7', $mandatory)) {

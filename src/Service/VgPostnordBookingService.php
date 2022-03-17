@@ -125,7 +125,7 @@ class VgPostnordBookingService
         $customer_country = new Country($address_delivery->id_country);
 
         $carrier_settings = json_decode(Configuration::get("VG_POSTNORD_CARRIER_SETTINGS"), true);
-        $service_code     = explode("_", $carrier_settings[$carrier->id]["service_code_consigneecountry"])[0];
+        $service_code     = explode("_", $carrier_settings[$carrier->id_reference]["service_code_consigneecountry"])[0];
 
         $additional_service_codes = explode(",", $booking->getAdditionalServices() ?? []);
 

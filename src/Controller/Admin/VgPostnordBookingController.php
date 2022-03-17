@@ -66,7 +66,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
         $idBooking = (int) $bookingId;
         $repository = $this->get('vilkas.postnord.repository.vgpostnordbooking');
         $booking = $repository->findOneById($idBooking);
-        $idOrder = $booking->getIdOrder();
+        $id_order = $booking->getIdOrder();
 
         $bookingFormBuilder = $this->get('vilkas.postnord.form.identifiable_object.builder.vg_postnord_booking_form_builder');
         $bookingForm = $bookingFormBuilder->getFormFor($idBooking);
@@ -85,7 +85,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
             'vgPostnordBookingEditForm' => $bookingForm->createView(),
             'ajaxurl' => $this->get('router')->generate('admin_vg_postnord_ajax_service_point_action'),
             'layoutTitle' => $this->trans('Edit Booking', 'Modules.Vgpostnord.Admin'),
-            'layoutHeaderToolbarBtn' => $this->getToolbarButtons($idOrder),
+            'layoutHeaderToolbarBtn' => $this->getToolbarButtons($id_order),
         ]);
     }
 
@@ -105,21 +105,20 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
             Configuration::get('VG_POSTNORD_APIKEY')
         );
         $carrierSetting = json_decode(Configuration::get('VG_POSTNORD_CARRIER_SETTINGS'), true);
-        $idOrder = (int) $request->request->get('idOrder');
+        $id_order = (int) $request->request->get('idOrder');
         $postalCode = $request->request->get('zipcode');
-        $order = new Order($idOrder);
-        $idCarrier = (int) $order->id_carrier;
-        $idAddress = (int) $order->id_address_delivery;
 
-        $address = new Address($idAddress);
-        $countryIsoCode = Country::getIsoById($address->id_country);
+        $order = new \Order($id_order);
+        $carrier = new \Carrier($order->id_carrier);
+        $address = new \Address($order->id_address_delivery);
+        $countryIsoCode = \Country::getIsoById($address->id_country);
 
         $params = [
             'countryCode' => $countryIsoCode,
             'agreementCountry' => $countryIsoCode,
             'postalCode' => $postalCode,
             'numberOfServicePoints' => 100, // TODO: this should probably be a setting?
-            'typeId' => $carrierSetting[$idCarrier]['service_codes'] // "type of the service point" or service code, see module configuration page
+            'typeId' => $carrierSetting[$carrier->id_reference]['service_codes'] // "type of the service point" or service code, see module configuration page
         ];
 
         try {

@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Vilkas\Postnord\Form;
 
+use Address;
+use Configuration;
+use Country;
 use Exception;
-use PrestaShop\PrestaShop\Adapter\Entity\Address;
-use PrestaShop\PrestaShop\Adapter\Entity\Configuration;
-use PrestaShop\PrestaShop\Adapter\Entity\Country;
-use PrestaShop\PrestaShop\Adapter\Entity\Order;
+use Order;
+use PrestaShopException;
 use PrestaShopBundle\Form\Admin\Type\Material\MaterialChoiceTableType;
 use PrestaShopBundle\Form\Admin\Type\TranslatorAwareType;
-
 use Symfony\Component\Form\Extension\Core\Type\ButtonType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
@@ -25,7 +25,6 @@ use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
 use Symfony\Component\Translation\TranslatorInterface;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
-
 use Vilkas\Postnord\Client\PostnordClient;
 
 class VgPostnordBookingType extends TranslatorAwareType
@@ -167,7 +166,7 @@ class VgPostnordBookingType extends TranslatorAwareType
                     // TODO: I actually somehow ended up with empty service point id, data and additional services, simulate an api error and test this out
                     //       (they probably shouldn't be changed if the widget can't be loaded)
                     $currentServicePoint = $data['servicepointid_value'];
-                    $idOrder = $data['id_order'];
+                    $id_order = $data['id_order'];
 
                     // create new choices list
                     $choices = [];
@@ -184,7 +183,7 @@ class VgPostnordBookingType extends TranslatorAwareType
                         $choices[$servicePoints] = $servicePoints;
                         // only update service_point_data if changed
                         if ($servicePoints !== $currentServicePoint) {
-                            $servicePointData = $this->getServicePointData($idOrder, $servicePoints);
+                            $servicePointData = $this->getServicePointData($id_order, $servicePoints);
                             if (empty($servicePointData['error'])) {
                                 $data['service_point_data'] = json_encode($servicePointData);
                                 $event->setData($data);
@@ -263,11 +262,12 @@ class VgPostnordBookingType extends TranslatorAwareType
     {
         $issuerCountry = Configuration::get('VG_POSTNORD_ISSUER_COUNTRY');
         $carrierSetting = json_decode(Configuration::get('VG_POSTNORD_CARRIER_SETTINGS'), true);
-        $idOrder = (int) $options['data']['id_order'];
-        $order = new Order($idOrder);
-        $idCarrier = (int) $order->id_carrier;
-        // split carrierSetting into ['servicecode', 'consigneeCountry']
-        $carrierSetting = explode('_', $carrierSetting[$idCarrier]["service_code_consigneecountry"]);
+
+        $id_order = (int) $options['data']['id_order'];
+        $order = new Order($id_order);
+        $carrier = new Carrier($order->id_carrier);
+
+        [$service_code, $consignee_country] = explode('_', $carrierSetting[$carrier->id_reference]["service_code_consigneecountry"]);
 
         // Get valid combination from postnord and filter with issuer country, service code and consignee country
         // additional services with mandatory tag are not shown
@@ -276,15 +276,15 @@ class VgPostnordBookingType extends TranslatorAwareType
         } catch (Exception|ExceptionInterface $e) {
             return ['error' => 'Failed to fetch additional services', 'errorMessage'=> $e->getMessage()];
         }
-        $validIssuerCountryCombination = array_filter($validCombination, function ($element) use (&$issuerCountry) {
+        $validIssuerCountryCombination = array_filter($validCombination, function ($element) use ($issuerCountry) {
             return $element['issuerCountryCode'] === $issuerCountry ? $element : null;
         });
         $finalCombination = array_reduce(
             reset($validIssuerCountryCombination)['adnlServiceCodeCombDetails'],
-            function ($carry, $element) use (&$carrierSetting) {
+            function ($carry, $element) use ($service_code, $consignee_country) {
                 if (
-                    $element['serviceCode'] === $carrierSetting[0]
-                    && $element['allowedConsigneeCountry'] === $carrierSetting[1]
+                    $element['serviceCode'] === $service_code
+                    && $element['allowedConsigneeCountry'] === $consignee_country
                 ) {
                     $carry[] = [$element['adnlServiceName'] => $element['adnlServiceCode']];
                     if ($element['mandatory'] === true) {
@@ -306,15 +306,19 @@ class VgPostnordBookingType extends TranslatorAwareType
         return $finalCombination;
     }
 
-    private function getServicePointData($idOrder, $servicePointId): array
+    /**
+     * @throws PrestaShopException
+     * @throws ExceptionInterface
+     */
+    private function getServicePointData($id_order, $servicePointId): array
     {
-        $order = new Order($idOrder);
-        $idAddress = (int) $order->id_address_delivery;
-        $address = new Address($idAddress);
-        $countryIsoCode = Country::getIsoById($address->id_country);
+        $order = new Order($id_order);
+        $id_address = (int) $order->id_address_delivery;
+        $address = new Address($id_address);
+        $countryCode = Country::getIsoById($address->id_country);
 
         $params = [
-            'countryCode' => $countryIsoCode,
+            'countryCode' => $countryCode,
             'ids' => $servicePointId
         ];
 
@@ -323,11 +327,11 @@ class VgPostnordBookingType extends TranslatorAwareType
 
     private function getPostalCode($options): string
     {
-        $idOrder = (int) $options['data']['id_order'];
-        $order = new Order($idOrder);
-        $idAddress = (int) $order->id_address_delivery;
-        $address = new Address($idAddress);
-        $postalCode = $address->postcode;
-        return $postalCode;
+        $id_order = (int) $options['data']['id_order'];
+        $order = new Order($id_order);
+        $id_address = (int) $order->id_address_delivery;
+        $address = new Address($id_address);
+
+        return $address->postcode;
     }
 }
