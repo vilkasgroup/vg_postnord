@@ -4,23 +4,21 @@ declare(strict_types=1);
 
 namespace Vilkas\Postnord\Controller\Admin;
 
+use Address;
+use Carrier;
+use Configuration;
+use Country;
 use Exception;
+use Order;
 use iio\libmergepdf\Driver\TcpdiDriver;
 use iio\libmergepdf\Merger;
-
 use Monolog\Logger;
-use PrestaShop\PrestaShop\Adapter\Entity\Address;
-use PrestaShop\PrestaShop\Adapter\Entity\Configuration;
-use PrestaShop\PrestaShop\Adapter\Entity\Country;
-use PrestaShop\PrestaShop\Adapter\Entity\Order;
 use PrestaShopBundle\Controller\Admin\FrameworkBundleAdminController;
 use PrestaShopBundle\Security\Annotation\AdminSecurity;
 use PrestaShopBundle\Security\Annotation\ModuleActivated;
-
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
-
 use Vilkas\Postnord\Client\PostnordClient;
 use Vilkas\Postnord\Entity\VgPostnordBooking;
 use Vilkas\Postnord\Grid\Filter\VgPostnordBookingQueryFilter;
@@ -108,10 +106,10 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
         $id_order = (int) $request->request->get('idOrder');
         $postalCode = $request->request->get('zipcode');
 
-        $order = new \Order($id_order);
-        $carrier = new \Carrier($order->id_carrier);
-        $address = new \Address($order->id_address_delivery);
-        $countryIsoCode = \Country::getIsoById($address->id_country);
+        $order = new Order($id_order);
+        $carrier = new Carrier($order->id_carrier);
+        $address = new Address($order->id_address_delivery);
+        $countryIsoCode = Country::getIsoById($address->id_country);
 
         $params = [
             'countryCode' => $countryIsoCode,
