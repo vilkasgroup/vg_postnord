@@ -51,14 +51,15 @@ class VgPostnordBookingService
 
         $booking = new VgPostnordBooking();
         $order   = new Order($id_order);
+        $carrier = new Carrier($order->id_carrier);
 
         // grab mandatory additional services from carrier settings
         $carrier_settings = json_decode(Configuration::get("VG_POSTNORD_CARRIER_SETTINGS"), true);
         if (
-            array_key_exists($order->id_carrier, $carrier_settings)
-            && array_key_exists("mandatory_service_codes", $carrier_settings[$order->id_carrier])
+            array_key_exists($carrier->id_reference, $carrier_settings)
+            && array_key_exists("mandatory_service_codes", $carrier_settings[$carrier->id_reference])
         ) {
-            $mandatory_services = implode(",", $carrier_settings[$order->id_carrier]["mandatory_service_codes"]);
+            $mandatory_services = implode(",", $carrier_settings[$carrier->id_reference]["mandatory_service_codes"]);
         } else {
             $mandatory_services = null;
         }
