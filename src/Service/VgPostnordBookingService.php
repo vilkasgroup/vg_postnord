@@ -261,10 +261,10 @@ class VgPostnordBookingService
         return json_encode(
             [
                 [
-                    "weight" => "",
-                    "height" => "",
-                    "width"  => "",
-                    "length" => ""
+                    "grossWeight" => null,
+                    "height"      => null,
+                    "width"       => null,
+                    "length"      => null
                 ]
             ]
         );
