@@ -81,6 +81,8 @@ class PostnordClientTest extends TestCase
 
     public function testGetServicePointsById(): void
     {
+        $this->markTestSkipped("Fails often due to not being able to find any service points");
+
         $params = [
             'countryCode' => 'FI',
             'ids' => '9335'
