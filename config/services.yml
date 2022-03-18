@@ -18,6 +18,7 @@ services:
     class: 'Vilkas\Postnord\Service\VgPostnordBookingService'
     arguments:
       - '@doctrine.orm.default_entity_manager'
+      - '@translator'
 
  # define the grid definition factory
   vilkas.postnord.grid.definition.factory.vg_postnord_booking_grid_definition_factory:

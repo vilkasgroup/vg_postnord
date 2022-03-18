@@ -11,10 +11,9 @@ use Customer;
 use Exception;
 use Order;
 use PrestaShopException;
-
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Translation\TranslatorInterface;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
-
 use Vilkas\Postnord\Client\PostnordClient;
 use Vilkas\Postnord\Entity\VgPostnordBooking;
 use Vilkas\Postnord\Entity\VgPostnordCartData;
@@ -24,12 +23,16 @@ class VgPostnordBookingService
     /** @var EntityManagerInterface */
     private $entityManager;
 
+    /** @var TranslatorInterface */
+    private $translator;
+
     /** @var PostnordClient */
     private $client;
 
-    public function __construct(EntityManagerInterface $entityManager)
+    public function __construct(EntityManagerInterface $entityManager, TranslatorInterface $translator)
     {
         $this->entityManager = $entityManager;
+        $this->translator    = $translator;
 
         $this->client = new PostnordClient(
             Configuration::get('VG_POSTNORD_HOST'),
@@ -112,6 +115,7 @@ class VgPostnordBookingService
      *
      * @return VgPostnordBooking
      *
+     * @throws Exception
      * @throws PrestaShopException
      * @throws ExceptionInterface
      */
@@ -171,6 +175,11 @@ class VgPostnordBookingService
         $pickup_address = [];
         // add service point data if related additional service is found
         if (in_array("A7", $additional_service_codes)) {
+            // technically these can be empty if changing carriers from one without service points to one with them
+            if (empty($service_point) || empty($booking->getServicepointid())) {
+                $msg = $this->translator->trans("Service point ID or data missing from booking.");
+                throw new Exception($msg);
+            }
             $pickup_address = [
                 "servicePointId" => $booking->getServicepointid(),
                 "name" => $service_point["name"],
