@@ -1,3 +1,12 @@
+20220318 - sauli
+========
+* Bump version to 0.9.2
+* Fix another import
+* Make numeric values in parcel data null by default
+* Fix weight key name in default parcel data
+* Fix error during booking editing caused by empty customs declaration detailed description
+* Show error when trying to fetch label if service point is not found in booking but is required by carrier
+
 20220317 - sauli
 ========
 * Bump version to 0.9.1
