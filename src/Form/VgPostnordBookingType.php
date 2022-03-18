@@ -217,7 +217,7 @@ class VgPostnordBookingType extends TranslatorAwareType
                 $event->setData($data);
 
                 $parcel_count          = count($data['parcel_data']);
-                $content_line_count    = count($data['detailed_description']);
+                $content_line_count    = !empty($data['detailed_description']) ? count($data['detailed_description']) : 0;
                 $default_tariff_number = Configuration::get('VG_POSTNORD_DEFAULT_TARIFF_NUMBER');
 
                 $customs_declaration = [
