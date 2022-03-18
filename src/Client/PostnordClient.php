@@ -199,7 +199,7 @@ class PostnordClient
         try {
             $response = $this->doRequest('GET', '/rest/businesslocation/v5/servicepoints/nearest/byaddress', $options);
         } catch (Exception $e) {
-            $this->logger->error('Error getting Service Point' . $e->getMessage());
+            $this->logger->error('Error getting Service Point', ['exception' => $e]);
 
             return [
                 'error' => $e->getMessage(),
