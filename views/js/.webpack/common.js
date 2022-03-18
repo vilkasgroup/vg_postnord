@@ -3,7 +3,8 @@ const webpack = require('webpack');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
 
 // PrestaShop folders, we use process.env.PWD instead of __dirname in case the module is symlinked
-const psRootDir = path.resolve(process.env.PWD, '../../../');
+// Note: when building, your admin folder needs to be named admin-dev
+const psRootDir = path.resolve(process.env.PWD, '../../../../');
 const psJsDir = path.resolve(psRootDir, 'admin-dev/themes/new-theme/js');
 const psComponentsDir = path.resolve(psJsDir, 'components');
 const psAppDir = path.resolve(psRootDir, 'admin-dev/themes/new-theme/js/app');
