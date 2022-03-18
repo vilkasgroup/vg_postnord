@@ -54,7 +54,10 @@ final class VgPostnordBookingFormDataHandler implements FormDataHandlerInterface
 
         // encode JSON-based fields back into JSON for storage
         $data["parcel_data"] = json_encode(array_values($data["parcel_data"]));
-        $data["detailed_description"] = json_encode(array_values($data["customs_declaration"]["detailed_description"]));
+        $detailed_description = $data["customs_declaration"]["detailed_description"];
+        if (!empty($detailed_description)) {
+            $data["detailed_description"] = json_encode(array_values($detailed_description));
+        }
 
         // grab customs declaration data and encode back into JSON for storage
         unset($data["customs_declaration"]["customs_declaration_data"]);
