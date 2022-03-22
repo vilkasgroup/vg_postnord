@@ -64,11 +64,12 @@ window["vg_postnord_form"] =
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 1);
+/******/ 	return __webpack_require__(__webpack_require__.s = 5);
 /******/ })
 /************************************************************************/
-/******/ ([
-/* 0 */
+/******/ ({
+
+/***/ 0:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -122,7 +123,8 @@ class SkipDisabledChoiceTable {
 
 
 /***/ }),
-/* 1 */
+
+/***/ 5:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -137,4 +139,5 @@ $(function () {
 });
 
 /***/ })
-/******/ ]);
+
+/******/ });
