@@ -1,9 +1,14 @@
-//import Grid from '@components/grid/grid';
+import Grid from '@components/grid/grid';
+import ReloadListExtension from '@components/grid/extension/reload-list-extension';
+import SortingExtension from '@components/grid/extension/sorting-extension';
+import LinkRowActionExtension from '@components/grid/extension/link-row-action-extension';
 
 const $ = window.$;
 
 $(() => {
-  //const bookingGrid = new Grid('vgpostnordbooking');
+  const bookingGrid = new Grid('vgpostnordbooking');
 
-  // TODO: add extensions
+  bookingGrid.addExtension(new ReloadListExtension());
+  bookingGrid.addExtension(new SortingExtension());
+  bookingGrid.addExtension(new LinkRowActionExtension());
 });
