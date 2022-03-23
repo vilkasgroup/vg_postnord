@@ -76,6 +76,13 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
         if ($result->isSubmitted() && $result->isValid()) {
             $this->addFlash('success', $this->trans('Successful modification.', 'Admin.Notifications.Success'));
 
+            if ($request->get("save-and-go-to-order") !== null) {
+                return $this->redirectToRoute("admin_orders_view", ["orderId" => $id_order]);
+            }
+            if ($request->get("save-and-stay") !== null) {
+                return $this->redirectToRoute("admin_vg_postnord_edit_action", ["bookingId" => $idBooking]);
+            }
+
             return $this->redirectToRoute('admin_vg_postnord_list_action');
         }
 

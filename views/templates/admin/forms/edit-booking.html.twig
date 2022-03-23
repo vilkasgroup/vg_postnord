@@ -5,7 +5,7 @@
     <div class="card">
       <h3 class="card-header">
         <i class="material-icons">pencil</i>
-        {{ 'Postnord Booking'|trans({}, 'Admin.Shopparameters.Feature') }}
+        {{ 'Postnord Booking'|trans({}, 'Modules.Vgpostnord.Admin') }}
       </h3>
       <div class="card-block row" id="vg_postnord_edit_booking" data-ajaxurl="{{ajaxurl}}">
         <div class="card-text">
@@ -16,8 +16,14 @@
         <a href="{{ path('admin_vg_postnord_list_action') }}" class="btn btn-outline-secondary">
           {{ 'Cancel'|trans({}, 'Admin.Actions') }}
         </a>
-        <button class="btn btn-primary float-right" id="save-button">
+        <button class="btn btn-primary float-right ml-2" id="save-button">
           {{ 'Save'|trans({}, 'Admin.Actions') }}
+        </button>
+        <button class="btn btn-primary float-right ml-2" id="save-and-stay-button" name="save-and-stay">
+          {{ 'Save & stay'|trans({}, 'Modules.Vgpostnord.Admin') }}
+        </button>
+        <button class="btn btn-primary float-right ml-2" id="save-and-go-to-order-button" name="save-and-go-to-order">
+          {{ 'Save & go to order'|trans({}, 'Modules.Vgpostnord.Admin') }}
         </button>
       </div>
     </div>
