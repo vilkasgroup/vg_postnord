@@ -1,3 +1,11 @@
+20220323 - sauli
+========
+* Bump version to 0.9.3
+* Add base extensions to grid
+* Add 'save & stay' and 'save & go to order' buttons to booking edit form
+* Prevent the deletion of the last parcel of a booking
+* Update parcel generation HTML
+
 20220318 - sauli
 ========
 * Bump version to 0.9.2
