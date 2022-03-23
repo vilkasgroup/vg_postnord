@@ -53,10 +53,10 @@
         <div class="col-sm">
          <div id="vg_postnord_booking_parcel_data_${i}">
            <div class="form-group row">
-             <label class="form-control-label required" for="vg_postnord_booking_parcel_data_${i}_weight">Weight</label>
+             <label class="form-control-label" for="vg_postnord_booking_parcel_data_${i}_weight">Weight</label>
              <div class="col-sm">
                <input type="text" id="vg_postnord_booking_parcel_data_${i}_grossWeight"
-                      name="vg_postnord_booking[parcel_data][${i}][grossWeight]" required="required"
+                      name="vg_postnord_booking[parcel_data][${i}][grossWeight]"
                       class="form-control">
              </div>
            </div>
@@ -170,6 +170,11 @@
   });
 
   $("body").on("click", ".vg-postnord-remove-parcel, .vg-postnord-remove-detailed-description", function() {
-    $(this).parent().closest(".form-group.row").remove();
+    let parcels = $("#vg_postnord_booking_parcel_data > div").length;
+
+    // don't allow deleting the last parcel
+    if (parcels > 1) {
+      $(this).parent().closest(".form-group.row").remove();
+    }
   });
 </script>
