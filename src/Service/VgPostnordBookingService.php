@@ -194,7 +194,7 @@ class VgPostnordBookingService
         }
 
         $label_info = [
-            "paperSize" => Configuration::get("VG_POSTNORD_LABEL_PAPER_SIZE") ?? "A5"
+            "paperSize" => Configuration::get("VG_POSTNORD_LABEL_PAPER_SIZE", null, null, null, "A5")
         ];
 
         $response = $this->client->createBooking(
@@ -248,7 +248,7 @@ class VgPostnordBookingService
     public function getReturnLabel(VgPostnordBooking $booking): VgPostnordBooking
     {
         $label_info = [
-            "paperSize" => Configuration::get("VG_POSTNORD_LABEL_PAPER_SIZE") ?? "A5"
+            "paperSize" => Configuration::get("VG_POSTNORD_LABEL_PAPER_SIZE", null, null, null, "A5")
         ];
 
         $itemIds = json_decode($booking->getIdLabelExternal(), true);
