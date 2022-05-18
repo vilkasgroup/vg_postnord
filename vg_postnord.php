@@ -81,6 +81,7 @@ class Vg_postnord extends CarrierModule
         Configuration::updateValue('VG_POSTNORD_ISSUER_COUNTRY', '');
         Configuration::updateValue('VG_POSTNORD_EORI_NUMBER', '');
         Configuration::updateValue('VG_POSTNORD_DEFAULT_TARIFF_NUMBER', '');
+        Configuration::updateValue('VG_POSTNORD_LABEL_PAPER_SIZE', 'A5');
         Configuration::updateValue('VG_POSTNORD_CARRIER_SETTINGS', '[]');
         Configuration::updateValue('VG_POSTNORD_SHOP_ADDRESS', '[]');
         Configuration::updateValue('VG_POSTNORD_RETURN_ADDRESS', '[]');
@@ -118,6 +119,7 @@ class Vg_postnord extends CarrierModule
         Configuration::deleteByName('VG_POSTNORD_ISSUER_COUNTRY');
         Configuration::deleteByName('VG_POSTNORD_EORI_NUMBER');
         Configuration::deleteByName('VG_POSTNORD_DEFAULT_TARIFF_NUMBER');
+        Configuration::deleteByName('VG_POSTNORD_LABEL_PAPER_SIZE');
         Configuration::deleteByName('VG_POSTNORD_CARRIER_SETTINGS');
         Configuration::deleteByName('VG_POSTNORD_SHOP_ADDRESS');
         Configuration::deleteByName('VG_POSTNORD_RETURN_ADDRESS');
@@ -374,6 +376,22 @@ class Vg_postnord extends CarrierModule
                         'label' => $this->trans('Default tariff number', [], 'Modules.Vgpostnord.Admin'),
                         'desc' => $this->trans('Default HS tariff number (see: tulltaxan.tullverket.se). Used to prefill tariff number for customs declarations.', [], 'Modules.Vgpostnord.Admin'),
                     ],
+                    [
+                        'type' => 'select',
+                        'name' => 'VG_POSTNORD_LABEL_PAPER_SIZE',
+                        'label' => $this->trans('Label paper size', [], 'Modules.Vgpostnord.Admin'),
+                        'options' => [
+                            'query' => [
+                                ['id' => 'A4', 'name' => 'A4'],
+                                ['id' => 'A5', 'name' => 'A5'],
+                                ['id' => 'LABEL', 'name' => 'LABEL'],
+                            ],
+                            'id' => 'id',
+                            'name' => 'name',
+                            'default' => null,
+                        ],
+                        'desc' => $this->trans('Paper size for labels.', [], 'Modules.Vgpostnord.Admin'),
+                    ],
                 ],
                 'submit' => [
                     'title' => $this->trans('Save', [], 'Modules.Vgpostnord.Admin'),
@@ -396,6 +414,7 @@ class Vg_postnord extends CarrierModule
             'VG_POSTNORD_ISSUER_COUNTRY' => Configuration::get('VG_POSTNORD_ISSUER_COUNTRY'),
             'VG_POSTNORD_EORI_NUMBER' => Configuration::get('VG_POSTNORD_EORI_NUMBER'),
             'VG_POSTNORD_DEFAULT_TARIFF_NUMBER' => Configuration::get('VG_POSTNORD_DEFAULT_TARIFF_NUMBER'),
+            'VG_POSTNORD_LABEL_PAPER_SIZE' => Configuration::get('VG_POSTNORD_LABEL_PAPER_SIZE'),
         ];
     }
 
