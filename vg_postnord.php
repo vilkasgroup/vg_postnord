@@ -97,6 +97,9 @@ class Vg_postnord extends CarrierModule
             # show possible selected pickup location in SF my account old order view
             && $this->registerHook('displayOrderDetail')
 
+            # show possible selected pickup location in order confirmation page
+            && $this->registerHook('displayOrderConfirmation1')
+
             // add "fetch label" button to order preview
             && $this->registerHook('displayOrderPreview')
             // add "fetch label" button to order buttons
@@ -1432,4 +1435,82 @@ class Vg_postnord extends CarrierModule
 
         return "";
     }
+
+    /**
+     * Show pickup location in order confirmation page if one is selected
+     *
+     * @throws Exception
+     */
+    public function hookDisplayOrderConfirmation1(array $params): string
+    {
+        // params does not contain anything sane, read the id_order from url
+        $id_order = Tools::getValue('id_order', 0);
+        if(!$id_order) {
+            return "";
+        }
+
+        // check the key
+        try {
+            $url_secure_key = Tools::getValue('key', 0);
+            $customer_secure_key = $this->context->customer->secure_key;
+            if($url_secure_key != $customer_secure_key) {
+                return "";
+            }
+        } catch (Exception $e) {
+            $this->logger->error("Failed checkin secure key!", [
+            "exception" => $e,
+            "hook"      => "hookDisplayOrderConfirmation1",
+            "id_order"  => $id_order
+            ]);
+            return "";
+        }
+        $Order = new Order((int) $id_order);
+        if (!$this->isPostNordOrder($Order->id)) {
+            return "";
+        }
+
+
+        try {
+            /** @var EntityManager $entityManager */
+            $entityManager = $this->get("doctrine.orm.entity_manager");
+            $repository = $entityManager->getRepository(VgPostnordCartData::class);
+        } catch (Exception $e) {
+            $this->logger->error("Error getting entity manager or repository", [
+                "exception" => $e,
+                "hook"      => "hookDisplayOrderDetail",
+                "id_order"  => $Order->id
+            ]);
+            return "";
+        }
+
+        $cartData = $repository->findOneBy(["id_order" => $Order->id]);
+        if (!$cartData) {
+            $this->logger->error("Couldn't find cart data for order", [
+                "hook"      => "hookDisplayOrderDetail",
+                "id_order"  => $Order->id
+            ]);
+            return "";
+        }
+        $service_point_data = json_decode($cartData->getServicePointData(), true);
+        if (!$service_point_data) {
+            return "";
+        }
+
+        try {
+            $this->context->smarty->assign([
+                "service_point" => $service_point_data,
+                "service_point_header" => $this->trans("Pickup point", [], "Modules.Vgpostnord.Admin")
+            ]);
+            return $this->context->smarty->fetch($this->local_path . "views/templates/hook/displayOrderConfirmation1-service-point.tpl");
+        } catch (Exception $e) {
+            $this->logger->error("Couldn't fetch Smarty template", [
+                "exception" => $e->getMessage(),
+                "hook"      => "hookDisplayOrderDetail",
+                "id_order"  => $Order->id,
+            ]);
+        }
+
+
+    }
+
 }
