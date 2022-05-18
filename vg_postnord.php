@@ -94,10 +94,9 @@ class Vg_postnord extends CarrierModule
             && $this->registerHook('displayAdminOrderMain')
             && $this->registerHook('actionValidateOrder')
 
-            # show possible selected pickup location in SF my account old order view
+            // show possible selected pickup location in SF my account old order view
             && $this->registerHook('displayOrderDetail')
-
-            # show possible selected pickup location in order confirmation page
+            // show possible selected pickup location in order confirmation page
             && $this->registerHook('displayOrderConfirmation1')
 
             // add "fetch label" button to order preview
