@@ -94,6 +94,9 @@ class Vg_postnord extends CarrierModule
             && $this->registerHook('displayAdminOrderMain')
             && $this->registerHook('actionValidateOrder')
 
+            # show possible selected pickup location in SF my account old order view
+            && $this->registerHook('displayOrderDetail')
+
             // add "fetch label" button to order preview
             && $this->registerHook('displayOrderPreview')
             // add "fetch label" button to order buttons
@@ -1368,5 +1371,65 @@ class Vg_postnord extends CarrierModule
             $this->logger->error('Failed to update booking', ['exception' => $e]);
             throw $e;
         }
+    }
+
+    /**
+     * Show pickup location in storefront order detail views if one is selected
+     *
+     * @throws Exception
+     */
+    public function hookDisplayOrderDetail(array $params): string
+    {
+        /** @var Order $Order */
+        $Order = $params['order'];
+        if(!$Order) {
+            return "";
+        }
+        if (!$this->isPostNordOrder($Order->id)) {
+            return "";
+        }
+
+        try {
+            /** @var EntityManager $entityManager */
+            $entityManager = $this->get("doctrine.orm.entity_manager");
+            $repository = $entityManager->getRepository(VgPostnordCartData::class);
+        } catch (Exception $e) {
+            $this->logger->error("Error getting entity manager or repository", [
+                "exception" => $e,
+                "hook"      => "hookDisplayOrderDetail",
+                "id_order"  => $Order->id
+            ]);
+            return "";
+        }
+
+        $cartData = $repository->findOneBy(["id_order" => $Order->id]);
+        if (!$cartData) {
+            $this->logger->error("Couldn't find cart data for order", [
+                "hook"      => "hookDisplayOrderDetail",
+                "id_order"  => $Order->id
+            ]);
+            return "";
+        }
+        $service_point_data = json_decode($cartData->getServicePointData(), true);
+        if (!$service_point_data) {
+            return "";
+        }
+
+        try {
+            $this->context->smarty->assign([
+                "service_point" => $service_point_data,
+                "service_point_header" => $this->trans("Pickup point", [], "Modules.Vgpostnord.Admin")
+            ]);
+            return $this->context->smarty->fetch($this->local_path . "views/templates/hook/displayOrderDetail-service-point.tpl");
+        } catch (Exception $e) {
+            $this->logger->error("Couldn't fetch Smarty template", [
+                "exception" => $e->getMessage(),
+                "hook"      => "hookDisplayOrderDetail",
+                "id_order"  => $Order->id,
+            ]);
+        }
+
+
+        return "";
     }
 }

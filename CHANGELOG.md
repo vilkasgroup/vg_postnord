@@ -1,5 +1,6 @@
 20220518 - tsw
 ========
+* show pickup location from cart data on order detail page (my account->orders)
 * configure carrier even if it is not active
 
 20220323 - sauli
