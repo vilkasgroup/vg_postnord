@@ -1112,7 +1112,7 @@ class Vg_postnord extends CarrierModule
         $gridDefinition = $params['definition'];
         $gridDefinition->getBulkActions()->add(
             (new SubmitBulkAction('bulk_fetch_label'))
-                ->setName($this->trans('Fetch label', [], 'Modules.Vgpostnord.Admin'))
+                ->setName($this->trans('Fetch label (PostNord)', [], 'Modules.Vgpostnord.Admin'))
                 ->setOptions([
                     'submit_route' => 'admin_vg_postnord_bulk_fetch_label',
                 ])
