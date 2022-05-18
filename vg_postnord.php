@@ -1385,7 +1385,7 @@ class Vg_postnord extends CarrierModule
     {
         /** @var Order $Order */
         $Order = $params['order'];
-        if(!$Order) {
+        if (!$Order) {
             return "";
         }
         if (!$this->isPostNordOrder($Order->id)) {
@@ -1432,7 +1432,6 @@ class Vg_postnord extends CarrierModule
             ]);
         }
 
-
         return "";
     }
 
@@ -1445,7 +1444,7 @@ class Vg_postnord extends CarrierModule
     {
         // params does not contain anything sane, read the id_order from url
         $id_order = Tools::getValue('id_order', 0);
-        if(!$id_order) {
+        if (!$id_order) {
             return "";
         }
 
@@ -1453,22 +1452,22 @@ class Vg_postnord extends CarrierModule
         try {
             $url_secure_key = Tools::getValue('key', 0);
             $customer_secure_key = $this->context->customer->secure_key;
-            if($url_secure_key != $customer_secure_key) {
+            if ($url_secure_key != $customer_secure_key) {
                 return "";
             }
         } catch (Exception $e) {
             $this->logger->error("Failed checkin secure key!", [
-            "exception" => $e,
-            "hook"      => "hookDisplayOrderConfirmation1",
-            "id_order"  => $id_order
+                "exception" => $e,
+                "hook"      => "hookDisplayOrderConfirmation1",
+                "id_order"  => $id_order
             ]);
             return "";
         }
+
         $Order = new Order((int) $id_order);
         if (!$this->isPostNordOrder($Order->id)) {
             return "";
         }
-
 
         try {
             /** @var EntityManager $entityManager */
@@ -1510,7 +1509,6 @@ class Vg_postnord extends CarrierModule
             ]);
         }
 
-
+        return "";
     }
-
 }
