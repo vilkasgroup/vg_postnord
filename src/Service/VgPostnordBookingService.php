@@ -10,6 +10,8 @@ use Country;
 use Customer;
 use Exception;
 use Order;
+use OrderCarrier;
+use PrestaShop\PrestaShop\Adapter\LegacyContext;
 use PrestaShopException;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Translation\TranslatorInterface;
@@ -26,13 +28,17 @@ class VgPostnordBookingService
     /** @var TranslatorInterface */
     private $translator;
 
+    /** @var LegacyContext */
+    private $context;
+
     /** @var PostnordClient */
     private $client;
 
-    public function __construct(EntityManagerInterface $entityManager, TranslatorInterface $translator)
+    public function __construct(EntityManagerInterface $entityManager, TranslatorInterface $translator, LegacyContext $context)
     {
         $this->entityManager = $entityManager;
         $this->translator    = $translator;
+        $this->context       = $context;
 
         $this->client = new PostnordClient(
             Configuration::get('VG_POSTNORD_HOST'),
