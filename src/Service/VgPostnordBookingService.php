@@ -231,6 +231,9 @@ class VgPostnordBookingService
             ->setFinalized(new \DateTime())
         ;
 
+        $this->addTrackingCodesToOrderCarrier($order, $label_ids);
+        $order->setCurrentState(Configuration::get("PS_OS_SHIPPING"), $this->context->getContext()->employee->id);
+
         if (Configuration::get('VG_POSTNORD_FETCH_BOTH')) {
             $this->getReturnLabel($booking);
         }
@@ -283,5 +286,26 @@ class VgPostnordBookingService
                 ]
             ]
         );
+    }
+
+    /**
+     * Add tracking codes to OrderCarrier
+     *
+     * Join with ", " and append to existing ones (if present)
+     *
+     * @throws PrestaShopException
+     */
+    private function addTrackingCodesToOrderCarrier(Order $order, array $tracking_codes)
+    {
+        $orderCarrier = new OrderCarrier($order->getIdOrderCarrier());
+        $old_codes = $orderCarrier->tracking_number;
+        $tracking_codes = join(",", $tracking_codes);
+        $codes = !empty($old_codes) ? join(", ", [$old_codes, $tracking_codes]) : $tracking_codes;
+        if (strlen($codes) > 64) {
+            return; // I'm not sure how this should be dealt with
+        }
+
+        $orderCarrier->tracking_number = $codes;
+        $orderCarrier->save();
     }
 }
