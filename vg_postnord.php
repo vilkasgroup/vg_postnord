@@ -609,7 +609,7 @@ class Vg_postnord extends CarrierModule
      */
     protected function getCarrierConfigForm(): array
     {
-        $carriers = Carrier::getCarriers((int) $this->context->language->id, true, false, false, null, Carrier::ALL_CARRIERS);
+        $carriers = Carrier::getCarriers((int) $this->context->language->id, false, false, false, null, Carrier::ALL_CARRIERS);
 
         $form = [
             'form' => [
@@ -723,7 +723,7 @@ class Vg_postnord extends CarrierModule
      */
     public function getCarrierConfigFormValues(): array
     {
-        $carriers = Carrier::getCarriers((int) $this->context->language->id, true, false, false, null, Carrier::ALL_CARRIERS);
+        $carriers = Carrier::getCarriers((int) $this->context->language->id, false, false, false, null, Carrier::ALL_CARRIERS);
         $carrierValues = [];
 
         $carrierSettings = $this->getCarrierConfigurations();

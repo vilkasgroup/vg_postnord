@@ -1,3 +1,7 @@
+20220518 - tsw
+========
+* configure carrier even if it is not active
+
 20220323 - sauli
 ========
 * Bump version to 0.9.3
