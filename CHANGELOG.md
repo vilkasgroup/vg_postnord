@@ -4,6 +4,7 @@
 * Show pickup location from cart data on order detail page (my account->orders)
 * Show pickup location on order confirmation page
 * Configure carrier even if it is not active
+* Fill followup in shipped email for tracking
 * Add setting for label paper size
 * Add carrier name to bulk label action
 * Add tracking codes to order carrier when fetching labels

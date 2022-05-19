@@ -1241,18 +1241,87 @@ class Vg_postnord extends CarrierModule
     }
 
     /**
-     * Add service point information to a placeholder in order confirmation template variables
+     * Add service point information to a placeholder in order
+     * confirmation template variables
      *
      * Placeholder: {postnord_service_point}
+     *
+     * add followup url in shipped email
      *
      * @noinspection PhpArrayWriteIsNotUsedInspection
      */
     public function hookActionGetExtraMailTemplateVars(array $params)
     {
-        if ($params["template"] !== "order_conf") {
+        if ($params["template"] === "order_conf") {
+            $this->SetExtraMailTemplateVarsOrderConf($params);
+        }
+
+        if ($params["template"] === "shipped") {
+            $this->SetExtraMailTemplateVarsShipped($params);
+        }
+
+    }
+
+    /**
+     * Set the followup url in the shipped email
+     */
+    public function SetExtraMailTemplateVarsShipped(array $params) {
+        if(
+            !array_key_exists('template_vars', $params)
+            || !array_key_exists('{id_order}', $params['template_vars'])) {
+            return;
+        }
+        $id_order = (int) $params["template_vars"]["{id_order}"];
+        if (!$id_order) {
+            return;
+        }
+        if (!$this->isPostNordOrder($id_order)) {
             return;
         }
 
+        // find latest booking with tracking code
+        try {
+            /** @var EntityManager $entityManager */
+            $entityManager = $this->get('doctrine.orm.entity_manager');
+            $bookingRepository  = $entityManager->getRepository(VgPostnordBooking::class);
+        } catch (Exception $e) {
+            $this->logger->error('Error getting entity manager or repository', [
+                'exception' => $e,
+                'hook' => 'displayAdminOrderMain',
+                'id_order' => $id_order
+            ]);
+
+            return;
+        }
+
+        $bookings = $bookingRepository->findBy(['id_order' => $id_order], ['id' => 'DESC']);
+        if(!count($bookings)) {
+            return;
+        }
+        $lastbooking = $bookings[array_key_last($bookings)];
+
+        // booking can have multiple codes, take the last one (arbitary decision)
+        $trackingData = $lastbooking->getTrackingData();
+        if(!count($trackingData)) {
+            return;
+        }
+        $lastTracking = $trackingData[array_key_last($trackingData)];
+        if(!array_key_exists('url', $lastTracking)) {
+            return;
+        }
+
+        // and set it to followup for the email
+        $url = $lastTracking['url'];
+        $params["extra_template_vars"]["{followup}"] = $url;
+    }
+
+    /**
+     * Add new {postnord_service_point} template variable that contains
+     * pickup location information to be used in order_conf email
+     *
+     * NOTE: you must add the tag into the email in the theme template
+     */
+    public function SetExtraMailTemplateVarsOrderConf(array $params) {
         /**
          * Default value (so that nothing is shown if carrier is not PostNord for example)
          */
@@ -1308,6 +1377,7 @@ class Vg_postnord extends CarrierModule
                 "id_order"  => $id_order,
             ]);
         }
+
     }
 
     /**
