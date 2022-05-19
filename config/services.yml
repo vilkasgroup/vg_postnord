@@ -19,6 +19,7 @@ services:
     arguments:
       - '@doctrine.orm.default_entity_manager'
       - '@translator'
+      - '@prestashop.adapter.legacy.context'
 
  # define the grid definition factory
   vilkas.postnord.grid.definition.factory.vg_postnord_booking_grid_definition_factory:

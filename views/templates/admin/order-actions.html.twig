@@ -58,12 +58,13 @@
                 <th>{{ 'Label'|trans({}, 'Modules.Vgpostnord.Admin') }}</th>
                 <th>{{ 'Return Label'|trans({}, 'Modules.Vgpostnord.Admin') }}</th>
                 <th>{{ 'Actions'|trans({}, 'Modules.Vgpostnord.Admin') }}</th>
+                <th>{{ 'Tracking'|trans({}, 'Modules.Vgpostnord.Admin') }}</th>
               </tr>
             {% endif %}
             <tr>
               <td>{{ booking.id }}</td>
               <td>
-                {{ booking.finalized ? 
+                {{ booking.finalized ?
                 booking.finalized|date('d-m-Y H:i:m') :
                'Not sent'|trans({}, 'Modules.Vgpostnord.Admin') }}
               </td>
@@ -78,8 +79,8 @@
                 <td>
                   {% if booking.idLabelExternal %}
                     <a href="{{ path('admin_vg_postnord_fetch_return_label', {'id_booking': booking.id}) }}" target="_blank">
-                      {{ booking.idLabelExternal ? 
-                        'Show' : 
+                      {{ booking.idLabelExternal ?
+                        'Show' :
                         'Fetch label'|trans({}, 'Modules.Vgpostnord.Admin') }}
                     </a>
                     {% else %}
@@ -104,6 +105,15 @@
               {% else %}
                 <td>-</td>
               {% endif %}
+              <td>
+                {% if booking.trackingData is not empty %}
+                  {% for tracking in booking.trackingData %}
+                    <a href="{{ tracking.url }}" target="_blank">{{ tracking.label }}</a><br>
+                  {% endfor %}
+                {% else %}
+                  -
+                {% endif %}
+              </td>
             </tr>
           {% endfor %}
         </table>

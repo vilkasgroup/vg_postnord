@@ -33,7 +33,7 @@ class Vg_postnord extends CarrierModule
     {
         $this->name = 'vg_postnord';
         $this->tab = 'shipping_logistics';
-        $this->version = '0.9.3';
+        $this->version = '0.9.4';
         $this->author = 'Vilkas Group Oy';
         $this->need_instance = 0;
 
@@ -81,6 +81,7 @@ class Vg_postnord extends CarrierModule
         Configuration::updateValue('VG_POSTNORD_ISSUER_COUNTRY', '');
         Configuration::updateValue('VG_POSTNORD_EORI_NUMBER', '');
         Configuration::updateValue('VG_POSTNORD_DEFAULT_TARIFF_NUMBER', '');
+        Configuration::updateValue('VG_POSTNORD_LABEL_PAPER_SIZE', 'A5');
         Configuration::updateValue('VG_POSTNORD_CARRIER_SETTINGS', '[]');
         Configuration::updateValue('VG_POSTNORD_SHOP_ADDRESS', '[]');
         Configuration::updateValue('VG_POSTNORD_RETURN_ADDRESS', '[]');
@@ -92,6 +93,11 @@ class Vg_postnord extends CarrierModule
             && $this->registerHook('displayCarrierExtraContent')
             && $this->registerHook('displayAdminOrderMain')
             && $this->registerHook('actionValidateOrder')
+
+            // show possible selected pickup location in SF my account old order view
+            && $this->registerHook('displayOrderDetail')
+            // show possible selected pickup location in order confirmation page
+            && $this->registerHook('displayOrderConfirmation1')
 
             // add "fetch label" button to order preview
             && $this->registerHook('displayOrderPreview')
@@ -118,6 +124,7 @@ class Vg_postnord extends CarrierModule
         Configuration::deleteByName('VG_POSTNORD_ISSUER_COUNTRY');
         Configuration::deleteByName('VG_POSTNORD_EORI_NUMBER');
         Configuration::deleteByName('VG_POSTNORD_DEFAULT_TARIFF_NUMBER');
+        Configuration::deleteByName('VG_POSTNORD_LABEL_PAPER_SIZE');
         Configuration::deleteByName('VG_POSTNORD_CARRIER_SETTINGS');
         Configuration::deleteByName('VG_POSTNORD_SHOP_ADDRESS');
         Configuration::deleteByName('VG_POSTNORD_RETURN_ADDRESS');
@@ -374,6 +381,22 @@ class Vg_postnord extends CarrierModule
                         'label' => $this->trans('Default tariff number', [], 'Modules.Vgpostnord.Admin'),
                         'desc' => $this->trans('Default HS tariff number (see: tulltaxan.tullverket.se). Used to prefill tariff number for customs declarations.', [], 'Modules.Vgpostnord.Admin'),
                     ],
+                    [
+                        'type' => 'select',
+                        'name' => 'VG_POSTNORD_LABEL_PAPER_SIZE',
+                        'label' => $this->trans('Label paper size', [], 'Modules.Vgpostnord.Admin'),
+                        'options' => [
+                            'query' => [
+                                ['id' => 'A4', 'name' => 'A4'],
+                                ['id' => 'A5', 'name' => 'A5'],
+                                ['id' => 'LABEL', 'name' => 'LABEL'],
+                            ],
+                            'id' => 'id',
+                            'name' => 'name',
+                            'default' => null,
+                        ],
+                        'desc' => $this->trans('Paper size for labels.', [], 'Modules.Vgpostnord.Admin'),
+                    ],
                 ],
                 'submit' => [
                     'title' => $this->trans('Save', [], 'Modules.Vgpostnord.Admin'),
@@ -396,6 +419,7 @@ class Vg_postnord extends CarrierModule
             'VG_POSTNORD_ISSUER_COUNTRY' => Configuration::get('VG_POSTNORD_ISSUER_COUNTRY'),
             'VG_POSTNORD_EORI_NUMBER' => Configuration::get('VG_POSTNORD_EORI_NUMBER'),
             'VG_POSTNORD_DEFAULT_TARIFF_NUMBER' => Configuration::get('VG_POSTNORD_DEFAULT_TARIFF_NUMBER'),
+            'VG_POSTNORD_LABEL_PAPER_SIZE' => Configuration::get('VG_POSTNORD_LABEL_PAPER_SIZE'),
         ];
     }
 
@@ -590,7 +614,7 @@ class Vg_postnord extends CarrierModule
      */
     protected function getCarrierConfigForm(): array
     {
-        $carriers = Carrier::getCarriers((int) $this->context->language->id, true, false, false, null, Carrier::ALL_CARRIERS);
+        $carriers = Carrier::getCarriers((int) $this->context->language->id, false, false, false, null, Carrier::ALL_CARRIERS);
 
         $form = [
             'form' => [
@@ -704,7 +728,7 @@ class Vg_postnord extends CarrierModule
      */
     public function getCarrierConfigFormValues(): array
     {
-        $carriers = Carrier::getCarriers((int) $this->context->language->id, true, false, false, null, Carrier::ALL_CARRIERS);
+        $carriers = Carrier::getCarriers((int) $this->context->language->id, false, false, false, null, Carrier::ALL_CARRIERS);
         $carrierValues = [];
 
         $carrierSettings = $this->getCarrierConfigurations();
@@ -1093,7 +1117,7 @@ class Vg_postnord extends CarrierModule
         $gridDefinition = $params['definition'];
         $gridDefinition->getBulkActions()->add(
             (new SubmitBulkAction('bulk_fetch_label'))
-                ->setName($this->trans('Fetch label', [], 'Modules.Vgpostnord.Admin'))
+                ->setName($this->trans('Fetch label (PostNord)', [], 'Modules.Vgpostnord.Admin'))
                 ->setOptions([
                     'submit_route' => 'admin_vg_postnord_bulk_fetch_label',
                 ])
@@ -1217,18 +1241,83 @@ class Vg_postnord extends CarrierModule
     }
 
     /**
-     * Add service point information to a placeholder in order confirmation template variables
-     *
-     * Placeholder: {postnord_service_point}
-     *
-     * @noinspection PhpArrayWriteIsNotUsedInspection
+     * Add extra template variables to some email templates
      */
     public function hookActionGetExtraMailTemplateVars(array $params)
     {
-        if ($params["template"] !== "order_conf") {
+        if ($params["template"] === "order_conf") {
+            $this->setExtraMailTemplateVarsOrderConf($params);
+        }
+
+        if ($params["template"] === "shipped") {
+            $this->setExtraMailTemplateVarsShipped($params);
+        }
+    }
+
+    /**
+     * Set the followup url in the shipped email
+     *
+     * @noinspection PhpArrayWriteIsNotUsedInspection
+     */
+    public function setExtraMailTemplateVarsShipped(array $params) {
+        if (
+            !array_key_exists('template_vars', $params)
+            || !array_key_exists('{id_order}', $params['template_vars'])) {
+            return;
+        }
+        $id_order = (int) $params["template_vars"]["{id_order}"];
+        if (!$id_order) {
+            return;
+        }
+        if (!$this->isPostNordOrder($id_order)) {
             return;
         }
 
+        // find the latest booking with tracking code
+        try {
+            /** @var EntityManager $entityManager */
+            $entityManager = $this->get('doctrine.orm.entity_manager');
+            $bookingRepository  = $entityManager->getRepository(VgPostnordBooking::class);
+        } catch (Exception $e) {
+            $this->logger->error('Error getting entity manager or repository', [
+                'exception' => $e,
+                'hook'      => 'displayAdminOrderMain',
+                'id_order'  => $id_order
+            ]);
+
+            return;
+        }
+
+        $bookings = $bookingRepository->findBy(['id_order' => $id_order], ['id' => 'DESC']);
+        if (!count($bookings)) {
+            return;
+        }
+        $lastBooking = $bookings[array_key_last($bookings)];
+
+        // booking can have multiple codes, take the last one (arbitrary decision)
+        $trackingData = $lastBooking->getTrackingData();
+        if (!count($trackingData)) {
+            return;
+        }
+        $lastTracking = $trackingData[array_key_last($trackingData)];
+        if (!array_key_exists('url', $lastTracking)) {
+            return;
+        }
+
+        // and set it to followup for the email
+        $url = $lastTracking['url'];
+        $params["extra_template_vars"]["{followup}"] = $url;
+    }
+
+    /**
+     * Add new {postnord_service_point} template variable that contains
+     * pickup location information to be used in order_conf email
+     *
+     * NOTE: you must add the tag into the email in the theme template
+     *
+     * @noinspection PhpArrayWriteIsNotUsedInspection
+     */
+    public function setExtraMailTemplateVarsOrderConf(array $params) {
         /**
          * Default value (so that nothing is shown if carrier is not PostNord for example)
          */
@@ -1349,5 +1438,141 @@ class Vg_postnord extends CarrierModule
             $this->logger->error('Failed to update booking', ['exception' => $e]);
             throw $e;
         }
+    }
+
+    /**
+     * Show pickup location in storefront order detail views if one is selected
+     *
+     * @throws Exception
+     */
+    public function hookDisplayOrderDetail(array $params): string
+    {
+        /** @var Order $Order */
+        $Order = $params['order'];
+        if (!$Order) {
+            return "";
+        }
+        if (!$this->isPostNordOrder($Order->id)) {
+            return "";
+        }
+
+        try {
+            /** @var EntityManager $entityManager */
+            $entityManager = $this->get("doctrine.orm.entity_manager");
+            $repository = $entityManager->getRepository(VgPostnordCartData::class);
+        } catch (Exception $e) {
+            $this->logger->error("Error getting entity manager or repository", [
+                "exception" => $e,
+                "hook"      => "hookDisplayOrderDetail",
+                "id_order"  => $Order->id
+            ]);
+            return "";
+        }
+
+        $cartData = $repository->findOneBy(["id_order" => $Order->id]);
+        if (!$cartData) {
+            $this->logger->error("Couldn't find cart data for order", [
+                "hook"      => "hookDisplayOrderDetail",
+                "id_order"  => $Order->id
+            ]);
+            return "";
+        }
+        $service_point_data = json_decode($cartData->getServicePointData(), true);
+        if (!$service_point_data) {
+            return "";
+        }
+
+        try {
+            $this->context->smarty->assign([
+                "service_point" => $service_point_data,
+                "service_point_header" => $this->trans("Pickup point", [], "Modules.Vgpostnord.Admin")
+            ]);
+            return $this->context->smarty->fetch($this->local_path . "views/templates/hook/displayOrderDetail-service-point.tpl");
+        } catch (Exception $e) {
+            $this->logger->error("Couldn't fetch Smarty template", [
+                "exception" => $e->getMessage(),
+                "hook"      => "hookDisplayOrderDetail",
+                "id_order"  => $Order->id,
+            ]);
+        }
+
+        return "";
+    }
+
+    /**
+     * Show pickup location in order confirmation page if one is selected
+     *
+     * @throws Exception
+     */
+    public function hookDisplayOrderConfirmation1(): string
+    {
+        // params does not contain anything sane, read the id_order from url
+        $id_order = Tools::getValue('id_order', 0);
+        if (!$id_order) {
+            return "";
+        }
+
+        // check the key
+        try {
+            $url_secure_key = Tools::getValue('key', 0);
+            $customer_secure_key = $this->context->customer->secure_key;
+            if ($url_secure_key != $customer_secure_key) {
+                return "";
+            }
+        } catch (Exception $e) {
+            $this->logger->error("Failed checking secure key!", [
+                "exception" => $e,
+                "hook"      => "hookDisplayOrderConfirmation1",
+                "id_order"  => $id_order
+            ]);
+            return "";
+        }
+
+        $Order = new Order((int) $id_order);
+        if (!$this->isPostNordOrder($Order->id)) {
+            return "";
+        }
+
+        try {
+            /** @var EntityManager $entityManager */
+            $entityManager = $this->get("doctrine.orm.entity_manager");
+            $repository = $entityManager->getRepository(VgPostnordCartData::class);
+        } catch (Exception $e) {
+            $this->logger->error("Error getting entity manager or repository", [
+                "exception" => $e,
+                "hook"      => "hookDisplayOrderDetail",
+                "id_order"  => $Order->id
+            ]);
+            return "";
+        }
+
+        $cartData = $repository->findOneBy(["id_order" => $Order->id]);
+        if (!$cartData) {
+            $this->logger->error("Couldn't find cart data for order", [
+                "hook"      => "hookDisplayOrderDetail",
+                "id_order"  => $Order->id
+            ]);
+            return "";
+        }
+        $service_point_data = json_decode($cartData->getServicePointData(), true);
+        if (!$service_point_data) {
+            return "";
+        }
+
+        try {
+            $this->context->smarty->assign([
+                "service_point" => $service_point_data,
+                "service_point_header" => $this->trans("Pickup point", [], "Modules.Vgpostnord.Admin")
+            ]);
+            return $this->context->smarty->fetch($this->local_path . "views/templates/hook/displayOrderConfirmation1-service-point.tpl");
+        } catch (Exception $e) {
+            $this->logger->error("Couldn't fetch Smarty template", [
+                "exception" => $e->getMessage(),
+                "hook"      => "hookDisplayOrderDetail",
+                "id_order"  => $Order->id,
+            ]);
+        }
+
+        return "";
     }
 }
