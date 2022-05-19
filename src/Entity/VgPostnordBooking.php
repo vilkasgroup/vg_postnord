@@ -134,13 +134,6 @@ class VgPostnordBooking
     private $detailed_description;
 
     /**
-     * Used to display tracking codes in displayAdminOrderMain, not an 'actual' part of the entity
-     *
-     * @var array|null
-     */
-    public $tracking = null;
-
-    /**
      * @return int
      */
     public function getId(): int
@@ -511,5 +504,30 @@ class VgPostnordBooking
         $this->setCustomsDeclaration($data['customs_declaration']);
         $this->setCustomsDeclarationData($data['customs_declaration_data']);
         $this->setDetailedDescription($data['detailed_description']);
+    }
+
+    /**
+     * Generate an array of tracking urls and labels for display
+     *
+     * @return array
+     */
+    public function getTrackingData(): array
+    {
+        $data = [];
+
+        if (!$this->getTrackingUrl()) {
+            return $data;
+        }
+        foreach (json_decode($this->getTrackingUrl(), true) as $url) {
+            if (!$url) {
+                continue;
+            }
+            $data[] = [
+                "url"   => $url,
+                "label" => explode("id=", $url)[1]
+            ];
+        }
+
+        return $data;
     }
 }

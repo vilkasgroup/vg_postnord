@@ -106,8 +106,8 @@
                 <td>-</td>
               {% endif %}
               <td>
-                {% if booking.tracking is not null %}
-                  {% for tracking in booking.tracking %}
+                {% if booking.trackingData is not empty %}
+                  {% for tracking in booking.trackingData %}
                     <a href="{{ tracking.url }}" target="_blank">{{ tracking.label }}</a><br>
                   {% endfor %}
                 {% else %}

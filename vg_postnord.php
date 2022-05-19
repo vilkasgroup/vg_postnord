@@ -1011,19 +1011,6 @@ class Vg_postnord extends CarrierModule
             }
         }
 
-        // generate tracking urls for display
-        foreach ($bookings as $booking) {
-            foreach (json_decode($booking->getTrackingUrl(), true) as $url) {
-                if (!$url) {
-                    continue;
-                }
-                $booking->tracking[] = [
-                    "url"   => $url,
-                    "label" => explode("id=", $url)[1]
-                ];
-            }
-        }
-
         try {
             /** @var Twig\Environment $twig */
             $twig = $this->get('twig');
