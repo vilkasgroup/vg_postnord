@@ -134,6 +134,13 @@ class VgPostnordBooking
     private $detailed_description;
 
     /**
+     * Used to display tracking codes in displayAdminOrderMain, not an 'actual' part of the entity
+     *
+     * @var array|null
+     */
+    public $tracking = null;
+
+    /**
      * @return int
      */
     public function getId(): int
