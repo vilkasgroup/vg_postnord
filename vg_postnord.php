@@ -1241,32 +1241,26 @@ class Vg_postnord extends CarrierModule
     }
 
     /**
-     * Add service point information to a placeholder in order
-     * confirmation template variables
-     *
-     * Placeholder: {postnord_service_point}
-     *
-     * add followup url in shipped email
-     *
-     * @noinspection PhpArrayWriteIsNotUsedInspection
+     * Add extra template variables to some email templates
      */
     public function hookActionGetExtraMailTemplateVars(array $params)
     {
         if ($params["template"] === "order_conf") {
-            $this->SetExtraMailTemplateVarsOrderConf($params);
+            $this->setExtraMailTemplateVarsOrderConf($params);
         }
 
         if ($params["template"] === "shipped") {
-            $this->SetExtraMailTemplateVarsShipped($params);
+            $this->setExtraMailTemplateVarsShipped($params);
         }
-
     }
 
     /**
      * Set the followup url in the shipped email
+     *
+     * @noinspection PhpArrayWriteIsNotUsedInspection
      */
-    public function SetExtraMailTemplateVarsShipped(array $params) {
-        if(
+    public function setExtraMailTemplateVarsShipped(array $params) {
+        if (
             !array_key_exists('template_vars', $params)
             || !array_key_exists('{id_order}', $params['template_vars'])) {
             return;
@@ -1279,7 +1273,7 @@ class Vg_postnord extends CarrierModule
             return;
         }
 
-        // find latest booking with tracking code
+        // find the latest booking with tracking code
         try {
             /** @var EntityManager $entityManager */
             $entityManager = $this->get('doctrine.orm.entity_manager');
@@ -1287,26 +1281,26 @@ class Vg_postnord extends CarrierModule
         } catch (Exception $e) {
             $this->logger->error('Error getting entity manager or repository', [
                 'exception' => $e,
-                'hook' => 'displayAdminOrderMain',
-                'id_order' => $id_order
+                'hook'      => 'displayAdminOrderMain',
+                'id_order'  => $id_order
             ]);
 
             return;
         }
 
         $bookings = $bookingRepository->findBy(['id_order' => $id_order], ['id' => 'DESC']);
-        if(!count($bookings)) {
+        if (!count($bookings)) {
             return;
         }
-        $lastbooking = $bookings[array_key_last($bookings)];
+        $lastBooking = $bookings[array_key_last($bookings)];
 
-        // booking can have multiple codes, take the last one (arbitary decision)
-        $trackingData = $lastbooking->getTrackingData();
-        if(!count($trackingData)) {
+        // booking can have multiple codes, take the last one (arbitrary decision)
+        $trackingData = $lastBooking->getTrackingData();
+        if (!count($trackingData)) {
             return;
         }
         $lastTracking = $trackingData[array_key_last($trackingData)];
-        if(!array_key_exists('url', $lastTracking)) {
+        if (!array_key_exists('url', $lastTracking)) {
             return;
         }
 
@@ -1320,8 +1314,10 @@ class Vg_postnord extends CarrierModule
      * pickup location information to be used in order_conf email
      *
      * NOTE: you must add the tag into the email in the theme template
+     *
+     * @noinspection PhpArrayWriteIsNotUsedInspection
      */
-    public function SetExtraMailTemplateVarsOrderConf(array $params) {
+    public function setExtraMailTemplateVarsOrderConf(array $params) {
         /**
          * Default value (so that nothing is shown if carrier is not PostNord for example)
          */
@@ -1377,7 +1373,6 @@ class Vg_postnord extends CarrierModule
                 "id_order"  => $id_order,
             ]);
         }
-
     }
 
     /**
@@ -1509,7 +1504,7 @@ class Vg_postnord extends CarrierModule
      *
      * @throws Exception
      */
-    public function hookDisplayOrderConfirmation1(array $params): string
+    public function hookDisplayOrderConfirmation1(): string
     {
         // params does not contain anything sane, read the id_order from url
         $id_order = Tools::getValue('id_order', 0);
@@ -1525,7 +1520,7 @@ class Vg_postnord extends CarrierModule
                 return "";
             }
         } catch (Exception $e) {
-            $this->logger->error("Failed checkin secure key!", [
+            $this->logger->error("Failed checking secure key!", [
                 "exception" => $e,
                 "hook"      => "hookDisplayOrderConfirmation1",
                 "id_order"  => $id_order
