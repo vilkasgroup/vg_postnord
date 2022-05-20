@@ -575,13 +575,24 @@ class PostnordClient
                         'basicServiceCode' => $order['basicServiceCode'],
                         'additionalServiceCode' => $order['additionalServiceCode'],
                     ],
-                    'freeText' => [],
+                    'freeText' => [
+                        [
+                            'usageCode' => 'ZTG',
+                            'text' => 'REF: ' . $order['reference'],
+                        ],
+                    ],
                     'numberOfPackages' => [
                         'value' => $order['numberOfPackages'],
                     ],
                     'totalGrossWeight' => [
                         'value' => $order['totalGrossWeight'],
                         'unit' => 'KGM',
+                    ],
+                    'references' => [
+                        [
+                            'referenceNo' => $order['reference'],
+                            'referenceType' => 'REF',
+                        ],
                     ],
                     'parties' => [
                         'consignor' => [

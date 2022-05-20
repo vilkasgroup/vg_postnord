@@ -1,3 +1,8 @@
+20220520 - sauli
+========
+* Bump version to 0.9.5
+* Send order reference when creating booking as both reference and free text on label
+
 20220519 - tsw & sauli
 ========
 * Bump version to 0.9.4
