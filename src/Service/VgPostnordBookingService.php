@@ -171,7 +171,8 @@ class VgPostnordBookingService
             "customsTotalGrossWeight" => $customsTotalGrossWeight,
             "customsTotalValue"       => $customsTotalValue,
             "postalCharge"            => (float) $order->total_shipping_tax_incl,
-            "orderCurrency"           => \Currency::getIsoCodeById($order->id_currency)
+            "orderCurrency"           => \Currency::getIsoCodeById($order->id_currency),
+            "reference"               => $order->reference
         ];
 
         $shop_address  = json_decode(Configuration::get("VG_POSTNORD_SHOP_ADDRESS"), true);
