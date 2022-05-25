@@ -1347,10 +1347,6 @@ class Vg_postnord extends CarrierModule
 
         $cartData = $repository->findOneBy(["id_order" => $id_order]);
         if (!$cartData) {
-            $this->logger->error("Couldn't find cart data for order", [
-                "hook"      => "actionGetExtraMailTemplateVars",
-                "id_order"  => $id_order
-            ]);
             return;
         }
         $service_point_data = json_decode($cartData->getServicePointData(), true);
