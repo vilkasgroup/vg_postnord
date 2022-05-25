@@ -14,13 +14,15 @@ class VgPostnordCartDataRepository extends EntityRepository
     /**
      * set or update servicepointid for cart data
      */
-    public function upsertCartServicePointId(int $id_cart, string $servicepointid)
+    public function upsertCartServicePointId(int $id_cart, string $servicepointid): VgPostnordCartData
     {
         $manager = $this->getEntityManager();
         $data = $this->_findOrNew($id_cart);
         $data->setServicePointId($servicepointid);
         $manager->persist($data);
         $manager->flush();
+
+        return $data;
     }
 
     /**
