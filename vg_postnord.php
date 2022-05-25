@@ -1215,8 +1215,21 @@ class Vg_postnord extends CarrierModule
 
                 try {
                     $response = $client->getServicePointsByAddress($params);
-                    $servicePointId = $response["servicePoints"][0]["servicePointId"];
-                    $cartData = $repository->upsertCartServicePointId($cart->id, $servicePointId);
+                    if (
+                        array_key_exists("servicePoints", $response)
+                        && !empty($response["servicePoints"])
+                        && array_key_exists("servicePointId", $response["servicePoints"][0])
+                    ) {
+                        $servicePointId = $response["servicePoints"][0]["servicePointId"];
+                        $cartData = $repository->upsertCartServicePointId($cart->id, $servicePointId);
+                    } else {
+                        $this->logger->error("Service point not found in response!", [
+                            "hook"     => "actionValidateOrder",
+                            "id_order" => $order->id,
+                            "id_cart"  => $cart->id
+                        ]);
+                        return;
+                    }
                 } catch (ExceptionInterface|Exception $e) {
                     $this->logger->error('Error assigning service point', [
                         'hook'      => 'actionValidateOrder',
