@@ -1147,9 +1147,9 @@ class Vg_postnord extends CarrierModule
         } catch (Exception $e) {
             $this->logger->error('Error getting entity manager or repository', [
                 'exception' => $e->getMessage(),
-                'hook' => 'actionValidateOrder',
-                'id_cart' => $cart->id,
-                'id_order' => $order->id,
+                'hook'      => 'actionValidateOrder',
+                'id_cart'   => $cart->id,
+                'id_order'  => $order->id,
             ]);
 
             return;
@@ -1194,10 +1194,10 @@ class Vg_postnord extends CarrierModule
                 $cartData->setServicePointData(json_encode($service_point));
             } catch (Throwable $e) {
                 $this->logger->error('Error getting service point data', [
-                    'hook' => 'actionValidateOrder',
+                    'hook'      => 'actionValidateOrder',
                     'exception' => $e,
-                    'id_order' => $order->id,
-                    'id_cart' => $cart->id
+                    'id_order'  => $order->id,
+                    'id_cart'   => $cart->id
                 ]);
             }
         }
@@ -1209,9 +1209,9 @@ class Vg_postnord extends CarrierModule
         } catch (ORMException $e) {
             $this->logger->error('Error updating cart data', [
                 'exception' => $e->getMessage(),
-                'hook' => 'actionValidateOrder',
-                'id_cart' => $cart->id,
-                'id_order' => $order->id,
+                'hook'      => 'actionValidateOrder',
+                'id_cart'   => $cart->id,
+                'id_order'  => $order->id,
             ]);
         }
     }
