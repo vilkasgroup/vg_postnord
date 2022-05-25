@@ -33,7 +33,7 @@ class Vg_postnord extends CarrierModule
     {
         $this->name = 'vg_postnord';
         $this->tab = 'shipping_logistics';
-        $this->version = '0.9.5';
+        $this->version = '0.9.6';
         $this->author = 'Vilkas Group Oy';
         $this->need_instance = 0;
 
@@ -1125,7 +1125,11 @@ class Vg_postnord extends CarrierModule
     }
 
     /**
-     * Save id_order in cart data if shipping method is PostNord
+     * Operations when an order is created:
+     * - Save id_order in cart data if shipping method is PostNord
+     * - Clear service point from cart data if it's not required
+     * - Pre-select the 'closest' service point if the customer didn't select any (and is required)
+     * - Fetch and save service point data to cart data if it has a service point id
      */
     public function hookActionValidateOrder(array $params)
     {
@@ -1147,32 +1151,96 @@ class Vg_postnord extends CarrierModule
         } catch (Exception $e) {
             $this->logger->error('Error getting entity manager or repository', [
                 'exception' => $e->getMessage(),
-                'hook' => 'actionValidateOrder',
-                'id_cart' => $cart->id,
-                'id_order' => $order->id,
+                'hook'      => 'actionValidateOrder',
+                'id_cart'   => $cart->id,
+                'id_order'  => $order->id,
             ]);
 
             return;
         }
 
         $cartData = $repository->findOneBy(['id_cart' => $cart->id]);
-        if (!$cartData) {
-            $this->logger->error('Could not find Postnord cart data', [
-                'hook' => 'actionValidateOrder',
-                'id_cart' => $cart->id,
-                'id_order' => $order->id,
+
+        try {
+            $client = new PostnordClient(
+                Configuration::get("VG_POSTNORD_HOST"),
+                Configuration::get("VG_POSTNORD_APIKEY")
+            );
+        } catch (Exception $e) {
+            $this->logger->error('Error initializing client', [
+                'hook'      => 'actionValidateOrder',
+                'exception' => $e,
+                'id_order'  => $order->id,
+                'id_cart'   => $cart->id
             ]);
 
             return;
         }
 
-        // clear service point from cart data if "optional service point" isn't mandatory
-        // reason: service point id might be saved to cart data even if selected carrier doesn't support them,
-        //         since it is saved as soon as the service point is clicked, even if the user ends up choosing
-        //         another carrier later
         $carrier_config = $this->getCarrierConfiguration($carrier->id_reference);
         if (!in_array("A7", $carrier_config["mandatory_service_codes"])) {
+            // have to make this check here and not right after fetching the cart data, since the else clause below
+            // will have to create the data if it doesn't exist
+            if (!$cartData) {
+                return; // no cart data and it's not needed, can return
+            }
+            // clear service point from cart data if "optional service point" isn't mandatory
+            // reason: service point id might be saved to cart data even if selected carrier doesn't support them,
+            //         since it is saved as soon as the service point is clicked, even if the user ends up choosing
+            //         another carrier later
             $cartData->setServicePointId(null);
+        } else {
+            // make sure we have a service point if "optional service point" is mandatory
+            // reason: one-page checkout modules like Klarna might create the order without selecting a service
+            //         point, so we will assign one to ease order handling
+            if (!$cartData || !$cartData->getServicePointId()) {
+                $this->logger->info("Cart data doesn't exist or it doesn't have a service point, upserting it", [
+                    "hook"     => "actionValidateOrder",
+                    "id_order" => $order->id
+                ]);
+
+                $address     = new Address($order->id_address_delivery);
+                $countryCode = Country::getIsoById($address->id_country);
+                $typeId      = $carrier_config["service_codes"];
+
+                $params = [
+                    'countryCode'           => $countryCode,
+                    'agreementCountry'      => $countryCode,
+                    'city'                  => $address->city,
+                    'postalCode'            => $address->postcode,
+                    'streetName'            => $address->address1,
+                    'numberOfServicePoints' => 1,
+                    'typeId'                => $typeId
+                ];
+
+                try {
+                    $response = $client->getServicePointsByAddress($params);
+                    if (
+                        array_key_exists("servicePoints", $response)
+                        && !empty($response["servicePoints"])
+                        && array_key_exists("servicePointId", $response["servicePoints"][0])
+                    ) {
+                        $servicePointId = $response["servicePoints"][0]["servicePointId"];
+                        $cartData = $repository->upsertCartServicePointId($cart->id, $servicePointId);
+                    } else {
+                        $this->logger->error("Service point not found in response!", [
+                            "hook"     => "actionValidateOrder",
+                            "id_order" => $order->id,
+                            "id_cart"  => $cart->id
+                        ]);
+                        return;
+                    }
+                } catch (ExceptionInterface|Exception $e) {
+                    $this->logger->error('Error assigning service point', [
+                        'hook'      => 'actionValidateOrder',
+                        'exception' => $e,
+                        'id_order'  => $order->id,
+                        'id_cart'   => $cart->id
+                    ]);
+
+                    return;
+                }
+            }
         }
 
         // fetch and save service point data to cart data if cart data has a service point id
@@ -1185,19 +1253,14 @@ class Vg_postnord extends CarrierModule
                     "countryCode" => $country->iso_code,
                     "ids" => $cartData->getServicePointId()
                 ];
-                $client = new PostnordClient(
-                    Configuration::get("VG_POSTNORD_HOST"),
-                    Configuration::get("VG_POSTNORD_APIKEY")
-                );
-
                 $service_point = $client->getServicePointById($params);
                 $cartData->setServicePointData(json_encode($service_point));
             } catch (Throwable $e) {
                 $this->logger->error('Error getting service point data', [
-                    'hook' => 'actionValidateOrder',
+                    'hook'      => 'actionValidateOrder',
                     'exception' => $e,
-                    'id_order' => $order->id,
-                    'id_cart' => $cart->id
+                    'id_order'  => $order->id,
+                    'id_cart'   => $cart->id
                 ]);
             }
         }
@@ -1209,9 +1272,9 @@ class Vg_postnord extends CarrierModule
         } catch (ORMException $e) {
             $this->logger->error('Error updating cart data', [
                 'exception' => $e->getMessage(),
-                'hook' => 'actionValidateOrder',
-                'id_cart' => $cart->id,
-                'id_order' => $order->id,
+                'hook'      => 'actionValidateOrder',
+                'id_cart'   => $cart->id,
+                'id_order'  => $order->id,
             ]);
         }
     }
@@ -1347,10 +1410,6 @@ class Vg_postnord extends CarrierModule
 
         $cartData = $repository->findOneBy(["id_order" => $id_order]);
         if (!$cartData) {
-            $this->logger->error("Couldn't find cart data for order", [
-                "hook"      => "actionGetExtraMailTemplateVars",
-                "id_order"  => $id_order
-            ]);
             return;
         }
         $service_point_data = json_decode($cartData->getServicePointData(), true);
