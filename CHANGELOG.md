@@ -1,3 +1,8 @@
+20220525 - sauli
+========
+* Remove invalid logging from email generation
+* Pre-select a service point if the customer didn't select any (and one is required)
+
 20220520 - sauli
 ========
 * Bump version to 0.9.5
