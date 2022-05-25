@@ -1199,10 +1199,9 @@ class Vg_postnord extends CarrierModule
                     "id_order" => $order->id
                 ]);
 
-                $address       = new Address($order->id_address_delivery);
-                $countryCode   = Country::getIsoById($address->id_country);
-                $configuration = $this->getCarrierConfiguration($carrier->id_reference);
-                $typeId        = $configuration["service_codes"];
+                $address     = new Address($order->id_address_delivery);
+                $countryCode = Country::getIsoById($address->id_country);
+                $typeId      = $carrier_config["service_codes"];
 
                 $params = [
                     'countryCode'           => $countryCode,
