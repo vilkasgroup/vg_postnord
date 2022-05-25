@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Vilkas\Postnord\Client\PostnordClient;
 use Vilkas\Postnord\Entity\VgPostnordCartData;
+use Vilkas\Postnord\Repository\VgPostnordCartDataRepository;
 
 class Vg_postnordCartPickupPointModuleFrontController extends ModuleFrontController
 {
@@ -97,6 +98,7 @@ class Vg_postnordCartPickupPointModuleFrontController extends ModuleFrontControl
     private function savePickupPoint(Cart $Cart, $servicepointid)
     {
         $manager = $this->get('doctrine.orm.entity_manager');
+        /** @var VgPostnordCartDataRepository $repo */
         $repo = $manager->getRepository(VgPostnordCartData::class);
         $repo->upsertCartServicePointId($Cart->id, $servicepointid);
     }
