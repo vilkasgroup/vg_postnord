@@ -1,5 +1,16 @@
+20220602 - sauli
+========
+* Bump version to 0.9.7
+* Remove invalid logging from hookDisplayOrderDetail
+* Fix code not redirecting on error when generating PDF label response
+* Redirect to edit page after creating new booking
+* More descriptive log messages for client when fetching labels
+* Check if return label data actually exists when displaying fetch/show button text
+* Check if label and return label data actually exist when trying to return existing label
+
 20220525 - sauli
 ========
+* Bump version to 0.9.6
 * Remove invalid logging from email generation
 * Pre-select a service point if the customer didn't select any (and one is required)
 

@@ -33,7 +33,7 @@ class Vg_postnord extends CarrierModule
     {
         $this->name = 'vg_postnord';
         $this->tab = 'shipping_logistics';
-        $this->version = '0.9.6';
+        $this->version = '0.9.7';
         $this->author = 'Vilkas Group Oy';
         $this->need_instance = 0;
 
