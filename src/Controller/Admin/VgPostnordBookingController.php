@@ -345,7 +345,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
                 $message = $this->trans("Booking is missing return label data. Something is wrong.", "Modules.Vgpostnord.Admin");
                 $this->addFlash("error", $message);
                 $this->logger->error("Booking is missing return label data", ["id_booking" => $booking->getId()]);
-                $this->redirectToRoute("admin_orders_view", ["orderId" => $booking->getIdOrder()]);
+                return $this->redirectToRoute("admin_orders_view", ["orderId" => $booking->getIdOrder()]);
             }
             $filename = $this->_getFileName($booking, true);
             $label_data = json_decode($booking->getReturnLabelData(), true);
@@ -354,7 +354,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
                 $message = $this->trans("Booking is missing label data. Something is wrong.", "Modules.Vgpostnord.Admin");
                 $this->addFlash("error", $message);
                 $this->logger->error("Booking is missing label data", ["id_booking" => $booking->getId()]);
-                $this->redirectToRoute("admin_orders_view", ["orderId" => $booking->getIdOrder()]);
+                return $this->redirectToRoute("admin_orders_view", ["orderId" => $booking->getIdOrder()]);
             }
             $filename = $this->_getFileName($booking);
             $label_data = json_decode($booking->getLabelData(), true);
