@@ -179,7 +179,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
         if (!$generate_label) {
             $message = $this->trans("New booking created successfully", "Modules.Vgpostnord.Admin");
             $this->addFlash("success", $message);
-            return $this->redirectToRoute("admin_orders_view", ["orderId" => $id_order]);
+            return $this->redirectToRoute("admin_vg_postnord_edit_action", ["bookingId" => $booking->getId()]);
         }
 
         try {
