@@ -79,13 +79,13 @@
                 <td>
                   {% if booking.idLabelExternal %}
                     <a href="{{ path('admin_vg_postnord_fetch_return_label', {'id_booking': booking.id}) }}" target="_blank">
-                      {{ booking.idLabelExternal ?
+                      {{ booking.getReturnLabelData is not null ?
                         'Show' :
                         'Fetch label'|trans({}, 'Modules.Vgpostnord.Admin') }}
                     </a>
-                    {% else %}
-                          -
-                    {% endif %}
+                  {% else %}
+                    -
+                  {% endif %}
                 </td>
               {% else %}
                 <td>{{ 'No return label'|trans({}, 'Modules.Vgpostnord.Admin') }}</td>
