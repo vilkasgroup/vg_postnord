@@ -575,12 +575,6 @@ class PostnordClient
                         'basicServiceCode' => $order['basicServiceCode'],
                         'additionalServiceCode' => $order['additionalServiceCode'],
                     ],
-                    'freeText' => [
-                        [
-                            'usageCode' => 'ZTG',
-                            'text' => 'REF: ' . $order['reference'],
-                        ],
-                    ],
                     'numberOfPackages' => [
                         'value' => $order['numberOfPackages'],
                     ],
@@ -589,6 +583,10 @@ class PostnordClient
                         'unit' => 'KGM',
                     ],
                     'references' => [
+                        [
+                            'referenceNo' => $order['reference'],
+                            'referenceType' => 'CU',
+                        ],
                         [
                             'referenceNo' => $order['reference'],
                             'referenceType' => 'REF',
