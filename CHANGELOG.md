@@ -1,3 +1,9 @@
+20220810 - tsw
+========
+* Bump version to 0.9.8
+* send `CU` reference when creating a booking (webshop order reference) so that the return label also contains the information
+* remove `freeText` so that the data isn't duplicated
+
 20220602 - sauli
 ========
 * Bump version to 0.9.7
