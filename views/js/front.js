@@ -133,7 +133,11 @@ $(document).ready(function () {
         $.ajax({
             type: "GET",
             url: actionurl,
-            data: data
+            data: data,
+            beforeSend: function (xhr) {
+                // Disable continue when fetching
+                $('button[name="confirmDeliveryOption"]').attr("disabled", true)
+            }
         }).done(function (resp) {
             // render the results
             $resultsDiv.empty();
@@ -144,13 +148,13 @@ $(document).ready(function () {
                 );
                 // and now that we have results rendered, select the first one
                 $resultsDiv.find('.vg_postnord_pickupPoint').first().click();
+                $('button[name="confirmDeliveryOption"]').attr("disabled", false)
             } else if (resp.error) {
                 $resultsDiv.html('<h3 class="alert alert-warning">' + resp.error + '</h3>');
             } else {
                 $resultsDiv.html('<h3 class="alert alert-warning">Unknown error, please try again later</h3>');
                 console.error(resp);
             }
-
         }).fail(function (jqXHR, textStatus) {
             console.error(jqXHR);
             $resultsDiv.html('<h3 class="alert alert-warning">' + jqXHR.statusText + '</h3>');
