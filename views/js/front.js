@@ -167,10 +167,12 @@ $(document).ready(function () {
 
     // on page load trigger search to prefill the results
     $(".vg_postnord_pickupselection_container:visible button.vg_postnord_searchbutton").click();
-
+    
     // when carrier changes if we have our search then click it to prefill if
     // there are no results yet
     $('body').on('change', '.delivery-option input[type=radio]', function (e) {
+        // Enable continue button in case it's disabled by failed postnord
+        $('button[name="confirmDeliveryOption"]').attr("disabled", false)
         // the radio value is actually id_carrier
         const id_carrier = parseInt($(this).val());
         $('.vg_postnord_pickupselection_container[data-carrierid="' + id_carrier + '"] button.vg_postnord_searchbutton').click();
