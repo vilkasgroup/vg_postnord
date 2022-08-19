@@ -133,7 +133,11 @@ $(document).ready(function () {
         $.ajax({
             type: "GET",
             url: actionurl,
-            data: data
+            data: data,
+            beforeSend: function (xhr) {
+                // Disable continue when fetching
+                setTimeout(function () { $('button[name="confirmDeliveryOption"]').attr("disabled", true) }, 0)
+            }
         }).done(function (resp) {
             // render the results
             $resultsDiv.empty();
@@ -144,13 +148,13 @@ $(document).ready(function () {
                 );
                 // and now that we have results rendered, select the first one
                 $resultsDiv.find('.vg_postnord_pickupPoint').first().click();
+                $('button[name="confirmDeliveryOption"]').attr("disabled", false)
             } else if (resp.error) {
                 $resultsDiv.html('<h3 class="alert alert-warning">' + resp.error + '</h3>');
             } else {
                 $resultsDiv.html('<h3 class="alert alert-warning">Unknown error, please try again later</h3>');
                 console.error(resp);
             }
-
         }).fail(function (jqXHR, textStatus) {
             console.error(jqXHR);
             $resultsDiv.html('<h3 class="alert alert-warning">' + jqXHR.statusText + '</h3>');
@@ -167,6 +171,8 @@ $(document).ready(function () {
     // when carrier changes if we have our search then click it to prefill if
     // there are no results yet
     $('body').on('change', '.delivery-option input[type=radio]', function (e) {
+        // Enable continue button in case it's disabled by failed postnord
+        $('button[name="confirmDeliveryOption"]').attr("disabled", false)
         // the radio value is actually id_carrier
         const id_carrier = parseInt($(this).val());
         $('.vg_postnord_pickupselection_container[data-carrierid="' + id_carrier + '"] button.vg_postnord_searchbutton').click();
