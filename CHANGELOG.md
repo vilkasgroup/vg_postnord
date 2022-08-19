@@ -1,5 +1,6 @@
 20220817 - dat
 ========
+* Bump version to 0.9.9
 * Disable continue button when loading + failed to load pickup point
 
 20220810 - tsw
