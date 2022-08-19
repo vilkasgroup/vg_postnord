@@ -136,7 +136,7 @@ $(document).ready(function () {
             data: data,
             beforeSend: function (xhr) {
                 // Disable continue when fetching
-                $('button[name="confirmDeliveryOption"]').attr("disabled", true)
+                setTimeout(function () { $('button[name="confirmDeliveryOption"]').attr("disabled", true) }, 0)
             }
         }).done(function (resp) {
             // render the results
@@ -167,7 +167,7 @@ $(document).ready(function () {
 
     // on page load trigger search to prefill the results
     $(".vg_postnord_pickupselection_container:visible button.vg_postnord_searchbutton").click();
-    
+
     // when carrier changes if we have our search then click it to prefill if
     // there are no results yet
     $('body').on('change', '.delivery-option input[type=radio]', function (e) {
