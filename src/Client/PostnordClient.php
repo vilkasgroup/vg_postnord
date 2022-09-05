@@ -611,6 +611,7 @@ class PostnordClient
                                 ],
                                 'contact' => [
                                     'phoneNo' => $shopAddress['shop_phone'],
+                                    'smsNo' => $shopAddress['shop_phone'],
                                 ]
                             ],
                         ],
@@ -643,6 +644,7 @@ class PostnordClient
                                     'contactName' => "{$customerAddress->firstname} {$customerAddress->lastname}",
                                     'emailAddress' => $customerEmail,
                                     'phoneNo' => $customerAddress->phone,
+                                    'smsNo' => $customerAddress->phone,
                                 ],
                             ],
                         ],
