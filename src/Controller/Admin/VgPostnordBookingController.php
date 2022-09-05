@@ -301,10 +301,14 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
                 foreach ($label_data as $datum) {
                     $data[] = base64_decode($datum);
                 }
-                $return_label_data = json_decode($booking->getReturnLabelData(), true);
-                if ($return_label_data) {
-                    foreach ($return_label_data as $datum) {
-                        $data[] = base64_decode($datum);
+                // Check return label before json_decode since
+                //  is not always fetched with shipping label
+                if (!empty($booking->getReturnLabelData())) {
+                    $return_label_data = json_decode($booking->getReturnLabelData(), true);
+                    if ($return_label_data) {
+                        foreach ($return_label_data as $datum) {
+                            $data[] = base64_decode($datum);
+                        }
                     }
                 }
             }
