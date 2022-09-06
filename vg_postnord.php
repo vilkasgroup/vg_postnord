@@ -110,7 +110,8 @@ class Vg_postnord extends CarrierModule
             && $this->registerHook('actionGetExtraMailTemplateVars')
 
             // update booking when changing order carrier
-            && $this->registerHook('actionObjectOrderUpdateBefore');
+            && $this->registerHook('actionObjectOrderUpdateBefore')
+        ;
     }
 
     public function uninstall(): bool
@@ -229,6 +230,7 @@ class Vg_postnord extends CarrierModule
         
         $output = $this->context->smarty->fetch($this->local_path . 'views/templates/admin/configure.tpl');
         $footer = $this->context->smarty->fetch($this->local_path . 'views/templates/admin/configure_footer.tpl');
+
         return $message . $output . $this->renderForm() . $footer;
     }
 
@@ -720,7 +722,6 @@ class Vg_postnord extends CarrierModule
                 'desc' => $this->trans('Service code for this carrier', [], 'Modules.Vgpostnord.Admin'),
             ];
 
-
             // which service codes to fetch pickup locations for
             $carrier_selections[] = [
                 'type' => 'text',
@@ -729,7 +730,7 @@ class Vg_postnord extends CarrierModule
                 'desc' => $this->trans('Comma separated list of service codes to use to filter pickuppoints. See possible values below. Leave empty for no filtering.', [], 'Modules.Vgpostnord.Admin'),
             ];
 
-            // additional service
+            // additional service as a hidden text which will be filled with checkbox
             $carrier_selections[] = [
                 'type' => 'text',
                 'name' => 'id_carrier_reference_' . $carrier['id_reference'] . '_additional_service_codes',
