@@ -1,0 +1,22 @@
+{% embed 'PrestaShopBundle:Admin/Helpers:bootstrap_popup.html.twig' with {
+  'id': 'fetchLabelModal',
+  'title': 'Fetch labels'|trans({}, 'Modules.Vgpostnord.Admin'),
+  'closable': false,
+  'progressbar': {
+    id: 'import_progress_bar',
+    label: 'Fetching labels...'|trans({}, 'Modules.Vgpostnord.Admin')
+  },
+  'actions': [
+    {
+      'type': 'button',
+      'label': 'Close'|trans({}, 'Admin.Actions'),
+      'class': 'btn btn-outline-secondary btn-lg js-close-fetcher-modal',
+    }
+  ],
+} %}
+  {% block content %}
+    <div class="modal-body">
+      <div id="fetch-label-errors"></div>
+    </div>
+  {% endblock %}
+{% endembed %}
