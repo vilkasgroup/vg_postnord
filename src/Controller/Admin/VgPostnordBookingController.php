@@ -481,7 +481,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
 
         $booking = $repository->findOneBy(["id" => $id_booking], ["id" => "DESC"]);
         if (!$booking) {
-            $message = $this->trans("Could not find booking with id $id_booking", "Modules.Vgpostnord.Admin");
+            $message = $this->trans("Couldn't find booking with id %id_booking%", "Modules.Vgpostnord.Admin", ["%id_booking%" => $id_booking]);
             $this->addFlash("error", $message);
             $this->logger->error("Could not find booking", ["id_booking" => $id_booking]);
 
