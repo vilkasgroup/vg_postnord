@@ -111,7 +111,7 @@ class Vg_postnord extends CarrierModule
 
             // update booking when changing order carrier
             && $this->registerHook('actionObjectOrderUpdateBefore')
-        ;
+            ;
     }
 
     public function uninstall(): bool
