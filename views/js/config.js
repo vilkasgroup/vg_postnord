@@ -1,6 +1,6 @@
 $(document).ready(function () {
     const issuerCountry = $('#VG_POSTNORD_ISSUER_COUNTRY').val()
-    const countryValidCombinations = JSON.parse(validCombinations)
+    const countryValidCombinations = validCombinations
         .reduce(function (previousValue, currentValue) {
             if (currentValue.issuerCountryCode === issuerCountry) {
                 return currentValue.adnlServiceCodeCombDetails

@@ -210,24 +210,22 @@ class Vg_postnord extends CarrierModule
             }
         }
 
-        $this->context->smarty->assign('module_dir', $this->_path);
-        
         try {
             $client = new PostnordClient(
                 Configuration::get("VG_POSTNORD_HOST"),
                 Configuration::get("VG_POSTNORD_APIKEY")
             );
-            $valid_combinations = json_encode($client->getValidCombinationsOfServiceCodes()["data"]);
+            $valid_combinations = $client->getValidCombinationsOfServiceCodes()["data"];
         } catch (Exception | ExceptionInterface $e) {
-            $msg = $this->trans("Error fetching service code combinations: %error%", ["%error%" => $e->getMessage()], "Modules.Vgpostnord.Admin");
-            $this->context->controller->errors[] = $msg;
-            return false;
+            $valid_combinations = [];
         }
-        $this->context->smarty->assign([
-            'validCombinations'=>$valid_combinations
+
+        Media::addJsDef([
+            'validCombinations' => $valid_combinations
         ]);
-        $this->context->controller->addJS($this->_path.'/views/js/config.js');
-        
+        $this->context->controller->addJS($this->_path . '/views/js/config.js');
+
+        $this->context->smarty->assign('module_dir', $this->_path);
         $output = $this->context->smarty->fetch($this->local_path . 'views/templates/admin/configure.tpl');
         $footer = $this->context->smarty->fetch($this->local_path . 'views/templates/admin/configure_footer.tpl');
 
