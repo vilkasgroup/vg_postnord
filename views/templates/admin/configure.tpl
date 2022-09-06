@@ -1,3 +1,6 @@
+<script type="text/javascript">
+    const validCombinations = '{$validCombinations}'
+</script>
 <div class="panel">
     <h3><i class="icon icon-tags"></i> {l s='Quick start' d='Modules.Vgpostnord.Admin'}</h3>
     <p>{l s='First configure your carriers. Then on this configuration page set up which carriers you want to use with Postnord and set up your apikey and host values.' d='Modules.Vgpostnord.Admin'}</p>

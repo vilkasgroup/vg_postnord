@@ -110,8 +110,7 @@ class Vg_postnord extends CarrierModule
             && $this->registerHook('actionGetExtraMailTemplateVars')
 
             // update booking when changing order carrier
-            && $this->registerHook('actionObjectOrderUpdateBefore')
-            ;
+            && $this->registerHook('actionObjectOrderUpdateBefore');
     }
 
     public function uninstall(): bool
@@ -211,9 +210,25 @@ class Vg_postnord extends CarrierModule
         }
 
         $this->context->smarty->assign('module_dir', $this->_path);
+        
+        try {
+            $client = new PostnordClient(
+                Configuration::get("VG_POSTNORD_HOST"),
+                Configuration::get("VG_POSTNORD_APIKEY")
+            );
+            $valid_combinations = json_encode($client->getValidCombinationsOfServiceCodes()["data"]);
+        } catch (Exception | ExceptionInterface $e) {
+            $msg = $this->trans("Error fetching service code combinations: %error%", ["%error%" => $e->getMessage()], "Modules.Vgpostnord.Admin");
+            $this->context->controller->errors[] = $msg;
+            return false;
+        }
+        $this->context->smarty->assign([
+            'validCombinations'=>$valid_combinations
+        ]);
+        $this->context->controller->addJS($this->_path.'/views/js/config.js');
+        
         $output = $this->context->smarty->fetch($this->local_path . 'views/templates/admin/configure.tpl');
         $footer = $this->context->smarty->fetch($this->local_path . 'views/templates/admin/configure_footer.tpl');
-
         return $message . $output . $this->renderForm() . $footer;
     }
 
@@ -705,12 +720,22 @@ class Vg_postnord extends CarrierModule
                 'desc' => $this->trans('Service code for this carrier', [], 'Modules.Vgpostnord.Admin'),
             ];
 
+
             // which service codes to fetch pickup locations for
             $carrier_selections[] = [
                 'type' => 'text',
                 'name' => 'id_carrier_reference_' . $carrier['id_reference'] . '_service_codes',
                 'label' => $this->trans('Service codes for pickup', [], 'Modules.Vgpostnord.Admin'),
                 'desc' => $this->trans('Comma separated list of service codes to use to filter pickuppoints. See possible values below. Leave empty for no filtering.', [], 'Modules.Vgpostnord.Admin'),
+            ];
+
+            // additional service
+            $carrier_selections[] = [
+                'type' => 'text',
+                'name' => 'id_carrier_reference_' . $carrier['id_reference'] . '_additional_service_codes',
+                'label' => $this->trans('Additional service codes', [], 'Modules.Vgpostnord.Admin'),
+                'desc' => $this->trans('Comma separated list of additional service codes to apply to all order.', [], 'Modules.Vgpostnord.Admin'),
+                'class' => 'additional_service_codes hidden'
             ];
         }
 
@@ -737,7 +762,7 @@ class Vg_postnord extends CarrierModule
             // just for the label (free text). always empty data
             $carrierValues['id_carrier_reference_' . $carrier['id_reference']] = '';
 
-            $keys = ['service_code_consigneecountry', 'service_codes'];
+            $keys = ['service_code_consigneecountry', 'service_codes', 'additional_service_codes'];
             foreach ($keys as $key) {
                 $carrierValues['id_carrier_reference_' . $carrier['id_reference'] . '_' . $key] = $carrierSettings[$carrier['id_reference']][$key] ?? '';
             }
@@ -817,7 +842,7 @@ class Vg_postnord extends CarrierModule
                 Configuration::get("VG_POSTNORD_APIKEY")
             );
             $valid_combinations = $client->getValidCombinationsOfServiceCodes()["data"];
-        } catch (Exception|ExceptionInterface $e) {
+        } catch (Exception | ExceptionInterface $e) {
             $msg = $this->trans("Error fetching service code combinations: %error%", ["%error%" => $e->getMessage()], "Modules.Vgpostnord.Admin");
             $this->context->controller->errors[] = $msg;
             return false;
@@ -1230,7 +1255,7 @@ class Vg_postnord extends CarrierModule
                         ]);
                         return;
                     }
-                } catch (ExceptionInterface|Exception $e) {
+                } catch (ExceptionInterface | Exception $e) {
                     $this->logger->error('Error assigning service point', [
                         'hook'      => 'actionValidateOrder',
                         'exception' => $e,
@@ -1322,10 +1347,12 @@ class Vg_postnord extends CarrierModule
      *
      * @noinspection PhpArrayWriteIsNotUsedInspection
      */
-    public function setExtraMailTemplateVarsShipped(array $params) {
+    public function setExtraMailTemplateVarsShipped(array $params)
+    {
         if (
             !array_key_exists('template_vars', $params)
-            || !array_key_exists('{id_order}', $params['template_vars'])) {
+            || !array_key_exists('{id_order}', $params['template_vars'])
+        ) {
             return;
         }
         $id_order = (int) $params["template_vars"]["{id_order}"];
@@ -1380,7 +1407,8 @@ class Vg_postnord extends CarrierModule
      *
      * @noinspection PhpArrayWriteIsNotUsedInspection
      */
-    public function setExtraMailTemplateVarsOrderConf(array $params) {
+    public function setExtraMailTemplateVarsOrderConf(array $params)
+    {
         /**
          * Default value (so that nothing is shown if carrier is not PostNord for example)
          */
@@ -1450,7 +1478,7 @@ class Vg_postnord extends CarrierModule
 
         // don't do anything if carrier hasn't changed
         $orderCurrent = new Order($order->id);
-        if ($orderCurrent->id_carrier === $order->id_carrier){
+        if ($orderCurrent->id_carrier === $order->id_carrier) {
             return;
         }
 
