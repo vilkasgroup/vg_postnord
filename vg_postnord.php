@@ -735,7 +735,7 @@ class Vg_postnord extends CarrierModule
                 'type' => 'text',
                 'name' => 'id_carrier_reference_' . $carrier['id_reference'] . '_additional_service_codes',
                 'label' => $this->trans('Additional service codes', [], 'Modules.Vgpostnord.Admin'),
-                'desc' => $this->trans('Comma separated list of additional service codes to apply to all order.', [], 'Modules.Vgpostnord.Admin'),
+                'desc' => $this->trans('Set default additional service codes for this delivery method.', [], 'Modules.Vgpostnord.Admin'),
                 'class' => 'additional_service_codes hidden'
             ];
         }

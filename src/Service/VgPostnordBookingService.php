@@ -77,7 +77,7 @@ class VgPostnordBookingService
             if (array_key_exists("additional_service_codes", $carrier_settings[$carrier->id_reference])) {
                 $additional_services = $carrier_settings[$carrier->id_reference]["additional_service_codes"];
             }
-            $service_codes = $mandatory_services . "," . $additional_services;
+            $additional_service_codes = $mandatory_services . "," . $additional_services;
         }
 
         /** @var VgPostnordBooking $previousBooking */
@@ -114,7 +114,7 @@ class VgPostnordBookingService
 
         $booking
             ->setIdOrder($id_order)
-            ->setAdditionalServices($service_codes)
+            ->setAdditionalServices($additional_service_codes)
         ;
 
         $this->entityManager->persist($booking);
