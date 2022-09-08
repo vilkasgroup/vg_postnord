@@ -210,21 +210,6 @@ class Vg_postnord extends CarrierModule
             }
         }
 
-        try {
-            $client = new PostnordClient(
-                Configuration::get("VG_POSTNORD_HOST"),
-                Configuration::get("VG_POSTNORD_APIKEY")
-            );
-            $valid_combinations = $client->getValidCombinationsOfServiceCodes()["data"];
-        } catch (Exception | ExceptionInterface $e) {
-            $valid_combinations = [];
-        }
-
-        Media::addJsDef([
-            'validCombinations' => $valid_combinations
-        ]);
-        $this->context->controller->addJS($this->_path . '/views/js/config.js');
-
         $this->context->smarty->assign('module_dir', $this->_path);
         $output = $this->context->smarty->fetch($this->local_path . 'views/templates/admin/configure.tpl');
         $footer = $this->context->smarty->fetch($this->local_path . 'views/templates/admin/configure_footer.tpl');
@@ -256,7 +241,6 @@ class Vg_postnord extends CarrierModule
             'languages' => $this->context->controller->getLanguages(),
             'id_language' => $this->context->language->id,
         ];
-
         return $helper->generateForm($this->getConfigForms());
     }
 
@@ -270,6 +254,7 @@ class Vg_postnord extends CarrierModule
         if (Configuration::get('VG_POSTNORD_DIFFERENT_RETURN_ADDRESS')) {
             $form['return'] = $this->getReturnAddressConfigForm();
         }
+
         return $form;
     }
 
@@ -666,6 +651,11 @@ class Vg_postnord extends CarrierModule
             $client = new PostnordClient($host, $apikey);
             $BasicServiceCodes = $client->getBasicServiceCodesFilterByIssuerCountryCode($issuerCountry);
 
+            $valid_combinations = $client->getValidCombinationsOfServiceCodes()["data"];
+            Media::addJsDef([
+                'validCombinations' => $valid_combinations
+            ]);
+
             // sort by id and name and consignee country to have some resemblance of logic in the list
             array_multisort(
                 array_column($BasicServiceCodes, 'serviceCode'),
@@ -926,6 +916,9 @@ class Vg_postnord extends CarrierModule
         }
         if (Tools::getValue('controller') == 'AdminOrders') {
             $this->context->controller->addCSS($this->_path . 'views/css/back.css');
+        }
+        if (Tools::getValue('configure') === $this->name) {
+            $this->context->controller->addJS($this->_path . '/views/js/config.js');
         }
     }
 

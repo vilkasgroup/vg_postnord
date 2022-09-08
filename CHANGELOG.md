@@ -4,7 +4,7 @@
 * Add option to set default Additional Service
     * https://vilkas.easyredmine.com/issues/14306
 * Fix batch fetching error when setting "Fetch both labels" is disabled
-* Fix coma in VgPostnordBooking->additional_services for consistency
+* Fix comma in VgPostnordBooking->additional_services for consistency
 
 20220817 - dat
 ========

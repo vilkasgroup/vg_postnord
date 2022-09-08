@@ -65,20 +65,20 @@ class VgPostnordBookingService
         // grab mandatory additional services from carrier settings
         $carrier_settings = json_decode(Configuration::get("VG_POSTNORD_CARRIER_SETTINGS"), true);
 
-        $mandatory_services = null;
-        $additional_services = null;
+        $mandatory_services = [];
+        $additional_services = [];
 
         if (
             array_key_exists($carrier->id_reference, $carrier_settings)
         ) {
             if (array_key_exists("mandatory_service_codes", $carrier_settings[$carrier->id_reference])) {
-                $mandatory_services = implode(",", $carrier_settings[$carrier->id_reference]["mandatory_service_codes"]);
+                $mandatory_services = $carrier_settings[$carrier->id_reference]["mandatory_service_codes"];
             }
             if (array_key_exists("additional_service_codes", $carrier_settings[$carrier->id_reference])) {
-                $additional_services = $carrier_settings[$carrier->id_reference]["additional_service_codes"];
+                $additional_services = json_decode($carrier_settings[$carrier->id_reference]["additional_service_codes"]);
             }
-            $additional_service_codes = $mandatory_services . "," . $additional_services;
         }
+        $additional_service_codes = implode(",", array_unique(array_merge($mandatory_services, $additional_services)));
 
         /** @var VgPostnordBooking $previousBooking */
         $previousBooking = $bookingRepository->findOneBy(["id_order" => $id_order], ["id" => "DESC"]);
