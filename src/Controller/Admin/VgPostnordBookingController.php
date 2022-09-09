@@ -404,6 +404,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
         $data = [];
 
         foreach ($booking_ids as $id_booking) {
+            /** @var VgPostnordBooking $booking */
             $booking = $bookingRepository->findOneById($id_booking);
             if (!$booking) {
                 $this->logger->error("Could not find booking", ["id_booking" => $id_booking]);
@@ -417,11 +418,12 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
                 foreach ($label_data as $datum) {
                     $data[] = base64_decode($datum);
                 }
-                // TODO: might be null
-                $return_label_data = json_decode($booking->getReturnLabelData(), true);
-                if ($return_label_data) {
-                    foreach ($return_label_data as $datum) {
-                        $data[] = base64_decode($datum);
+                if (!empty($booking->getReturnLabelData())) {
+                    $return_label_data = json_decode($booking->getReturnLabelData(), true);
+                    if ($return_label_data) {
+                        foreach ($return_label_data as $datum) {
+                            $data[] = base64_decode($datum);
+                        }
                     }
                 }
             }
