@@ -56,7 +56,7 @@ export default class Fetcher {
   /**
    * Fetch labels for single order.
    *
-   * @param data POST data
+   * @param {Object} data POST data
    *
    * @returns {*} jQuery Deferred object
    */
@@ -67,17 +67,15 @@ export default class Fetcher {
       data: data,
     })
       .done((data, textStatus, jqXHR) => {
-        console.log(data);
-        this.booking_ids.push(data["id_booking"]);
+        this.handleFetchSuccess(data, textStatus, jqXHR);
       })
       .fail((jqXHR, textStatus, errorThrown) => {
-        console.log(jqXHR["responseJSON"]);
-        let error = jqXHR["responseJSON"]["error"];
-        this.progressModal.addErrorMessage(error);
+        this.handleFetchError(jqXHR, textStatus, errorThrown, data);
       })
       .always(() => {
         this.progressModal.incrementProgress();
-      });
+      })
+      ;
   }
 
   /**
@@ -128,5 +126,41 @@ export default class Fetcher {
 
     let fileUrl = URL.createObjectURL(file);
     window.open(fileUrl, "_blank");
+  }
+
+  /**
+   * @param data
+   * @param textStatus
+   * @param jqXHR
+   */
+  handleFetchSuccess(data, textStatus, jqXHR) {
+    console.log(data);
+    if (!("id_booking" in data)) {
+      console.log("Property 'id_booking' not found in response data!");
+    }
+
+    this.booking_ids.push(data["id_booking"]);
+  }
+
+  /**
+   * @param jqXHR
+   * @param textStatus
+   * @param errorThrown
+   * @param {Object} data data object that was passed to fetchLabel()
+   */
+  handleFetchError(jqXHR, textStatus, errorThrown, data) {
+    if (!("responseJSON" in jqXHR)) {
+      this.progressModal.addErrorMessage("ID " + data["id_order"] + ": " + textStatus)
+      return;
+    }
+
+    console.log(jqXHR["responseJSON"]);
+    if (!("error" in jqXHR["responseJSON"])) {
+      console.log("Property 'error' not found in response data!");
+      return;
+    }
+
+    let error = jqXHR["responseJSON"]["error"];
+    this.progressModal.addErrorMessage(error);
   }
 }
