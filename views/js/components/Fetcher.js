@@ -20,11 +20,7 @@ export default class Fetcher {
     const modalDom = $(`#${this.modal_id}`);
 
     modalDom.one("shown.bs.modal", async () => {
-      await this.fetchLabels()
-        .catch(() => {
-          // do nothing? TODO
-        })
-      ;
+      await this.fetchLabels();
       if (this.booking_ids.length > 0) {
         await this.combineLabels();
       } else {
@@ -53,13 +49,7 @@ export default class Fetcher {
       promises.push(this.fetchLabel(data));
     }
     return (
-      $.when.apply(null, promises)
-        .done(() => {
-          console.log("FINISHED!"); // TODO: doesn't execute if any one of the ajax calls fails, move to .always() if needed
-        })
-        .catch(() => {
-          // do nothing? TODO
-        })
+      Promise.allSettled(promises)
     );
   }
 
@@ -81,6 +71,7 @@ export default class Fetcher {
         this.booking_ids.push(data["id_booking"]);
       })
       .fail((jqXHR, textStatus, errorThrown) => {
+        console.log(jqXHR["responseJSON"]);
         let error = jqXHR["responseJSON"]["error"];
         this.progressModal.addErrorMessage(error);
       })
@@ -89,6 +80,11 @@ export default class Fetcher {
       });
   }
 
+  /**
+   * Combine and serve labels for processed orders
+   *
+   * @returns {Promise<void>}
+   */
   async combineLabels() {
     const data = {
       action: "combine-labels",
@@ -100,7 +96,6 @@ export default class Fetcher {
       data: data,
     })
       .done((data, textStatus, jqXHR) => {
-        // TODO: any orders after the first error aren't included in the final label printout for some reason
         this.generateAndServePDFBlob(data["label_data"]);
       })
       .fail((jqXHR, textStatus, errorThrown) => {
