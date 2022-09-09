@@ -52,7 +52,7 @@ export default class FetchLabelProgressModal {
     this.completed = 0;
     this.updateProgress(this.completed, 1);
     this.setLabelText(this.progressLabel.attr('default-value'));
-    this.errorMessageBlock.find('fetch-label-error-message').remove();
+    this.errorMessageBlock.find('.fetch-label-error-message').remove();
   }
 
   /**
