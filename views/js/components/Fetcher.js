@@ -7,6 +7,7 @@ export default class Fetcher {
     this.url       = url;
 
     this.booking_ids   = [];
+    this.translations  = [];
     this.progressModal = new FetchLabelProgressModal(modal_id, order_ids.length);
 
     $(document).on("click", '.js-close-fetcher-modal', () => this.progressModal.hide());
@@ -16,21 +17,29 @@ export default class Fetcher {
    * 'Main' function.
    */
   start() {
+    this.parseTranslations();
     this.progressModal.show();
     const modalDom = $(`#${this.modal_id}`);
 
     modalDom.one("shown.bs.modal", async () => {
       await this.fetchLabels();
       if (this.booking_ids.length > 0) {
+        this.progressModal.setLabelText(this.translations["merging-labels"]);
         await this.combineLabels();
       } else {
-        // TODO: no bookings were generated - what then?
+        this.progressModal.addErrorMessage(this.translations["no-bookings-generated"]);
+        this.progressModal.setLabelText(this.translations["done"]);
       }
     });
 
     modalDom.one("hidden.bs.modal", () => {
       this.progressModal.reset();
     });
+  }
+
+  parseTranslations() {
+    let json = $("#vg-postnord-fetch-label-translations").text()
+    this.translations = JSON.parse(json);
   }
 
   /**
@@ -94,16 +103,12 @@ export default class Fetcher {
       data: data,
     })
       .done((data, textStatus, jqXHR) => {
-        this.generateAndServePDFBlob(data["label_data"]);
+        this.handleCombineSuccess(data, textStatus, jqXHR);
       })
       .fail((jqXHR, textStatus, errorThrown) => {
-        console.log(textStatus);
-        console.log(errorThrown);
-        console.log(jqXHR["responseJSON"]["error"]);
+        this.handleCombineError(jqXHR, textStatus, errorThrown, data);
       })
-      .always(() => {
-        // TODO: show some text?
-      });
+    ;
   }
 
   /**
@@ -137,6 +142,7 @@ export default class Fetcher {
     console.log(data);
     if (!("id_booking" in data)) {
       console.log("Property 'id_booking' not found in response data!");
+      return;
     }
 
     this.booking_ids.push(data["id_booking"]);
@@ -150,7 +156,7 @@ export default class Fetcher {
    */
   handleFetchError(jqXHR, textStatus, errorThrown, data) {
     if (!("responseJSON" in jqXHR)) {
-      this.progressModal.addErrorMessage("ID " + data["id_order"] + ": " + textStatus)
+      this.progressModal.addErrorMessage("ID " + data["id_order"] + ": " + errorThrown)
       return;
     }
 
@@ -162,5 +168,38 @@ export default class Fetcher {
 
     let error = jqXHR["responseJSON"]["error"];
     this.progressModal.addErrorMessage(error);
+  }
+
+  /**
+   * @param data
+   * @param textStatus
+   * @param jqXHR
+   */
+  handleCombineSuccess(data, textStatus, jqXHR) {
+    this.generateAndServePDFBlob(data["label_data"]);
+    this.progressModal.setLabelText(data["success"]);
+  }
+
+  /**
+   * @param jqXHR
+   * @param textStatus
+   * @param errorThrown
+   * @param {object} data data object that was passed to combineLabels()
+   */
+  handleCombineError(jqXHR, textStatus, errorThrown, data) {
+    if (!("responseJSON" in jqXHR)) {
+      this.progressModal.addErrorMessage(this.translations["error-merging"] + errorThrown);
+      return;
+    }
+
+    console.log(jqXHR["responseJSON"]);
+    if (!("error" in jqXHR["responseJSON"])) {
+      console.log("Property 'error' not found in response data!");
+      return;
+    }
+
+    let error = jqXHR["responseJSON"]["error"];
+    this.progressModal.addErrorMessage(error);
+    this.progressModal.setLabelText(this.translations["error"]);
   }
 }
