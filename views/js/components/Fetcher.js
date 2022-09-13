@@ -18,6 +18,7 @@ export default class Fetcher {
    */
   start() {
     this.parseTranslations();
+    this.progressModal.disableButtons();
     this.progressModal.show();
     const modalDom = $(`#${this.modal_id}`);
 
@@ -30,6 +31,7 @@ export default class Fetcher {
         this.progressModal.addErrorMessage(this.translations["no-bookings-generated"]);
         this.progressModal.setLabelText(this.translations["done"]);
       }
+      this.progressModal.enableCloseButton();
     });
 
     modalDom.one("hidden.bs.modal", () => {
@@ -37,6 +39,9 @@ export default class Fetcher {
     });
   }
 
+  /**
+   * Parse JSON translations from inside the modal template into an array.
+   */
   parseTranslations() {
     let json = $("#vg-postnord-fetch-label-translations").text()
     this.translations = JSON.parse(json);
@@ -130,6 +135,7 @@ export default class Fetcher {
     let file      = new Blob([byteArray], { type: 'application/pdf;base64' });
 
     let fileUrl = URL.createObjectURL(file);
+    this.progressModal.enableOpenLabelsButton(fileUrl);
     window.open(fileUrl, "_blank");
   }
 
@@ -139,7 +145,7 @@ export default class Fetcher {
    * @param jqXHR
    */
   handleFetchSuccess(data, textStatus, jqXHR) {
-    console.log(data);
+    console.log(data["success"]);
     if (!("id_booking" in data)) {
       console.log("Property 'id_booking' not found in response data!");
       return;
