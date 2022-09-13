@@ -402,7 +402,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
      */
     private function _ajaxCombineLabels(Request $request): Response
     {
-        $booking_ids       = $request->request->get("booking_ids");
+        $booking_ids       = array_map("intval", $request->request->get("booking_ids"));
         $bookingRepository = $this->get("vilkas.postnord.repository.vgpostnordbooking");
 
         $data = [];
