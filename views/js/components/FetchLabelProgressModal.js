@@ -79,6 +79,33 @@ export default class FetchLabelProgressModal {
   }
 
   /**
+   * Disable all the buttons inside the modal.
+   */
+  disableButtons() {
+    this.fetchLabelModal.find('.btn').attr('disabled', true);
+  }
+
+  /**
+   * Enable the close modal button.
+   */
+  enableCloseButton() {
+    this.fetchLabelModal.find('.js-close-fetcher-modal').attr('disabled', false);
+  }
+
+  /**
+   * Enable the open labels button and set target URL.
+   *
+   * @param {string} url
+   */
+  enableOpenLabelsButton(url) {
+    let button = $('.js-open-merged-labels');
+    button.click(() => {
+      window.open(url, "_blank");
+    })
+    button.attr('disabled', false);
+  }
+
+  /**
    * Get the fetch label progress bar.
    *
    * @returns {jQuery}
