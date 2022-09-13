@@ -1,3 +1,9 @@
+20220913 - sauli
+========
+* Bump version to 0.9.11
+* Use ajax to perform bulk label fetches one label at a time
+* Add modal that shows label fetching progress
+
 20220906 - dat
 ========
 * Bump version to 0.9.10

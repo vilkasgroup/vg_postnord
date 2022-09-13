@@ -332,6 +332,127 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
     }
 
     /**
+     * Combined ajax endpoint action function (so we only have to pass one route to the bulk action button)
+     *
+     * @param Request $request
+     *
+     * @return Response
+     */
+    public function ajaxFetchLabelAction(Request $request): Response
+    {
+        $action = $request->request->get("action");
+        switch ($action) {
+            case "fetch-label":
+                return $this->_ajaxFetchLabel($request);
+            case "combine-labels":
+                return $this->_ajaxCombineLabels($request);
+        }
+
+        return $this->returnErrorJsonResponse(
+            ["error" => "Invalid action"],
+            Response::HTTP_BAD_REQUEST
+        );
+    }
+
+    /**
+     * Create a new booking and fetch label (for ajax request)
+     *
+     * @param Request $request
+     *
+     * @return Response
+     */
+    private function _ajaxFetchLabel(Request $request): Response
+    {
+        $id_order       = (int) $request->request->get("id_order");
+        $bookingService = $this->get("vilkas.postnord.service.vgpostnordbookingservice");
+
+        try {
+            $booking = $bookingService->createBlankBooking($id_order);
+            $booking = $bookingService->sendBookingAndGenerateLabel($booking);
+        } catch (\Throwable $e) {
+            $this->logger->error("Error fetching label (ajax)", [
+                "exception" => $e,
+                "id_order"  => $id_order
+            ]);
+            return $this->returnErrorJsonResponse(
+                ["error" => $this->trans("Failed to fetch label for order with id %id_order%. Error: %e%", "Modules.Vgpostnord.Admin", ["%id_order%" => $id_order, "%e%" => $e->getMessage()])],
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
+        }
+
+        $label_data = json_decode($booking->getLabelData(), true);
+        if (empty($label_data)) {
+            return $this->returnErrorJsonResponse(
+                ["error" => $this->trans("No label data (order id %id_order%, booking id %id_booking%)", "Modules.Vgpostnord.Admin", ["%id_order%" => $id_order, "%id_booking%" => $booking->getId()])],
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
+        }
+
+        return $this->json([
+            "success"    => "Created booking and fetched label for order " . $id_order,
+            "id_order"   => $id_order,
+            "id_booking" => $booking->getId()
+        ]);
+    }
+
+    /**
+     * @param Request $request
+     *
+     * @return Response
+     */
+    private function _ajaxCombineLabels(Request $request): Response
+    {
+        $booking_ids       = array_map("intval", $request->request->get("booking_ids"));
+        $bookingRepository = $this->get("vilkas.postnord.repository.vgpostnordbooking");
+
+        $data = [];
+
+        foreach ($booking_ids as $id_booking) {
+            /** @var VgPostnordBooking $booking */
+            $booking = $bookingRepository->findOneById($id_booking);
+            if (!$booking) {
+                $this->logger->error("Could not find booking", ["id_booking" => $id_booking]);
+                return $this->returnErrorJsonResponse(
+                    ["error" => $this->trans("Couldn't find booking with id %id_booking%", "Modules.Vgpostnord.Admin", ["%id_booking%" => $id_booking])],
+                    Response::HTTP_INTERNAL_SERVER_ERROR
+                );
+            }
+            $label_data = json_decode($booking->getLabelData(), true);
+            if ($label_data) {
+                foreach ($label_data as $datum) {
+                    $data[] = base64_decode($datum);
+                }
+                if (!empty($booking->getReturnLabelData())) {
+                    $return_label_data = json_decode($booking->getReturnLabelData(), true);
+                    if ($return_label_data) {
+                        foreach ($return_label_data as $datum) {
+                            $data[] = base64_decode($datum);
+                        }
+                    }
+                }
+            }
+        }
+
+        if (!count($data)) {
+            return $this->returnErrorJsonResponse(
+                ["error" => $this->trans("No label data", "Modules.Vgpostnord.Admin")],
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
+        }
+
+        $merger = new Merger(new TcpdiDriver());
+        foreach ($data as $raw_label) {
+            $merger->addRaw($raw_label);
+        }
+        $merged_raw_labels = $merger->merge();
+
+        return $this->json([
+            "success"    => $this->trans("Successfully merged label data", "Modules.Vgpostnord.Admin"),
+            "label_data" => base64_encode($merged_raw_labels)
+        ]);
+    }
+
+    /**
      * Generate filename for label PDF
      */
     private function _getFileName(VgPostnordBooking $booking, $return = false): string
@@ -485,7 +606,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
 
         $booking = $repository->findOneBy(["id" => $id_booking], ["id" => "DESC"]);
         if (!$booking) {
-            $message = $this->trans("Could not find booking with id $id_booking", "Modules.Vgpostnord.Admin");
+            $message = $this->trans("Couldn't find booking with id %id_booking%", "Modules.Vgpostnord.Admin", ["%id_booking%" => $id_booking]);
             $this->addFlash("error", $message);
             $this->logger->error("Could not find booking", ["id_booking" => $id_booking]);
 

@@ -1,4 +1,4 @@
-import SkipDisabledChoiceTable from "../components/skip-disabled-choice-table";
+import SkipDisabledChoiceTable from "../extensions/skip-disabled-choice-table";
 
 const $ = window.$;
 

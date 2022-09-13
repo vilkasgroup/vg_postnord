@@ -17,6 +17,7 @@ use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 use Vilkas\Postnord\Client\PostnordClient;
 use Vilkas\Postnord\Entity\VgPostnordBooking;
 use Vilkas\Postnord\Entity\VgPostnordCartData;
+use Vilkas\Postnord\Grid\Action\VgPostnordJavascriptAction;
 
 if (!defined('_PS_VERSION_')) {
     exit;
@@ -33,7 +34,7 @@ class Vg_postnord extends CarrierModule
     {
         $this->name = 'vg_postnord';
         $this->tab = 'shipping_logistics';
-        $this->version = '0.9.10';
+        $this->version = '0.9.11';
         $this->author = 'Vilkas Group Oy';
         $this->need_instance = 0;
 
@@ -1133,10 +1134,12 @@ class Vg_postnord extends CarrierModule
         /** @var GridDefinition $gridDefinition */
         $gridDefinition = $params['definition'];
         $gridDefinition->getBulkActions()->add(
-            (new SubmitBulkAction('bulk_fetch_label'))
+            (new VgPostnordJavascriptAction('bulk_fetch_label'))
                 ->setName($this->trans('Fetch label (PostNord)', [], 'Modules.Vgpostnord.Admin'))
                 ->setOptions([
-                    'submit_route' => 'admin_vg_postnord_bulk_fetch_label',
+                    'function' => 'bulkFetchLabelAction(this, event);',
+                    'modal_id' => 'fetchLabelModal',
+                    'route'    => 'admin_vg_postnord_ajax_fetch_label_action'
                 ])
         );
     }

@@ -1,0 +1,36 @@
+{% embed 'PrestaShopBundle:Admin/Helpers:bootstrap_popup.html.twig' with {
+  'id': 'fetchLabelModal',
+  'title': 'Fetch labels'|trans({}, 'Modules.Vgpostnord.Admin'),
+  'closable': false,
+  'progressbar': {
+    id: 'import_progress_bar',
+    label: 'Fetching labels...'|trans({}, 'Modules.Vgpostnord.Admin')
+  },
+  'actions': [
+    {
+      'type': 'button',
+      'label': 'Open labels'|trans({}, 'Admin.Actions'),
+      'class': 'btn btn-primary btn-lg js-open-merged-labels',
+    },
+    {
+      'type': 'button',
+      'label': 'Close'|trans({}, 'Admin.Actions'),
+      'class': 'btn btn-outline-secondary btn-lg js-close-fetcher-modal',
+    }
+  ],
+} %}
+  {% block content %}
+    <div class="modal-body">
+      <div id="fetch-label-errors"></div>
+    </div>
+    <script id="vg-postnord-fetch-label-translations" type="application/json">
+      {
+        "merging-labels": "{{ 'Merging labels...'|trans({}, 'Modules.Vgpostnord.Admin') }}",
+        "no-bookings-generated": "{{ 'No bookings were generated.'|trans({}, 'Modules.Vgpostnord.Admin') }}",
+        "error-merging": "{{ 'Error merging labels: '|trans({}, 'Modules.Vgpostnord.Admin') }}",
+        "done": "{{ 'Done'|trans({}, 'Modules.Vgpostnord.Admin') }}",
+        "error": "{{ 'Error'|trans({}, 'Modules.Vgpostnord.Admin') }}"
+      }
+    </script>
+  {% endblock %}
+{% endembed %}
