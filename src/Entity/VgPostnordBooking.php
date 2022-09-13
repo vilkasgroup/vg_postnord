@@ -474,7 +474,7 @@ class VgPostnordBooking
             'service_point_data' => $this->getServicePointData(),
             'id_label_external' => $this->getIdLabelExternal(),
             'finalized' => $this->isFinalized(),
-            'additional_services' => empty($this->getAdditionalServices()) ? [] : explode(',', $this->getAdditionalServices()),
+            'additional_services' => empty($this->getAdditionalServices()) ? [] : explode(', ', $this->getAdditionalServices()),
             'parcel_data' => $this->getParcelData(),
             'customs_declaration' => $this->hasCustomsDeclaration(),
             'customs_declaration_data' => $this->getCustomsDeclarationData(),
@@ -499,7 +499,7 @@ class VgPostnordBooking
         // $this->setIdLabelExternal($data['id_label_external']);
         // $this->setFinalized($data['finalized']);
         // $this->setTrackingUrl($data['tracking_url']);
-        $this->setAdditionalServices(implode(',', $data['additional_services']));
+        $this->setAdditionalServices(implode(', ', $data['additional_services']));
         $this->setParcelData($data['parcel_data']);
         $this->setCustomsDeclaration($data['customs_declaration']);
         $this->setCustomsDeclarationData($data['customs_declaration_data']);
