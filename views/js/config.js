@@ -75,7 +75,7 @@ $(document).ready(() => {
                         id="${hiddenInput.id}_${
   filteredCombination[element].adnlServiceCode
 }" value="${filteredCombination[element].adnlServiceCode}">
-                        ${filteredCombination[element].adnlServiceName}
+                        ${filteredCombination[element].adnlServiceCode} - ${filteredCombination[element].adnlServiceName}
                     </label>
                 </div>`;
         });
