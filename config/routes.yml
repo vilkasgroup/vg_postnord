@@ -22,12 +22,6 @@ admin_vg_postnord_fetch_both_label:
   defaults:
     _controller: 'Vilkas\Postnord\Controller\Admin\VgPostnordBookingController::getBothLabelAction'
 
-admin_vg_postnord_bulk_fetch_label:
-  path: vg_postnord/bulk_fetch_label
-  methods: [POST]
-  defaults:
-    _controller: 'Vilkas\Postnord\Controller\Admin\VgPostnordBookingController::bulkFetchLabelAction'
-
 admin_vg_postnord_list_action:
   path: vg_postnord/list_action
   methods: [GET]

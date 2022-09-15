@@ -94,9 +94,9 @@ class PostnordClient
     /**
      * Do a request and check that the response is somewhat valid.
      *
-     * @param string method    one of GET POST PUT etc
-     * @param string endpoint  path of the url to call
-     * @param array  options   parameters for HttpClient
+     * @param string $method    one of GET POST PUT etc
+     * @param string $endpoint  path of the url to call
+     * @param array  $options   parameters for HttpClient
      *
      * @return array json_decoded response
      *

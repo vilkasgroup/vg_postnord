@@ -34,7 +34,7 @@ class Vg_postnord extends CarrierModule
     {
         $this->name = 'vg_postnord';
         $this->tab = 'shipping_logistics';
-        $this->version = '0.9.11';
+        $this->version = '0.9.12';
         $this->author = 'Vilkas Group Oy';
         $this->need_instance = 0;
 
@@ -1618,7 +1618,7 @@ class Vg_postnord extends CarrierModule
         } catch (Exception $e) {
             $this->logger->error("Error getting entity manager or repository", [
                 "exception" => $e,
-                "hook"      => "hookDisplayOrderDetail",
+                "hook"      => "hookDisplayOrderConfirmation1",
                 "id_order"  => $Order->id
             ]);
             return "";
@@ -1626,10 +1626,6 @@ class Vg_postnord extends CarrierModule
 
         $cartData = $repository->findOneBy(["id_order" => $Order->id]);
         if (!$cartData) {
-            $this->logger->error("Couldn't find cart data for order", [
-                "hook"      => "hookDisplayOrderDetail",
-                "id_order"  => $Order->id
-            ]);
             return "";
         }
         $service_point_data = json_decode($cartData->getServicePointData(), true);
@@ -1646,7 +1642,7 @@ class Vg_postnord extends CarrierModule
         } catch (Exception $e) {
             $this->logger->error("Couldn't fetch Smarty template", [
                 "exception" => $e->getMessage(),
-                "hook"      => "hookDisplayOrderDetail",
+                "hook"      => "hookDisplayOrderConfirmation1",
                 "id_order"  => $Order->id,
             ]);
         }

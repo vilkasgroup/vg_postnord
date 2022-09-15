@@ -35,7 +35,7 @@ export default class Fetcher {
     });
 
     modalDom.one("hidden.bs.modal", () => {
-      this.progressModal.reset();
+      window.location.reload();
     });
   }
 

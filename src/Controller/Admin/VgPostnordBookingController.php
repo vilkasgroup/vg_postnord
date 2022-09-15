@@ -274,64 +274,6 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
     }
 
     /**
-     * Create bookings and fetch labels for orders in bulk
-     */
-    public function bulkFetchLabelAction(Request $request): Response
-    {
-        $ids = $request->request->get("order_orders_bulk");
-        $bookingService = $this->get("vilkas.postnord.service.vgpostnordbookingservice");
-
-        $data = [];
-
-        foreach ($ids as $id_order) {
-            try {
-                $booking = $bookingService->createBlankBooking((int) $id_order);
-                $booking = $bookingService->sendBookingAndGenerateLabel($booking);
-            } catch (\Throwable $e) {
-                $this->addFlash("error", "Failed to fetch label for order with id {$id_order}. <br> Error: " . $e->getMessage());
-                $this->logger->error("Error fetching label (in bulk)", [
-                    "exception" => $e,
-                    "id_order" => $id_order
-                ]);
-                continue;
-            }
-
-            $label_data = json_decode($booking->getLabelData(), true);
-            if ($label_data) {
-                foreach ($label_data as $datum) {
-                    $data[] = base64_decode($datum);
-                }
-                // Check return label before json_decode since
-                // it is not always fetched with shipping label
-                if (!empty($booking->getReturnLabelData())) {
-                    $return_label_data = json_decode($booking->getReturnLabelData(), true);
-                    if ($return_label_data) {
-                        foreach ($return_label_data as $datum) {
-                            $data[] = base64_decode($datum);
-                        }
-                    }
-                }
-            }
-        }
-
-        if (!count($data)) {
-            $message = $this->trans("No label data", "Modules.Vgpostnord.Admin");
-            $this->addFlash("error", $message);
-            return $this->redirectToRoute("admin_orders_index");
-        }
-
-        $merger = new Merger(new TcpdiDriver());
-        foreach ($data as $raw_label) {
-            $merger->addRaw($raw_label);
-        }
-        $merged_raw_labels = $merger->merge();
-
-        $filename = "labels_" . time() . ".pdf";
-
-        return $this->_getRawPDFLabelResponse($merged_raw_labels, $filename);
-    }
-
-    /**
      * Combined ajax endpoint action function (so we only have to pass one route to the bulk action button)
      *
      * @param Request $request
@@ -411,26 +353,15 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
             /** @var VgPostnordBooking $booking */
             $booking = $bookingRepository->findOneById($id_booking);
             if (!$booking) {
+                // this effectively aborts the whole process if any ID is invalid, but that should be fine
+                // since an invalid ID is a sign of a bigger problem
                 $this->logger->error("Could not find booking", ["id_booking" => $id_booking]);
                 return $this->returnErrorJsonResponse(
                     ["error" => $this->trans("Couldn't find booking with id %id_booking%", "Modules.Vgpostnord.Admin", ["%id_booking%" => $id_booking])],
                     Response::HTTP_INTERNAL_SERVER_ERROR
                 );
             }
-            $label_data = json_decode($booking->getLabelData(), true);
-            if ($label_data) {
-                foreach ($label_data as $datum) {
-                    $data[] = base64_decode($datum);
-                }
-                if (!empty($booking->getReturnLabelData())) {
-                    $return_label_data = json_decode($booking->getReturnLabelData(), true);
-                    if ($return_label_data) {
-                        foreach ($return_label_data as $datum) {
-                            $data[] = base64_decode($datum);
-                        }
-                    }
-                }
-            }
+            $this->gatherBookingData($data, $booking);
         }
 
         if (!count($data)) {
@@ -450,6 +381,41 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
             "success"    => $this->trans("Successfully merged label data", "Modules.Vgpostnord.Admin"),
             "label_data" => base64_encode($merged_raw_labels)
         ]);
+    }
+
+    /**
+     * Add data (if exists) from booking to given array
+     *
+     * @param array             $data    Array to add booking data to
+     * @param VgPostnordBooking $booking
+     *
+     * @return void
+     */
+    private function gatherBookingData(array &$data, VgPostnordBooking $booking): void
+    {
+        if (empty($booking->getLabelData())) {
+            return;
+        }
+        $label_data = json_decode($booking->getLabelData(), true);
+        if (!$label_data) {
+            return;
+        }
+
+        foreach ($label_data as $datum) {
+            $data[] = base64_decode($datum);
+        }
+
+        if (empty($booking->getReturnLabelData())) {
+            return;
+        }
+        $return_label_data = json_decode($booking->getReturnLabelData(), true);
+        if (!$return_label_data) {
+            return;
+        }
+
+        foreach ($return_label_data as $datum) {
+            $data[] = base64_decode($datum);
+        }
     }
 
     /**
@@ -518,17 +484,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
         }
 
         $data = [];
-
-        $label_data = json_decode($booking->getLabelData(), true);
-        foreach ($label_data as $datum) {
-            $data[] = base64_decode($datum);
-        }
-        $return_label_data = json_decode($booking->getReturnLabelData(), true);
-        if ($return_label_data) {
-            foreach ($return_label_data as $datum) {
-                $data[] = base64_decode($datum);
-            }
-        }
+        $this->gatherBookingData($data, $booking);
 
         if (!empty($data)) {
             $merger = new Merger(new TcpdiDriver());

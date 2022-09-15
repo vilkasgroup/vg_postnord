@@ -1,3 +1,10 @@
+20220914 - sauli
+=======
+* Bump version to 0.9.12
+* Reload page after fetch label modal close
+* Fix logging in hookDisplayOrderConfirmation1
+* Some code cleanup
+
 20220913 - sauli
 ========
 * Bump version to 0.9.11
