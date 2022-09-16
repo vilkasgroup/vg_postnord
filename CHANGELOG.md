@@ -1,5 +1,11 @@
+20220916 - sauli
+========
+* Bump version to 0.9.13
+* Add order_conf email template variable for service point information without html
+  * `{postnord_service_point_no_html}`
+
 20220914 - sauli
-=======
+========
 * Bump version to 0.9.12
 * Reload page after fetch label modal close
 * Fix logging in hookDisplayOrderConfirmation1
