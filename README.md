@@ -16,6 +16,8 @@ This module adds a `{postnord_service_point}` placeholder to the order confirmat
 which contains information about the selected pickup point for the order. If you want to display the information,
 you will have to add the placeholder to the template manually.
 
+There's also a variable without html for use in text-based emails: `{postnord_service_point_no_html}`
+
 ## Creating a new release
 Remember to:
 - Up the version number in the main module file
