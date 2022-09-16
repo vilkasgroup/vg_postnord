@@ -1405,9 +1405,10 @@ class Vg_postnord extends CarrierModule
     public function setExtraMailTemplateVarsOrderConf(array $params)
     {
         /**
-         * Default value (so that nothing is shown if carrier is not PostNord for example)
+         * Default values (so that nothing is shown if carrier is not PostNord for example)
          */
         $params["extra_template_vars"]["{postnord_service_point}"] = "";
+        $params["extra_template_vars"]["{postnord_service_point_no_html}"] = "";
 
         $id_order = (int) $params["template_vars"]["{id_order}"];
         if (!$id_order) {
@@ -1440,11 +1441,20 @@ class Vg_postnord extends CarrierModule
             return;
         }
 
+        $service_point_header = $this->trans("Pickup point", [], "Modules.Vgpostnord.Admin");
+        $delivery_address     = $service_point_data["deliveryAddress"];
+
+        $service_point_no_html =
+            "{$service_point_header}\r\n" .
+            "{$service_point_data["name"]}\r\n" .
+            "{$delivery_address["streetName"]} {$delivery_address["streetNumber"]}\r\n" .
+            "{$delivery_address["postalCode"]} {$delivery_address["city"]}";
+
         // Note: seems you can't get an instance of the Symfony container here, so you can't load services like Twig
         try {
             $this->context->smarty->assign([
-                "service_point" => $service_point_data,
-                "service_point_header" => $this->trans("Pickup point", [], "Modules.Vgpostnord.Admin")
+                "service_point"        => $service_point_data,
+                "service_point_header" => $service_point_header
             ]);
             $tpl = $this->context->smarty->fetch($this->local_path . "views/templates/mails/order-confirmation-service-point.tpl");
             $params["extra_template_vars"]["{postnord_service_point}"] = $tpl;
@@ -1455,6 +1465,8 @@ class Vg_postnord extends CarrierModule
                 "id_order"  => $id_order,
             ]);
         }
+
+        $params["extra_template_vars"]["{postnord_service_point_no_html}"] = $service_point_no_html;
     }
 
     /**
