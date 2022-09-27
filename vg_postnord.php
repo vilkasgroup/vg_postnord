@@ -2,16 +2,13 @@
 
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\ORMException;
-
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
-use Psr\Log\AbstractLogger;
-
-use PrestaShop\PrestaShop\Core\Grid\Action\Bulk\Type\SubmitBulkAction;
+use PrestaShop\PrestaShop\Adapter\SymfonyContainer;
 use PrestaShop\PrestaShop\Core\Grid\Definition\GridDefinition;
 use PrestaShopBundle\Controller\Admin\Sell\Order\ActionsBarButton;
 use PrestaShopBundle\Controller\Admin\Sell\Order\ActionsBarButtonsCollection;
-
+use Psr\Log\AbstractLogger;
 use Symfony\Bundle\FrameworkBundle\Routing\Router;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 use Vilkas\Postnord\Client\PostnordClient;
