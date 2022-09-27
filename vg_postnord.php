@@ -1658,4 +1658,27 @@ class Vg_postnord extends CarrierModule
 
         return "";
     }
+
+    /**
+     * Add fetch label modal to the end of the BO order list
+     */
+    public function hookDisplayAdminEndContent(array $params): ?string
+    {
+        if ($this->context->controller->controller_name !== "AdminOrders") {
+            return null;
+        }
+
+        try {
+            /** @var Twig\Environment $twig */
+            $twig = SymfonyContainer::getInstance()->get("twig");
+            return $twig->render("@Modules/vg_postnord/views/templates/admin/fetch_label_modal.html.twig");
+        } catch (Exception $e) {
+            $this->logger->error("Could not render Twig template", [
+                "exception" => $e->getMessage(),
+                "hook"      => "displayAdminEndContent"
+            ]);
+
+            return null;
+        }
+    }
 }
