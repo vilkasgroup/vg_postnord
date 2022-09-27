@@ -1,3 +1,9 @@
+20220927 - sauli
+=======
+* Bump version to 1.0.0
+* Use `displayAdminEndContent` hook to load fetch label modal instead of an override
+* Fix missing translation domain
+
 20220916 - sauli
 ========
 * Bump version to 0.9.13

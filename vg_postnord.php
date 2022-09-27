@@ -2,16 +2,13 @@
 
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\ORMException;
-
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
-use Psr\Log\AbstractLogger;
-
-use PrestaShop\PrestaShop\Core\Grid\Action\Bulk\Type\SubmitBulkAction;
+use PrestaShop\PrestaShop\Adapter\SymfonyContainer;
 use PrestaShop\PrestaShop\Core\Grid\Definition\GridDefinition;
 use PrestaShopBundle\Controller\Admin\Sell\Order\ActionsBarButton;
 use PrestaShopBundle\Controller\Admin\Sell\Order\ActionsBarButtonsCollection;
-
+use Psr\Log\AbstractLogger;
 use Symfony\Bundle\FrameworkBundle\Routing\Router;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 use Vilkas\Postnord\Client\PostnordClient;
@@ -34,7 +31,7 @@ class Vg_postnord extends CarrierModule
     {
         $this->name = 'vg_postnord';
         $this->tab = 'shipping_logistics';
-        $this->version = '0.9.13';
+        $this->version = '1.0.0';
         $this->author = 'Vilkas Group Oy';
         $this->need_instance = 0;
 
@@ -1660,5 +1657,28 @@ class Vg_postnord extends CarrierModule
         }
 
         return "";
+    }
+
+    /**
+     * Add fetch label modal to the end of the BO order list
+     */
+    public function hookDisplayAdminEndContent(array $params): ?string
+    {
+        if ($this->context->controller->controller_name !== "AdminOrders") {
+            return null;
+        }
+
+        try {
+            /** @var Twig\Environment $twig */
+            $twig = SymfonyContainer::getInstance()->get("twig");
+            return $twig->render("@Modules/vg_postnord/views/templates/admin/fetch_label_modal.html.twig");
+        } catch (Exception $e) {
+            $this->logger->error("Could not render Twig template", [
+                "exception" => $e->getMessage(),
+                "hook"      => "displayAdminEndContent"
+            ]);
+
+            return null;
+        }
     }
 }
