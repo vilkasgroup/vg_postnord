@@ -191,7 +191,7 @@ class VgPostnordBookingService
         if (in_array("A7", $additional_service_codes)) {
             // technically these can be empty if changing carriers from one without service points to one with them
             if (empty($service_point) || empty($booking->getServicepointid())) {
-                $msg = $this->translator->trans("Service point ID or data missing from booking.");
+                $msg = $this->translator->trans("Service point ID or data missing from booking.", [], "Modules.Vgpostnord.Service");
                 throw new Exception($msg);
             }
             $pickup_address = [
