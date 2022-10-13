@@ -227,6 +227,20 @@ class VgPostnordBookingService
 
         $label_ids = $label_data = [];
         foreach ($labelPrintout as $lp) {
+            // the request may fail while the API still returns 200 OK,
+            // so check the status field
+            if (
+                array_key_exists("status", $lp["itemIds"][0])
+                && $lp["itemIds"][0]["status"] === "FAIL"
+            ) {
+                if (array_key_exists("errorResponse", $lp["itemIds"][0])) {
+                    $errorResponse = $lp["itemIds"][0]["errorResponse"];
+                    $msg = $this->translator->trans("createBooking returned status: 'FAIL'. Message: %msg%", ["%msg%" => $errorResponse["message"]], "Modules.Vgpostnord.Service");
+                    throw new Exception($msg);
+                }
+                $msg = $this->translator->trans("createBooking returned status: 'FAIL'. Could not parse response further. See logs for details.", [], "Modules.Vgpostnord.Service");
+                throw new Exception($msg);
+            }
             $label_ids[]  = $lp["itemIds"][0]["itemIds"];
             $label_data[] = $lp["printout"]["data"];
         }
