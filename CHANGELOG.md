@@ -1,3 +1,8 @@
+20221013 - sauli
+========
+* Bump version to 1.0.1
+* Check response 'status' field for errors when fetching labels
+
 20220927 - sauli
 =======
 * Bump version to 1.0.0
