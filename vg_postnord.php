@@ -91,6 +91,7 @@ class Vg_postnord extends CarrierModule
             && $this->registerHook('displayCarrierExtraContent')
             && $this->registerHook('displayAdminOrderMain')
             && $this->registerHook('actionValidateOrder')
+            && $this->registerHook('displayAdminEndContent')
 
             // show possible selected pickup location in SF my account old order view
             && $this->registerHook('displayOrderDetail')
