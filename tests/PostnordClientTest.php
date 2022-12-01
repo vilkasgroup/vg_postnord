@@ -1,4 +1,9 @@
 <?php
+/**
+ * @noinspection PhpUnitDeprecatedCallsIn10VersionInspection
+ * @noinspection PhpUnreachableStatementInspection
+ * @noinspection PhpUnhandledExceptionInspection
+ */
 
 declare(strict_types=1);
 
@@ -15,6 +20,98 @@ class PostnordClientTest extends TestCase
     protected $client;
 
     /**
+     * @var array Shop address information
+     */
+    private $shopAddress = [
+        'shop_name' => 'Temp Dev',
+        'shop_party_id' => '1111111111',
+        'shop_street' => 'Finlaysoninkuja 19',
+        'shop_postcode' => '33210',
+        'shop_city' => 'Tampere',
+        'shop_country' => 'FI',
+        'shop_phone' => '+358123456789',
+    ];
+
+    /**
+     * @var array Pickup point information
+     *
+     * TODO: What if this changes? Shouldn't this be fetched from PostNord DURING the tests?
+     */
+    private $pickupAddress = [
+        'name' => 'Pn K-supermarket Kuninkaankulma',
+        'servicePointId' => '9325',
+        'visitingAddress' => [
+            'countryCode' => 'FI',
+            'city' => 'TAMPERE',
+            'streetName' => 'Kuninkaankatu',
+            'streetNumber' => '14',
+            'postalCode' => '33210',
+            'additionalDescription' => null,
+        ],
+    ];
+
+    /**
+     * @var string Customer email
+     */
+    private $email = 'customer@prestashop.com';
+
+    /**
+     * @var array Mimics a PrestaShop address object
+     */
+    private $address = [
+        'firstname' => 'first',
+        'lastname' => 'last',
+        'address1' => 'Venuksenkuja 5',
+        'address2' => 'M',
+        'phone' => '0123456789',
+        'postcode' => '01480',
+        'city' => 'Vantaa',
+        'country' => 'FI',
+    ];
+
+    /**
+     * @var array Return address information
+     */
+    private $returnAddress = [
+        'return_name' => 'Temp Dev',
+        'return_street' => 'Finlaysoninkuja 19',
+        'return_postcode' => '33210',
+        'return_city' => 'Tampere',
+        'return_country' => 'FI',
+    ];
+
+    /**
+     * @var string Customer country, default is 'FI'
+     */
+    private $country = 'FI';
+
+    /**
+     * @var array Order information
+     */
+    private $order = [
+        'id' => '0',
+        'basicServiceCode' => '19',
+        'additionalServiceCode' => ['A3', 'A7'],
+        'numberOfPackages' => 1,
+        'totalGrossWeight' => 1.1,
+        'items' => [
+            [
+                'id' => '0',
+                'grossWeight' => 1.1,
+            ],
+        ],
+        'hasCustomsDeclaration' => false,
+        'reference' => 'ABCABCABC',
+    ];
+
+    /**
+     * @var array Label settings
+     */
+    private $labelInfo = [
+        'paperSize' => 'LABEL'
+    ];
+
+    /**
      * Skip everything if environment variables are not available and the client cannot be setup.
      */
     protected function setUp(): void
@@ -28,7 +125,7 @@ class PostnordClientTest extends TestCase
     }
 
     /**
-     * test fetching some service points.
+     * Test fetching some service points.
      */
     public function testGetServicePointsByAddress(): void
     {
@@ -42,7 +139,7 @@ class PostnordClientTest extends TestCase
             'streetName' => 'Finlaysoninkuja',
             'streetNumber' => '19',
             'numberOfServicePoints' => 1,
-            'typeId' => 38, // typeId is the service code for pick up filter. 38 is "38 - Servicepoint (FIN)"
+            'typeId' => 38, // typeId is the service code for pickup filter. 38 is "38 - Servicepoint (FIN)"
         ];
 
         $results = $this->client->getServicePointsByAddress($params);
@@ -96,116 +193,43 @@ class PostnordClientTest extends TestCase
 
     public function testGetBasicServiceCodes(): void
     {
-        $params = [];
-
-        $results = $this->client->getBasicServiceCodes($params);
+        $results = $this->client->getBasicServiceCodes();
         $this->assertArrayHasKey('data', $results);
     }
 
     public function testGetAdditionalServiceCodes(): void
     {
-        $params = [];
-
-        $results = $this->client->getAdditionalServiceCodes($params);
+        $results = $this->client->getAdditionalServiceCodes();
         $this->assertArrayHasKey('data', $results);
     }
 
     public function testGetValidCombinationsOfServiceCodes(): void
     {
-        $params = [];
-
-        $results = $this->client->getValidCombinationsOfServiceCodes($params);
+        $results = $this->client->getValidCombinationsOfServiceCodes();
         $this->assertArrayHasKey('data', $results);
     }
 
     public function testGetSurchargeHealthCheck(): void
     {
         $this->markTestSkipped('This errors out on their end all the time');
-        $params = [];
 
-        $results = $this->client->getSurchargeHealthCheck($params);
+        $results = $this->client->getSurchargeHealthCheck();
         $this->assertArrayHasKey('status', $results);
         $this->assertEquals('UP', $results['status']);
     }
 
     public function testCreateBooking(): void
     {
-        // extract from VG_POSTNORD_SHOP_ADDRESS
-        $shopAddress = [
-            'shop_name' => 'Temp Dev',
-            'shop_party_id' => '1111111111',
-            'shop_street' => 'Finlaysoninkuja 19',
-            'shop_postcode' => '33210',
-            'shop_city' => 'Tamperere',
-            'shop_country' => 'FI',
-            'shop_phone' => '+358123456789',
-        ];
-        // Come from front office
-        // The data follows the format from Postnord
-        $pickupAddress = [
-            'name' => 'Pn K-supermarket Kuninkaankulma',
-            'servicePointId' => '9325',
-            'visitingAddress' => [
-                'countryCode' => 'FI',
-                'city' => 'TAMPERE',
-                'streetName' => 'Kuninkaankatu',
-                'streetNumber' => '14',
-                'postalCode' => '33210',
-                'additionalDescription' => null,
-            ],
-        ];
-        // extract from VG_POSTNORD_RETURN_ADDRESS can be left empty
-        // $returnAddress = [
-        //     'return_name' => 'Temp Dev',
-        //     'return_street' => 'Finlaysoninkuja 19',
-        //     'return_postcode' => '33210',
-        //     'return_city' => 'Tamperere',
-        //     'return_country' => 'FI',
-        // ];
-        // just customer email
-        $email = 'customer@prestashop.com';
-        // address is prestashop address object (customer address)
-        $address = (object) [
-            'firstname' => 'first',
-            'lastname' => 'last',
-            'address1' => 'Venuksenkuja 5',
-            'address2' => 'M',
-            'phone' => '0123456789',
-            'postcode' => '01480',
-            'city' => 'Vantaa',
-            'country' => 'FI',
-        ];
-        // It would be nice if the $order follow this format
-        $order = [
-            'id' => '0',
-            'basicServiceCode' => '19',
-            'additionalServiceCode' => ['A3', 'A7'],
-            'numberOfPackages' => 1,
-            'totalGrossWeight' => 1.1,
-            'items' => [
-                [
-                    'id' => '0',
-                    'grossWeight' => 1.1,
-                ],
-            ],
-            'hasCustomsDeclaration' => false, // TODO: test with hasCustomsDeclaration => true
-            'reference' => 'ABCABCABC',
-        ];
-        // Customer country, default is 'FI'
-        $country = 'FI';
-        // check $labelInfo format in Post Nord documentation
-        // $labelInfo = [
-        // 'paperSize' => 'LABEL'
-        // ];
+        // TODO: test with $order['hasCustomsDeclaration'] => true
         $results = $this->client->createBooking(
-            $email,
-            $address,
-            $order,
-            $shopAddress,
+            $this->email,
+            (object) $this->address,
+            $this->order,
+            $this->shopAddress,
             [],
-            $country,
+            $this->country,
             [],
-            $pickupAddress
+            $this->pickupAddress
         );
 
         $this->assertArrayHasKey('bookingId', $results);
@@ -215,67 +239,16 @@ class PostnordClientTest extends TestCase
 
     public function testCreateBookingWithPDF(): void
     {
-        $shopAddress = [
-            'shop_name' => 'Temp Dev',
-            'shop_party_id' => '1111111111',
-            'shop_street' => 'Finlaysoninkuja 19',
-            'shop_postcode' => '33210',
-            'shop_city' => 'Tampere',
-            'shop_country' => 'FI',
-            'shop_phone' => '+358123456789',
-        ];
-        $pickupAddress = [
-            'name' => 'Pn K-supermarket Kuninkaankulma',
-            'servicePointId' => '9325',
-            'visitingAddress' => [
-                'countryCode' => 'FI',
-                'city' => 'TAMPERE',
-                'streetName' => 'Kuninkaankatu',
-                'streetNumber' => '14',
-                'postalCode' => '33210',
-                'additionalDescription' => null,
-            ],
-        ];
-        $email = 'customer@prestashop.com';
-        $address = (object) [
-            'firstname' => 'first',
-            'lastname' => 'last',
-            'address1' => 'Venuksenkuja 5',
-            'address2' => 'M',
-            'phone' => '0123456789',
-            'postcode' => '01480',
-            'city' => 'Vantaa',
-            'country' => 'FI',
-        ];
-        $order = [
-            'id' => '0',
-            'basicServiceCode' => '19',
-            'additionalServiceCode' => ['A3', 'A7'],
-            'numberOfPackages' => 1,
-            'totalGrossWeight' => 1.1,
-            'items' => [
-                [
-                    'id' => '0',
-                    'grossWeight' => 1.1,
-                ],
-            ],
-            'hasCustomsDeclaration' => false, // TODO: test with hasCustomsDeclaration => true
-            'reference' => 'ABCABCABC',
-        ];
-        $country = 'FI';
-        // check $labelInfo format in Post Nord documentation
-        $labelInfo = [
-            'paperSize' => 'LABEL',
-        ];
+        // TODO: test with $order['hasCustomsDeclaration'] => true
         $results = $this->client->createBooking(
-            $email,
-            $address,
-            $order,
-            $shopAddress,
+            $this->email,
+            (object) $this->address,
+            $this->order,
+            $this->shopAddress,
             [],
-            $country,
-            $labelInfo,
-            $pickupAddress
+            $this->country,
+            $this->labelInfo,
+            $this->pickupAddress
         );
         $this->assertArrayHasKey('labelPrintout', $results);
     }
@@ -293,112 +266,47 @@ class PostnordClientTest extends TestCase
 
     public function testGetReturnPDFLabelFromId(): void
     {
-        $labelInfo = [
-            'paperSize' => 'LABEL',
-        ];
         $itemId = '00364300432996662601';
-        $results = $this->client->getReturnPDFLabelFromId($itemId, $labelInfo);
+        $results = $this->client->getReturnPDFLabelFromId($itemId, $this->labelInfo);
         $this->assertArrayHasKey('bookingResponse', $results);
     }
 
     public function testCreateBookingAndGetBothLabel(): void
     {
-        // extract from VG_POSTNORD_SHOP_ADDRESS
-        $shopAddress = [
-            'shop_name' => 'Temp Dev',
-            'shop_party_id' => '1111111111',
-            'shop_street' => 'Finlaysoninkuja 19',
-            'shop_postcode' => '33210',
-            'shop_city' => 'Tamperere',
-            'shop_country' => 'FI',
-            'shop_phone' => '+358123456789',
-        ];
-        // extract from VG_POSTNORD_RETURN_ADDRESS
-        $returnAddress = [
-            'return_name' => 'Temp Dev',
-            'return_street' => 'Finlaysoninkuja 19',
-            'return_postcode' => '33210',
-            'return_city' => 'Tamperere',
-            'return_country' => 'FI',
-        ];
-        // Come from front office
-        // The data follows the format from Postnord
-        $pickupAddress = [
-            'name' => 'Pn K-supermarket Kuninkaankulma',
-            'servicePointId' => '9325',
-            'visitingAddress' => [
-                'countryCode' => 'FI',
-                'city' => 'TAMPERE',
-                'streetName' => 'Kuninkaankatu',
-                'streetNumber' => '14',
-                'postalCode' => '33210',
-                'additionalDescription' => null,
-            ],
-        ];
-        // just customer email
-        $email = 'customer@prestashop.com';
-        // address is prestashop address object (customer address)
-        $address = (object) [
-            'firstname' => 'first',
-            'lastname' => 'last',
-            'address1' => 'Venuksenkuja 5',
-            'address2' => 'M',
-            'phone' => '0123456789',
-            'postcode' => '01480',
-            'city' => 'Vantaa',
-            'country' => 'FI',
-        ];
-        // It would be nice if the $order follow this format
-        $order = [
+        // TODO: test with $order['hasCustomsDeclaration'] => true
+        $order = $this->order;
+        $order['items'][] = [
             'id' => '0',
-            'basicServiceCode' => '19',
-            'additionalServiceCode' => ['A3', 'A7'],
-            'numberOfPackages' => 1,
-            'totalGrossWeight' => 2.2,
-            'items' => [
-                [
-                    'id' => '0',
-                    'grossWeight' => 1.1,
-                ],
-                [
-                    'id' => '0',
-                    'grossWeight' => 1.1,
-                ]
-            ],
-            'hasCustomsDeclaration' => false, // TODO: test with hasCustomsDeclaration => true
-            'reference' => 'ABCABCABC',
+            'grossWeight' => 1.1,
         ];
-        // Customer country, default is 'FI'
-        $country = 'FI';
-        // check $labelInfo format in Post Nord documentation
-        $labelInfo = [
-            'paperSize' => 'LABEL'
-        ];
+        $order['totalGrossWeight'] = 2.2;
+
         $results = $this->client->createBooking(
-            $email,
-            $address,
+            $this->email,
+            (object) $this->address,
             $order,
-            $shopAddress,
-            $returnAddress,
-            $country,
+            $this->shopAddress,
+            $this->returnAddress,
+            $this->country,
             [],
-            $pickupAddress
+            $this->pickupAddress
         );
         $this->assertArrayHasKey('bookingId', $results);
 
+        $labelIds = [];
         foreach ($results["idInformation"][0]["ids"] as $id) {
             $labelIds[] = $id["value"];
         }
 
-        $this->assertTrue(!empty($labelIds), 'Missing label ids');
+        $this->assertNotEmpty($labelIds, 'Missing label ids');
 
         // Postnord use the same id for item and label
         if (!empty($labelIds)) {
             $this->assertEquals(2, count($labelIds), 'Not enough label ids');
             foreach ($labelIds as $itemId) {
-                $results = $this->client->getPDFLabelFromId($itemId, $labelInfo);
+                $results = $this->client->getPDFLabelFromId($itemId, $this->labelInfo);
                 $this->assertArrayHasKey('printout', $results[0]);
-                $results = $this->client->getReturnPDFLabelFromId($itemId, $labelInfo);
+                $results = $this->client->getReturnPDFLabelFromId($itemId, $this->labelInfo);
                 $this->assertArrayHasKey('bookingResponse', $results);
             }
         }
