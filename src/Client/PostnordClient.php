@@ -194,7 +194,7 @@ class PostnordClient
         ];
         $parameters = $this->mergeOptions($defaults, $parameters);
         $options['query'] = $parameters;
-        $options['timeout'] = 3; // maybe enough?
+        $options['timeout'] = 7;
 
         try {
             $response = $this->doRequest('GET', '/rest/businesslocation/v5/servicepoints/nearest/byaddress', $options);
