@@ -128,8 +128,10 @@ class PostnordClient
 
                 $results = json_decode($content, true);
                 if (null === $results) {
-                    // TODO: probably needs more information
-                    $this->logger->error('Could not decode JSON response');
+                    $this->logger->error(
+                        'Could not decode JSON response',
+                        ['content' => $content]
+                    );
                     throw new Exception('Could not decode JSON response');
                 }
 
@@ -167,8 +169,10 @@ class PostnordClient
         // decode the json response
         $results = json_decode($content, true);
         if (null === $results) {
-            // TODO: probably needs more information
-            $this->logger->error('Could not decode JSON response');
+            $this->logger->error(
+                'Could not decode JSON response',
+                ['content' => $content]
+            );
             throw new Exception('Could not decode JSON response');
         }
 
