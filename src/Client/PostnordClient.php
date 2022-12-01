@@ -111,7 +111,7 @@ class PostnordClient
             $status = $response->getStatusCode();
         } catch (TransportExceptionInterface $e) {
             $this->logger->error(
-                'Unsupported option passed to HttpClient',
+                'Network error occurred while making request',
                 ['exception' => $e->getMessage(), 'options' => json_encode($options)]
             );
             throw $e;
@@ -156,13 +156,10 @@ class PostnordClient
             );
             throw new Exception($content);
         } catch (TransportExceptionInterface $e) {
-            // TODO: make this better
-            $this->logger->error('Network error occurred', ['exception' => $e]);
+            $this->logger->error('Network error occurred while getting response content', ['exception' => $e]);
             throw $e;
         } catch (Exception $e) {
-            // TODO: make this better
-            // something bad happened
-            $this->logger->error('Something bad happened', ['exception' => $e]);
+            $this->logger->error('Error getting response content', ['exception' => $e]);
             throw $e;
         }
 
