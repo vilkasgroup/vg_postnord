@@ -9,6 +9,7 @@
 * Add missing hook to install()
 * Remove translation from an ajax endpoint error message
 * Fix some bugs related to wrong types of variables being passed to functions in booking service
+* Bump client version to 0.0.2
 
 20221013 - sauli
 ========
