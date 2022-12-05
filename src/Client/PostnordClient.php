@@ -561,7 +561,7 @@ class PostnordClient
             'messageId' => uniqid(),
             'application' => [
                 'name' => 'vg_postnord',
-                'version' => '0.0.1',
+                'version' => '0.0.2',
                 'applicationId' => 1653
             ],
             'updateIndicator' => 'Original', // enum: Original, Update, Deletion
