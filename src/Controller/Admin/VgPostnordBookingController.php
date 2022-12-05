@@ -378,7 +378,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
         $merged_raw_labels = $merger->merge();
 
         return $this->json([
-            "success"    => $this->trans("Successfully merged label data", "Modules.Vgpostnord.Admin"),
+            "success"    => "Successfully merged label data",
             "label_data" => base64_encode($merged_raw_labels)
         ]);
     }

@@ -1,3 +1,16 @@
+20221201 - sauli
+========
+* Bump version to 1.0.2
+* Raise getServicePointsByAdress() timeout from 3 to 7 seconds
+* Log more information when JSON decoding an API response fails
+* Improve client error messages
+* Add our applicationId to client booking requests
+* Some client test refactoring and cleanup
+* Add missing hook to install()
+* Remove translation from an ajax endpoint error message
+* Fix some bugs related to wrong types of variables being passed to functions in booking service
+* Bump client version to 0.0.2
+
 20221013 - sauli
 ========
 * Bump version to 1.0.1

@@ -31,7 +31,7 @@ class Vg_postnord extends CarrierModule
     {
         $this->name = 'vg_postnord';
         $this->tab = 'shipping_logistics';
-        $this->version = '1.0.1';
+        $this->version = '1.0.2';
         $this->author = 'Vilkas Group Oy';
         $this->need_instance = 0;
 
@@ -91,6 +91,7 @@ class Vg_postnord extends CarrierModule
             && $this->registerHook('displayCarrierExtraContent')
             && $this->registerHook('displayAdminOrderMain')
             && $this->registerHook('actionValidateOrder')
+            && $this->registerHook('displayAdminEndContent')
 
             // show possible selected pickup location in SF my account old order view
             && $this->registerHook('displayOrderDetail')

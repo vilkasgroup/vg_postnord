@@ -111,7 +111,7 @@ class PostnordClient
             $status = $response->getStatusCode();
         } catch (TransportExceptionInterface $e) {
             $this->logger->error(
-                'Unsupported option passed to HttpClient',
+                'Network error occurred while making request',
                 ['exception' => $e->getMessage(), 'options' => json_encode($options)]
             );
             throw $e;
@@ -128,8 +128,10 @@ class PostnordClient
 
                 $results = json_decode($content, true);
                 if (null === $results) {
-                    // TODO: probably needs more information
-                    $this->logger->error('Could not decode JSON response');
+                    $this->logger->error(
+                        'Could not decode JSON response',
+                        ['content' => $content]
+                    );
                     throw new Exception('Could not decode JSON response');
                 }
 
@@ -154,21 +156,20 @@ class PostnordClient
             );
             throw new Exception($content);
         } catch (TransportExceptionInterface $e) {
-            // TODO: make this better
-            $this->logger->error('Network error occurred', ['exception' => $e]);
+            $this->logger->error('Network error occurred while getting response content', ['exception' => $e]);
             throw $e;
         } catch (Exception $e) {
-            // TODO: make this better
-            // something bad happened
-            $this->logger->error('Something bad happened', ['exception' => $e]);
+            $this->logger->error('Error getting response content', ['exception' => $e]);
             throw $e;
         }
 
         // decode the json response
         $results = json_decode($content, true);
         if (null === $results) {
-            // TODO: probably needs more information
-            $this->logger->error('Could not decode JSON response');
+            $this->logger->error(
+                'Could not decode JSON response',
+                ['content' => $content]
+            );
             throw new Exception('Could not decode JSON response');
         }
 
@@ -194,7 +195,7 @@ class PostnordClient
         ];
         $parameters = $this->mergeOptions($defaults, $parameters);
         $options['query'] = $parameters;
-        $options['timeout'] = 3; // maybe enough?
+        $options['timeout'] = 7;
 
         try {
             $response = $this->doRequest('GET', '/rest/businesslocation/v5/servicepoints/nearest/byaddress', $options);
@@ -560,7 +561,8 @@ class PostnordClient
             'messageId' => uniqid(),
             'application' => [
                 'name' => 'vg_postnord',
-                'version' => '0.0.1',
+                'version' => '0.0.2',
+                'applicationId' => 1653
             ],
             'updateIndicator' => 'Original', // enum: Original, Update, Deletion
             'shipment' => [
