@@ -55,14 +55,16 @@ export default class Fetcher {
    */
   async fetchLabels() {
     let promises = [];
+
     for (const id of this.order_ids) {
       console.log("Fetching label for Order ID " + id);
       let data = {
         action: "fetch-label",
         id_order: id
       };
-      promises.push(this.fetchLabel(data));
+      promises.push(await this.fetchLabel(data));
     }
+
     return (
       Promise.allSettled(promises)
     );
@@ -75,7 +77,7 @@ export default class Fetcher {
    *
    * @returns {*} jQuery Deferred object
    */
-  fetchLabel(data) {
+  async fetchLabel(data) {
     return $.post({
       url: this.url,
       dataType: 'json',
