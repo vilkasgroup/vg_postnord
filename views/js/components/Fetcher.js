@@ -86,8 +86,8 @@ export default class Fetcher {
       .done((data, textStatus, jqXHR) => {
         this.handleFetchSuccess(data, textStatus, jqXHR);
       })
-      .fail((jqXHR, textStatus, errorThrown) => {
-        this.handleFetchError(jqXHR, textStatus, errorThrown, data);
+      .catch((e) => {
+        this.handleFetchError(e, data);
       })
       .always(() => {
         this.progressModal.incrementProgress();
@@ -158,24 +158,22 @@ export default class Fetcher {
   }
 
   /**
-   * @param jqXHR
-   * @param textStatus
-   * @param errorThrown
+   * @param response
    * @param {Object} data data object that was passed to fetchLabel()
    */
-  handleFetchError(jqXHR, textStatus, errorThrown, data) {
-    if (!("responseJSON" in jqXHR)) {
-      this.progressModal.addErrorMessage("ID " + data["id_order"] + ": " + errorThrown)
+  handleFetchError(response, data) {
+    if (!("responseJSON" in response)) {
+      this.progressModal.addErrorMessage("ID " + data["id_order"] + ": " + response["statusText"])
       return;
     }
 
-    console.log(jqXHR["responseJSON"]);
-    if (!("error" in jqXHR["responseJSON"])) {
+    console.log(response["responseJSON"]);
+    if (!("error" in response["responseJSON"])) {
       console.log("Property 'error' not found in response data!");
       return;
     }
 
-    let error = jqXHR["responseJSON"]["error"];
+    let error = response["responseJSON"]["error"];
     this.progressModal.addErrorMessage(error);
   }
 
