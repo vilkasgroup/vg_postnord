@@ -1,5 +1,6 @@
 import FetchLabelProgressModal from "./FetchLabelProgressModal.js";
 
+// noinspection DuplicatedCode
 export default class Fetcher {
   constructor(modal_id, order_ids, url) {
     this.modal_id  = modal_id;
@@ -10,7 +11,7 @@ export default class Fetcher {
     this.translations  = [];
     this.progressModal = new FetchLabelProgressModal(modal_id, order_ids.length);
 
-    $(document).on("click", '.js-close-fetcher-modal', () => this.progressModal.hide());
+    $(document).on("click", '.js-vg-postnord-close-fetcher-modal', () => this.progressModal.hide());
   }
 
   /**

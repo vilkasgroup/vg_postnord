@@ -1,3 +1,4 @@
+// noinspection DuplicatedCode
 export default class FetchLabelProgressModal {
   constructor(modal_id, total) {
     this.fetchLabelModal = $(`#${modal_id}`);
@@ -52,7 +53,7 @@ export default class FetchLabelProgressModal {
     this.completed = 0;
     this.updateProgress(this.completed, 1);
     this.setLabelText(this.progressLabel.attr('default-value'));
-    this.errorMessageBlock.find('.fetch-label-error-message').remove();
+    this.errorMessageBlock.find('.vg-postnord-fetch-label-error-message').remove();
   }
 
   /**
@@ -73,7 +74,7 @@ export default class FetchLabelProgressModal {
     let domMessage = $('<div>');
 
     domMessage.text(message);
-    domMessage.addClass('fetch-label-error-message alert alert-danger');
+    domMessage.addClass('vg-postnord-fetch-label-error-message alert alert-danger');
 
     this.errorMessageBlock.append(domMessage);
   }
@@ -89,7 +90,7 @@ export default class FetchLabelProgressModal {
    * Enable the close modal button.
    */
   enableCloseButton() {
-    this.fetchLabelModal.find('.js-close-fetcher-modal').attr('disabled', false);
+    this.fetchLabelModal.find('.js-vg-postnord-close-fetcher-modal').attr('disabled', false);
   }
 
   /**
@@ -98,7 +99,7 @@ export default class FetchLabelProgressModal {
    * @param {string} url
    */
   enableOpenLabelsButton(url) {
-    let button = $('.js-open-merged-labels');
+    let button = $('.js-vg-postnord-open-merged-labels');
     button.click(() => {
       window.open(url, "_blank");
     })
@@ -129,6 +130,6 @@ export default class FetchLabelProgressModal {
    * @returns {jQuery|HTMLElement|*}
    */
   get errorMessageBlock() {
-    return $('#fetch-label-errors');
+    return $('#vg-postnord-fetch-label-errors');
   }
 }

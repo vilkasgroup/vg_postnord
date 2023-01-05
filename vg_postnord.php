@@ -1135,8 +1135,8 @@ class Vg_postnord extends CarrierModule
             (new VgPostnordJavascriptAction('bulk_fetch_label'))
                 ->setName($this->trans('Fetch label (PostNord)', [], 'Modules.Vgpostnord.Admin'))
                 ->setOptions([
-                    'function' => 'bulkFetchLabelAction(this, event);',
-                    'modal_id' => 'fetchLabelModal',
+                    'function' => 'vgpostnordBulkFetchLabelAction(this, event);',
+                    'modal_id' => 'vgpostnordFetchLabelModal',
                     'route'    => 'admin_vg_postnord_ajax_fetch_label_action'
                 ])
         );
