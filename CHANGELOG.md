@@ -1,3 +1,9 @@
+20220109 - sauli
+========
+* Prefix some classes, ids and function names so there are no conflicts with other modules using similar code
+* Fetch labels one at a time (wait for the previous call to finish before sending another one)
+* Use catch() instead of fail() for ajax errors
+
 20221201 - sauli
 ========
 * Bump version to 1.0.2
