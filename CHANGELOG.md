@@ -1,4 +1,4 @@
-20220109 - sauli
+20230109 - sauli
 ========
 * Prefix some classes, ids and function names so there are no conflicts with other modules using similar code
 * Fetch labels one at a time (wait for the previous call to finish before sending another one)
