@@ -9,7 +9,8 @@ import Fetcher from "./components/Fetcher.js";
  * - modules have their own scope
  * - but the function below has to be accessible globally (for the onclick event)
  */
-window.bulkFetchLabelAction = function(element, event) {
+// noinspection DuplicatedCode
+window.vgpostnordBulkFetchLabelAction = function(element, event) {
   let items = $('input[name="order_orders_bulk[]"]:checked');
   if (items.length === 0) {
     return false;

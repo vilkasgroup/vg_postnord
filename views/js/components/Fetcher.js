@@ -1,5 +1,6 @@
 import FetchLabelProgressModal from "./FetchLabelProgressModal.js";
 
+// noinspection DuplicatedCode
 export default class Fetcher {
   constructor(modal_id, order_ids, url) {
     this.modal_id  = modal_id;
@@ -10,7 +11,7 @@ export default class Fetcher {
     this.translations  = [];
     this.progressModal = new FetchLabelProgressModal(modal_id, order_ids.length);
 
-    $(document).on("click", '.js-close-fetcher-modal', () => this.progressModal.hide());
+    $(document).on("click", '.js-vg-postnord-close-fetcher-modal', () => this.progressModal.hide());
   }
 
   /**
@@ -54,14 +55,16 @@ export default class Fetcher {
    */
   async fetchLabels() {
     let promises = [];
+
     for (const id of this.order_ids) {
       console.log("Fetching label for Order ID " + id);
       let data = {
         action: "fetch-label",
         id_order: id
       };
-      promises.push(this.fetchLabel(data));
+      promises.push(await this.fetchLabel(data));
     }
+
     return (
       Promise.allSettled(promises)
     );
@@ -74,7 +77,7 @@ export default class Fetcher {
    *
    * @returns {*} jQuery Deferred object
    */
-  fetchLabel(data) {
+  async fetchLabel(data) {
     return $.post({
       url: this.url,
       dataType: 'json',
@@ -83,8 +86,8 @@ export default class Fetcher {
       .done((data, textStatus, jqXHR) => {
         this.handleFetchSuccess(data, textStatus, jqXHR);
       })
-      .fail((jqXHR, textStatus, errorThrown) => {
-        this.handleFetchError(jqXHR, textStatus, errorThrown, data);
+      .catch((e) => {
+        this.handleFetchError(e, data);
       })
       .always(() => {
         this.progressModal.incrementProgress();
@@ -155,24 +158,22 @@ export default class Fetcher {
   }
 
   /**
-   * @param jqXHR
-   * @param textStatus
-   * @param errorThrown
+   * @param response
    * @param {Object} data data object that was passed to fetchLabel()
    */
-  handleFetchError(jqXHR, textStatus, errorThrown, data) {
-    if (!("responseJSON" in jqXHR)) {
-      this.progressModal.addErrorMessage("ID " + data["id_order"] + ": " + errorThrown)
+  handleFetchError(response, data) {
+    if (!("responseJSON" in response)) {
+      this.progressModal.addErrorMessage("ID " + data["id_order"] + ": " + response["statusText"])
       return;
     }
 
-    console.log(jqXHR["responseJSON"]);
-    if (!("error" in jqXHR["responseJSON"])) {
+    console.log(response["responseJSON"]);
+    if (!("error" in response["responseJSON"])) {
       console.log("Property 'error' not found in response data!");
       return;
     }
 
-    let error = jqXHR["responseJSON"]["error"];
+    let error = response["responseJSON"]["error"];
     this.progressModal.addErrorMessage(error);
   }
 

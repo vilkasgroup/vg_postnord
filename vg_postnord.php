@@ -31,7 +31,7 @@ class Vg_postnord extends CarrierModule
     {
         $this->name = 'vg_postnord';
         $this->tab = 'shipping_logistics';
-        $this->version = '1.0.2';
+        $this->version = '1.0.3';
         $this->author = 'Vilkas Group Oy';
         $this->need_instance = 0;
 
@@ -1135,8 +1135,8 @@ class Vg_postnord extends CarrierModule
             (new VgPostnordJavascriptAction('bulk_fetch_label'))
                 ->setName($this->trans('Fetch label (PostNord)', [], 'Modules.Vgpostnord.Admin'))
                 ->setOptions([
-                    'function' => 'bulkFetchLabelAction(this, event);',
-                    'modal_id' => 'fetchLabelModal',
+                    'function' => 'vgpostnordBulkFetchLabelAction(this, event);',
+                    'modal_id' => 'vgpostnordFetchLabelModal',
                     'route'    => 'admin_vg_postnord_ajax_fetch_label_action'
                 ])
         );
