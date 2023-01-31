@@ -146,7 +146,9 @@ class VgPostnordBookingType extends TranslatorAwareType
                     // add servicepointid table. The default choice is the
                     // current servicepointid to prevent bug when submit
                     // without changing.
-                    $form->add('servicepointid', MaterialChoiceTableType::class, [
+                    // MaterialChoiceTableType has issue with 'multiple' => false
+                    // So a working clone is created. No effect on Prestashop core. 
+                    $form->add('servicepointid', VgPostnordMaterialChoiceTableType::class, [
                         'label' => $this->trans('New Service Point', 'Modules.Vgpostnord.Admin'),
                         'help' => $this->trans('Change to New Service Point', 'Modules.Vgpostnord.Admin'),
                         'choices' => [$data['servicepointid'] => $data['servicepointid']],
