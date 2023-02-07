@@ -8,7 +8,7 @@
         {{ 'Postnord Booking'|trans({}, 'Modules.Vgpostnord.Admin') }}
       </h3>
       <div class="card-block row" id="vg_postnord_edit_booking" data-ajaxurl="{{ajaxurl}}">
-        {% comment %} The style help the form looks better in PS 8.  {% endcomment %}
+        {# The style help the form looks better in PS 8. #}
         <div class="card-text" style="width:100%; margin:0 1rem 0;">
           {{ form_widget(vgPostnordBookingEditForm) }}
         </div>

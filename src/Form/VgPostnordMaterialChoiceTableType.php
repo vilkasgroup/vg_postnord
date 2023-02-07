@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -62,9 +63,9 @@ class VgPostnordMaterialChoiceTableType extends AbstractType
     public function buildView(FormView $view, FormInterface $form, array $options): void
     {
         // when multiple=false, $form->getViewData() is a string and count() will throw
-        if($options['multiple']){
+        if ($options['multiple']) {
             $view->vars['isCheckSelectAll'] = count($form->getViewData()) === count($options['choices']);
-        }else{
+        } else {
             $view->vars['isCheckSelectAll'] = false;
         }
     }

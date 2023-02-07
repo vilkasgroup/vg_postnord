@@ -62,7 +62,7 @@ $(document).ready(function () {
         }).always(function () {
             $button.prop('disabled', false);
             $button.html($buttonText)
-            $('body').find('.d-none').removeClass('d-none')
+            $('#vg_postnord_booking').find('.d-none').removeClass('d-none')
         });
 
     });
@@ -96,7 +96,7 @@ $(document).ready(function () {
 
         $('#vg_postnord_booking_button_search').click()
         
-        $('.changeButton').remove()
+        this.remove()
     })
     
     if(!servicePointValue){
