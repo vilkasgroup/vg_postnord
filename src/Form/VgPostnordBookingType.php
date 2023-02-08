@@ -104,7 +104,7 @@ class VgPostnordBookingType extends TranslatorAwareType
                 ])
                 ->add($builder->create('change_service_point', FormType::class, [
                     'label' => false,
-                    'row_attr' => ['class' => 'changeButton']
+                    'row_attr' => ['class' => 'vg-postnord-booking-change-service-point-button']
                 ])
                     ->add('button', ButtonType::class, [
                         'attr' => ['class' => 'search btn-primary float-right col px-md-5'],
@@ -151,7 +151,7 @@ class VgPostnordBookingType extends TranslatorAwareType
                         'help' => $this->trans('Change to New Service Point', 'Modules.Vgpostnord.Admin'),
                         'choices' => [$data['servicepointid'] => $data['servicepointid']],
                         'multiple' => false,
-                        'row_attr' => ['class' => 'servicePointIdPicker d-none']
+                        'row_attr' => ['class' => 'vg-postnord-service-point-id-picker d-none']
                     ]);
 
                     $event->setData($data);

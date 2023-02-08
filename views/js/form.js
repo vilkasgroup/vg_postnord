@@ -1,5 +1,5 @@
 $(document).ready(function () {
-    const $servicePointTable = $('body').find('.servicePointIdPicker');
+    const $servicePointTable = $('body').find('.vg-postnord-service-point-id-picker');
     const $tableBody = $servicePointTable.find('tbody');
     const servicePointValue = $('#vg_postnord_booking_servicepointid_value').val();
     const ajaxurl = $('#vg_postnord_edit_booking').data('ajaxurl');
@@ -96,7 +96,7 @@ $(document).ready(function () {
 
         $('#vg_postnord_booking_button_search').click()
         
-        this.remove()
+        $('.vg-postnord-booking-change-service-point-button').remove()
     })
     
     if(!servicePointValue){
