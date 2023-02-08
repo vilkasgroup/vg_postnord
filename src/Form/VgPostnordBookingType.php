@@ -274,8 +274,8 @@ class VgPostnordBookingType extends TranslatorAwareType
         // additional services with mandatory tag are not shown
         try {
             $validCombination = ($this->client->getValidCombinationsOfServiceCodes())['data'];
-        } catch (Exception|ExceptionInterface $e) {
-            return ['error' => 'Failed to fetch additional services', 'errorMessage'=> $e->getMessage()];
+        } catch (Exception | ExceptionInterface $e) {
+            return ['error' => 'Failed to fetch additional services', 'errorMessage' => $e->getMessage()];
         }
         $validIssuerCountryCombination = array_filter($validCombination, function ($element) use ($issuerCountry) {
             return $element['issuerCountryCode'] === $issuerCountry ? $element : null;
