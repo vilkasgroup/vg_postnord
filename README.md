@@ -4,8 +4,6 @@
 
 ## Developing
 
-Also run this commands when upgrading Prestashop.
-
 ```
 composer dump-autoload --optimize --no-dev --classmap-authoritative
 ```
