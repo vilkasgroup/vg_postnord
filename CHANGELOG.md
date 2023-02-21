@@ -1,3 +1,11 @@
+20230221 - dat
+========
+* Bump version to 1.0.4
+* Support Prestashop 8
+  * Add class VgPostnordMaterialChoiceTableType for compatibility
+  * Change class name of Booking form for clarity
+  * Small change to Twig template
+
 20230109 - sauli
 ========
 * Prefix some classes, ids and function names so there are no conflicts with other modules using similar code
