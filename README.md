@@ -21,10 +21,10 @@ There's also a variable without html for use in text-based emails: `{postnord_se
 ## Creating a new release
 
 Remember to:
-- Bump version number according to semver in the module file
+- Bump version number according to semver in the main module file
 - Update CHANGELOG, change next version to the new version and add new section for next version
 - Create pull request of the changes and merge to main
-- tag main for the release using format vX.X.X (same version as in the module file)
+- Tag main for the release using format vX.X.X (same version as in the main module file)
 
 ```
 git tag vX.X.X
