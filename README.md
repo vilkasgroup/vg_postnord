@@ -19,15 +19,19 @@ you will have to add the placeholder to the template manually.
 There's also a variable without html for use in text-based emails: `{postnord_service_point_no_html}`
 
 ## Creating a new release
-Remember to:
-- Up the version number in the main module file
-- Update CHANGELOG
 
-Releases are triggered by tags matching vx.x.x being pushed, for example:
+Remember to:
+- Bump version number according to semver in the main module file
+- Update CHANGELOG, change next version to the new version and add new section for next version
+- Create pull request of the changes and merge to main
+- Tag main for the release using format vX.X.X (same version as in the main module file)
+
 ```
-git tag v1.0.0
+git tag vX.X.X
 git push --tags
 ```
+
+Github actions will create new release and add a zip package to it
 
 ## Running tests
 
@@ -40,4 +44,3 @@ POSTNORD_APIKEY=asdf composer run-script test
 You can also define `POSTNORD_HOST` if left out it will default to `atapi2.postnord.com`
 
 get your apikey from: https://atdeveloper.postnord.com/signup
-

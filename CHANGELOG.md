@@ -1,4 +1,7 @@
-20230221 v1.0.4
+NEXT VERSION
 ========
-* Bump version to 1.0.4
+
+20230327 v1.1.0
+========
+* Bump version to 1.1.0
 * Support Prestashop 8
