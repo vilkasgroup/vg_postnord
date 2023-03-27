@@ -1,0 +1,9 @@
+<button id="{{ '%s_grid_bulk_action_%s'|format(grid.id, action.id) }}"
+        class="dropdown-item"
+        type="button"
+        onclick="{{ action.options.function }}"
+        data-modal-id="{{ action.options.modal_id }}"
+        data-url="{{ path(action.options.route) }}"
+>
+  {{ action.name }}
+</button>

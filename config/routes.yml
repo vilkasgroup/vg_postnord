@@ -1,0 +1,53 @@
+admin_vg_postnord_create_booking:
+  path: vg_postnord/create_booking
+  methods: [GET, POST]
+  defaults:
+    _controller: 'Vilkas\Postnord\Controller\Admin\VgPostnordBookingController::createBookingAction'
+
+admin_vg_postnord_fetch_label:
+  path: vg_postnord/fetch_label
+  methods: [GET, POST]
+  defaults:
+    _controller: 'Vilkas\Postnord\Controller\Admin\VgPostnordBookingController::sendBookingAction'
+
+admin_vg_postnord_fetch_return_label:
+  path: vg_postnord/fetch_return_label
+  methods: [GET, POST]
+  defaults:
+    _controller: 'Vilkas\Postnord\Controller\Admin\VgPostnordBookingController::getReturnLabelAction'
+
+admin_vg_postnord_fetch_both_label:
+  path: vg_postnord/fetch_both_label
+  methods: [GET, POST]
+  defaults:
+    _controller: 'Vilkas\Postnord\Controller\Admin\VgPostnordBookingController::getBothLabelAction'
+
+admin_vg_postnord_list_action:
+  path: vg_postnord/list_action
+  methods: [GET]
+  defaults:
+    _controller: 'Vilkas\Postnord\Controller\Admin\VgPostnordBookingController::listAction'
+    _legacy_controller: VgPostnordBookingController
+
+admin_vg_postnord_edit_action:
+  path: /vg_postnord/{bookingId}/edit
+  methods: [GET, POST]
+  defaults:
+    _controller: 'Vilkas\Postnord\Controller\Admin\VgPostnordBookingController::editBookingAction'
+    _legacy_controller: "AdminVGPostnordBookingController"
+  requirements:
+    bookingId: \d+
+
+admin_vg_postnord_ajax_service_point_action:
+  path: vg_postnord_ajax_service_point
+  methods: [POST]
+  defaults:
+    _controller: 'Vilkas\Postnord\Controller\Admin\VgPostnordBookingController::ajaxServicePointAction'
+    _legacy_controller: VgPostnordBookingController
+
+admin_vg_postnord_ajax_fetch_label_action:
+  path: vg_postnord_ajax_fetch_label
+  methods: [POST]
+  defaults:
+    _controller: 'Vilkas\Postnord\Controller\Admin\VgPostnordBookingController::ajaxFetchLabelAction'
+    _legacy_controller': VgPostnordBookingController

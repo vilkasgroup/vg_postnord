@@ -1,0 +1,16 @@
+{% extends '@PrestaShop/Admin/layout.html.twig' %}
+
+{% block content %}
+  <div class="row justify-content-center">
+    <div class="col-lg-12">
+      {% include '@PrestaShop/Admin/Common/Grid/grid_panel.html.twig' with {'grid': vgPostnordBookingsGrid} %}
+    </div>
+  </div>
+{%  endblock %}
+
+{% block javascripts %}
+  {{ parent() }}
+
+  <script src="{{ asset('../modules/vg_postnord/views/js/vg_postnord.bundle.js') }}"></script>
+  <script src="{{ asset('themes/default/js/bundle/pagination.js') }}"></script>
+{% endblock %}

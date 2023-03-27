@@ -1,0 +1,46 @@
+{
+  "name": "vilkas/vg_postnord",
+  "description": "Postnord integration for prestashop",
+  "type": "prestashop-module",
+  "require": {
+    "php": ">=7.2.0",
+    "symfony/http-client": "^5.0",
+    "monolog/monolog": "^2.3",
+    "symfony/http-foundation": "^5.4",
+    "iio/libmergepdf": "^4.0"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "7.0.2",
+    "prestashop/php-dev-tools": "^4.2"
+  },
+  "autoload": {
+    "psr-4": {
+      "Vilkas\\Postnord\\": "src/"
+    },
+    "classmap": [
+      "vg_postnord.php"
+    ],
+    "exclude-from-classmap": []
+  },
+  "config": {
+    "prepend-autoloader": false,
+    "preferred-install": "dist"
+  },
+  "scripts": {
+    "test": "./vendor/bin/phpunit --debug --verbose tests"
+  },
+  "authors": [
+    {
+      "name": "Tatu Wikman",
+      "email": "tatu.wikman@gmail.com"
+    },
+    {
+      "name": "Sauli Maijala",
+      "email": "sauli@vilkas.fi"
+    },
+    {
+      "name": "Dat Nguyen",
+      "email": "dat.nguyen@vilkas.fi"
+    }
+  ]
+}

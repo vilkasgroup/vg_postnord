@@ -1,0 +1,16 @@
+{% extends '@PrestaShop/Admin/layout.html.twig' %}
+
+{% block content %}
+  <div class="row justify-content-center">
+    <div class="col">
+      {% include '@Modules/vg_postnord/views/templates/admin/forms/edit-booking.html.twig' %}
+    </div>
+  </div>
+{% endblock %}
+
+{% block javascripts %}
+  {{ parent() }}
+
+  <script src="{{ asset('../modules/vg_postnord/views/js/form.js') }}"></script>
+  <script src="{{ asset('../modules/vg_postnord/views/js/vg_postnord_form.bundle.js') }}"></script>
+{% endblock %}

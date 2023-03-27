@@ -1,0 +1,18 @@
+{
+  "name": "pagantis/autoindex",
+  "type": "module",
+  "description": "Generate index.php file in all directories that does not contain index.php file. This is helpful for Prestashop",
+  "keywords": ["autoindex", "module", "index", "prestashop"],
+  "homepage": "https://github.com/pagantis/autoindex",
+  "license": "MIT",
+  "authors": [{
+    "name": "Pagantis",
+    "email": "integration@pagantis.com"
+  }],
+  "require": {
+    "php": ">=5.3"
+  },
+  "config": {
+    "bin-dir": "bin/"
+  }
+}
