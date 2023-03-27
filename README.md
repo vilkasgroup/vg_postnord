@@ -23,11 +23,11 @@ There's also a variable without html for use in text-based emails: `{postnord_se
 Remember to:
 - Bump version number according to semver in the module file
 - Update CHANGELOG, change next version to the new version and add new section for next version
-- Create and merge to main
-- tag main for the release
+- Create pull request of the changes and merge to main
+- tag main for the release using format vX.X.X (same version as in the module file)
 
 ```
-git tag v1.0.0
+git tag vX.X.X
 git push --tags
 ```
 
