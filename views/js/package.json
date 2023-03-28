@@ -21,7 +21,7 @@
     "loader-utils": "^1.4.2",
     "uglify-save-license": "^0.4.1",
     "uglifyjs-webpack-plugin": "^2.2.0",
-    "webpack": "^2.7",
+    "webpack": "^5.76",
     "webpack-cli": "^4.1.0"
   },
   "scripts": {
