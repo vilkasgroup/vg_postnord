@@ -58,7 +58,7 @@ module.exports = {
       // FILES
       {
         test: /.(jpg|png|woff2?|eot|otf|ttf|svg|gif)$/,
-        loader: 'file-loader?name=[hash].[ext]',
+        type: 'asset/resource',
       },
     ],
   },
