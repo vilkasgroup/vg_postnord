@@ -129,13 +129,13 @@ class SkipDisabledChoiceTable {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__components_skip_disabled_choice_table__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__extensions_skip_disabled_choice_table__ = __webpack_require__(0);
 
 
 var $ = window.$;
 
 $(function () {
-  new __WEBPACK_IMPORTED_MODULE_0__components_skip_disabled_choice_table__["a" /* default */]();
+  new __WEBPACK_IMPORTED_MODULE_0__extensions_skip_disabled_choice_table__["a" /* default */]();
 });
 
 /***/ })
