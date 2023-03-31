@@ -55,14 +55,6 @@ module.exports = {
           },
         }],
       },
-      {
-        test: /jquery-ui\.js/,
-        use: 'imports-loader?define=>false&this=>window',
-      },
-      {
-        test: /jquery\.magnific-popup\.js/,
-        use: 'imports-loader?define=>false&exports=>false&this=>window',
-      },
       // FILES
       {
         test: /.(jpg|png|woff2?|eot|otf|ttf|svg|gif)$/,
