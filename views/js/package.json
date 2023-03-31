@@ -3,9 +3,7 @@
   "version": "1.0.0",
   "description": "Postnord integration for PrestaShop",
   "main": "index.js",
-  "dependencies": {
-    "babel-plugin-transform-object-rest-spread": "^6.26.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "babel-core": "^6.26.3",
     "babel-loader": "^7.1.5",
