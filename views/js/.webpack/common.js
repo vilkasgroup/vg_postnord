@@ -1,6 +1,5 @@
 const path = require('path');
 const webpack = require('webpack');
-const CleanWebpackPlugin = require('clean-webpack-plugin');
 
 // PrestaShop folders, we use process.env.PWD instead of __dirname in case the module is symlinked
 // Note: when building, your admin folder needs to be named admin-dev
@@ -72,9 +71,6 @@ module.exports = {
     ],
   },
   plugins: [
-    new CleanWebpackPlugin(['js'], {
-      root: path.resolve(__dirname, '../../views')
-    }),
     new webpack.ProvidePlugin({
       $: 'jquery', // needed for jquery-ui
       jQuery: 'jquery',
