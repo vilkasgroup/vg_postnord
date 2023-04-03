@@ -24,7 +24,7 @@ module.exports = {
     vg_postnord_form: './vg_postnord/form',
   },
   output: {
-    path: path.resolve(__dirname, '../'),
+    path: path.resolve(__dirname, '../dist/'),
     filename: '[name].bundle.js',
     libraryTarget: 'window',
     library: '[name]',
