@@ -1,5 +1,6 @@
 const path = require('path');
 const webpack = require('webpack');
+const TerserPlugin = require('terser-webpack-plugin');
 
 // PrestaShop folders, we use process.env.PWD instead of __dirname in case the module is symlinked
 // Note: when building, your admin folder needs to be named admin-dev
@@ -9,6 +10,12 @@ const psComponentsDir = path.resolve(psJsDir, 'components');
 const psAppDir = path.resolve(psRootDir, 'admin-dev/themes/new-theme/js/app');
 
 module.exports = {
+  optimization: {
+    minimize: true,
+    minimizer: [new TerserPlugin({
+      extractComments: false,
+    })],
+  },
   externals: {
     jquery: 'jQuery',
   },
