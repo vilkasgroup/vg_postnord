@@ -1,6 +1,6 @@
 const path = require('path');
 const webpack = require('webpack');
-const CleanWebpackPlugin = require('clean-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
 
 // PrestaShop folders, we use process.env.PWD instead of __dirname in case the module is symlinked
 // Note: when building, your admin folder needs to be named admin-dev
@@ -10,6 +10,12 @@ const psComponentsDir = path.resolve(psJsDir, 'components');
 const psAppDir = path.resolve(psRootDir, 'admin-dev/themes/new-theme/js/app');
 
 module.exports = {
+  optimization: {
+    minimize: true,
+    minimizer: [new TerserPlugin({
+      extractComments: false,
+    })],
+  },
   externals: {
     jquery: 'jQuery',
   },
@@ -18,7 +24,7 @@ module.exports = {
     vg_postnord_form: './vg_postnord/form',
   },
   output: {
-    path: path.resolve(__dirname, '../'),
+    path: path.resolve(__dirname, '../dist/'),
     filename: '[name].bundle.js',
     libraryTarget: 'window',
     library: '[name]',
@@ -39,7 +45,7 @@ module.exports = {
           loader: 'babel-loader',
           options: {
             presets: [
-              ['es2015', {modules: false}],
+              ['@babel/preset-env', { modules: false }],
             ],
           },
         }],
@@ -51,30 +57,19 @@ module.exports = {
           loader: 'babel-loader',
           options: {
             presets: [
-              ['es2015', {modules: false}],
+              ['@babel/preset-env', { modules: false }],
             ],
           },
         }],
       },
-      {
-        test: /jquery-ui\.js/,
-        use: 'imports-loader?define=>false&this=>window',
-      },
-      {
-        test: /jquery\.magnific-popup\.js/,
-        use: 'imports-loader?define=>false&exports=>false&this=>window',
-      },
       // FILES
       {
         test: /.(jpg|png|woff2?|eot|otf|ttf|svg|gif)$/,
-        loader: 'file-loader?name=[hash].[ext]',
+        type: 'asset/resource',
       },
     ],
   },
   plugins: [
-    new CleanWebpackPlugin(['js'], {
-      root: path.resolve(__dirname, '../../views')
-    }),
     new webpack.ProvidePlugin({
       $: 'jquery', // needed for jquery-ui
       jQuery: 'jquery',
