@@ -1,4 +1,4 @@
-# Postnord shipping
+# Postnord shipping integration for Prestashop
 
 [Postnord](https://developer.postnord.com/) integration for PrestaShop.
 
