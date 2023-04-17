@@ -45,9 +45,9 @@ get your apikey from: https://atdeveloper.postnord.com/signup
 
 ## Docs
 
-Documentation is built using Jekyll in docs folder and are update when new commits are done to `main`.
+Documentation is built using Jekyll in docs folder and is updated when new commits are pushed to `main`.
 
-To build docks locally install ruby and bundler and run:
+To build docs locally install ruby and bundler and run:
 
 ```
 cd docs
