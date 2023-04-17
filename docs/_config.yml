@@ -1,0 +1,71 @@
+locale                   : "en-US"
+
+title                    : Prestashop Postnord Documentation
+title_separator          : "-"
+author:
+  name                   : Vilkas Group Oy
+  email                  : support@vilkas.fi
+  links:
+    - label: "Email"
+      icon: "fas fa-fw fa-envelope-square"
+    - label: "Website"
+      icon: "fas fa-fw fa-lin"
+      url: "https://www.vilkas.fi"
+
+include:
+  - _pages
+
+description              : Postnord module for Prestashop
+baseurl                  : ""
+url                      : ""
+
+twitter:
+  username         : vilkasgroup
+github_username          : vilkasgroup
+repository               : vilkasgroup/vg_postnord
+
+search                   : true
+
+atom_feed:
+  hide: true
+
+theme: minimal-mistakes-jekyll
+minimal_mistakes_skin    : "dark"
+breadcrumbs: false
+
+
+markdown: kramdown
+highlighter: rouge
+kramdown:
+  input: GFM
+  hard_wrap: false
+  auto_ids: true
+  footnote_nr: 1
+  entity_output: as_char
+  toc_levels: 1..6
+  smart_quotes: lsquo,rsquo,ldquo,rdquo
+  enable_coderay: false
+
+footer:
+  links:
+    - label: "Twitter"
+      icon: "fab fa-fw fa-twitter-square"
+      url: "https://twitter.com/vilkasgroup"
+    - label: "GitHub"
+      icon: "fab fa-fw fa-github"
+      url: "https://github.com/vilkasgroup/vg_postnord"
+
+
+defaults:
+  # _pages
+  - scope:
+      path: ""
+      type: pages
+    values:
+      layout: single
+      author_profile: false
+      toc: false
+      sidebar:
+        nav: "docs"
+      classes: wide
+

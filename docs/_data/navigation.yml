@@ -1,0 +1,20 @@
+main:
+  - title: "Docs"
+    url: /docs/
+
+# documentation links
+docs:
+  - title: Getting started
+    children:
+      - title: "Installation"
+        url: /docs/#installation
+      - title: "Configuration"
+        url: /docs/#configuration
+
+
+  - title: Usage
+    children:
+      - title: "Pickuplocations in storefront"
+        url: /docs/#pickuplocations-in-storefront
+      - title: "Generating labels"
+        url: /docs/#generating-labels
