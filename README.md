@@ -9,8 +9,12 @@ Please see [documentation](https://vilkasgroup.github.io/vg_postnord/)
 # Developing
 
 ```
+cd modules
+git clone git@github.com:vilkasgroup/vg_postnord.git
 composer dump-autoload --optimize --no-dev --classmap-authoritative
 ```
+
+And install the module
 
 ## Creating a new release
 
