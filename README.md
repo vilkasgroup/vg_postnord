@@ -2,21 +2,15 @@
 
 [Postnord](https://developer.postnord.com/) integration for PrestaShop.
 
-## Developing
+## Docs
+
+Please see [documentation](https://vilkasgroup.github.io/vg_postnord/)
+
+# Developing
 
 ```
 composer dump-autoload --optimize --no-dev --classmap-authoritative
 ```
-
-## Usage
-
-### Pickup location in email
-
-This module adds a `{postnord_service_point}` placeholder to the order confirmation template variables,
-which contains information about the selected pickup point for the order. If you want to display the information,
-you will have to add the placeholder to the template manually.
-
-There's also a variable without html for use in text-based emails: `{postnord_service_point_no_html}`
 
 ## Creating a new release
 
@@ -44,3 +38,19 @@ POSTNORD_APIKEY=asdf composer run-script test
 You can also define `POSTNORD_HOST` if left out it will default to `atapi2.postnord.com`
 
 get your apikey from: https://atdeveloper.postnord.com/signup
+
+## Docs
+
+Documentation is built using Jekyll in docs folder and are update when new commits are done to `main`.
+
+To build docks locally install ruby and bundler and run:
+
+```
+cd docs
+bundle install
+bundle exec jekyll serve
+```
+
+Docs use [Minimal Mistakes](https://mmistakes.github.io/minimal-mistakes/docs/quick-start-guide/) theme.
+
+Remember to update docs side nav if you add new sections
