@@ -11,7 +11,7 @@ Postnord module for Prestashop is created by [Vilkas Group Oy](https://www.vilka
 
 ## Read the documentation
 
-Documentation is still a work in progress but you can read it [here](/docs)
+Documentation is still a work in progress but you can read it [here]({% link _pages/docs.md %})
 
 ## Found a bug?
 
