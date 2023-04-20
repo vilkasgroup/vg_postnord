@@ -940,9 +940,20 @@ class Vg_postnord extends CarrierModule
      */
     public function hookDisplayCarrierExtraContent($params)
     {
-        // don't show pickup point selection if "optional service point" isn't a mandatory additional service
+        // don't show pickup point selection if the "optional service point" additional service hasn't been
+        // selected and isn't mandatory
         $carrier_config = $this->getCarrierConfiguration((int) $params["carrier"]["id_reference"]);
-        if (!in_array("A7", $carrier_config["mandatory_service_codes"])) {
+        if (
+            !array_key_exists("additional_service_codes", $carrier_config)
+            || !array_key_exists("mandatory_service_codes", $carrier_config)
+        ) {
+            return null;
+        }
+        $additional_service_codes = json_decode($carrier_config["additional_service_codes"]) ?? [];
+        if (
+            !in_array("A7", $carrier_config["mandatory_service_codes"])
+            && !in_array("A7", $additional_service_codes)
+        ) {
             return null;
         }
 
