@@ -1156,8 +1156,8 @@ class Vg_postnord extends CarrierModule
     /**
      * Operations when an order is created:
      * - Save id_order in cart data if shipping method is PostNord
-     * - Clear service point from cart data if it's not required
-     * - Pre-select the 'closest' service point if the customer didn't select any (and is required)
+     * - Clear service point from cart data if it's not applicable
+     * - Pre-select the 'closest' service point if the customer didn't select any (and is applicable)
      * - Fetch and save service point data to cart data if it has a service point id
      */
     public function hookActionValidateOrder(array $params)
