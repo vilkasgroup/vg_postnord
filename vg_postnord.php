@@ -944,7 +944,7 @@ class Vg_postnord extends CarrierModule
      * If the selected carrier is marked as a postnord carrier that has pickup locations show a selection screen of
      * pickup point to the customer
      *
-     * The pickup point will be saved as a ajax request to be used for label creation later
+     * The pickup point will be saved as an ajax request to be used for label creation later
      */
     public function hookDisplayCarrierExtraContent($params)
     {
