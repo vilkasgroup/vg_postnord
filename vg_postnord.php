@@ -780,6 +780,27 @@ class Vg_postnord extends CarrierModule
     }
 
     /**
+     * Get both mandatory and additional service codes for a given carrier config
+     *
+     * @param array $carrier_config
+     *
+     * @return array
+     */
+    public function getCombinedServiceCodesForConfig(array $carrier_config): array
+    {
+        $mandatory = $additional = [];
+
+        if (array_key_exists("additional_service_codes", $carrier_config)) {
+            $additional = $carrier_config["additional_service_codes"];
+        }
+        if (array_key_exists("mandatory_service_codes", $carrier_config)) {
+            $mandatory = $carrier_config["mandatory_service_codes"];
+        }
+
+        return array_unique(array_merge($mandatory, $additional));
+    }
+
+    /**
      * Save form data.
      */
     protected function postProcess(): bool
