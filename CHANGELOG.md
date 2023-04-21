@@ -1,5 +1,6 @@
 NEXT VERSION
 ========
+* Convert additional_service_codes inside carrier configurations from JSON string to array
 
 20230403 v1.1.1
 ========
