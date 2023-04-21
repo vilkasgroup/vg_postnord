@@ -750,10 +750,13 @@ class Vg_postnord extends CarrierModule
             // just for the label (free text). always empty data
             $carrierValues['id_carrier_reference_' . $carrier['id_reference']] = '';
 
-            $keys = ['service_code_consigneecountry', 'service_codes', 'additional_service_codes'];
+            $keys = ['service_code_consigneecountry', 'service_codes'];
             foreach ($keys as $key) {
                 $carrierValues['id_carrier_reference_' . $carrier['id_reference'] . '_' . $key] = $carrierSettings[$carrier['id_reference']][$key] ?? '';
             }
+
+            // special case: convert additional service codes into a JSON string for the hidden text input
+            $carrierValues['id_carrier_reference_' . $carrier['id_reference'] . '_additional_service_codes'] = json_encode($carrierSettings[$carrier['id_reference']]['additional_service_codes']) ?? '';
         }
 
         return $carrierValues;
@@ -843,6 +846,11 @@ class Vg_postnord extends CarrierModule
             } else {
                 $this->setCarrierToPostNord($id_carrier_reference, false);
             }
+
+            // convert additional_service_codes from JSON string to array for storage,
+            // so it won't be double-encoded inside the database
+            $asc = json_decode($oneconfig["additional_service_codes"]) ?? [];
+            $oneconfig["additional_service_codes"] = $asc;
 
             // TODO: swear there's a better way to do whatever the following lines do
 
