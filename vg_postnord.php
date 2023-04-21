@@ -972,17 +972,8 @@ class Vg_postnord extends CarrierModule
         // don't show pickup point selection if the "optional service point" additional service hasn't been
         // selected and isn't mandatory
         $carrier_config = $this->getCarrierConfiguration((int) $params["carrier"]["id_reference"]);
-        if (
-            !array_key_exists("additional_service_codes", $carrier_config)
-            || !array_key_exists("mandatory_service_codes", $carrier_config)
-        ) {
-            return null;
-        }
-        $additional_service_codes = json_decode($carrier_config["additional_service_codes"]) ?? [];
-        if (
-            !in_array("A7", $carrier_config["mandatory_service_codes"])
-            && !in_array("A7", $additional_service_codes)
-        ) {
+        $service_codes = $this->getCombinedServiceCodesForConfig($carrier_config);
+        if (!in_array("A7", $service_codes)) {
             return null;
         }
 
@@ -1236,22 +1227,8 @@ class Vg_postnord extends CarrierModule
         }
 
         $carrier_config = $this->getCarrierConfiguration($carrier->id_reference);
-        if (
-            !array_key_exists("additional_service_codes", $carrier_config)
-            || !array_key_exists("mandatory_service_codes", $carrier_config)
-        ) {
-            $this->logger->error("Service codes are missing from carrier configuration", [
-                "hook"     => "actionValidateOrder",
-                "id_order" => $order->id,
-                "id_cart"  => $cart->id
-            ]);
-            return;
-        }
-        $additional_service_codes = json_decode($carrier_config["additional_service_codes"]) ?? [];
-        if (
-            !in_array("A7", $carrier_config["mandatory_service_codes"])
-            && !in_array("A7", $additional_service_codes)
-        ) {
+        $service_codes = $this->getCombinedServiceCodesForConfig($carrier_config);
+        if (!in_array("A7", $service_codes)) {
             // have to make this check here and not right after fetching the cart data, since the else clause below
             // will have to create the data if it doesn't exist
             if (!$cartData) {
