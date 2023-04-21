@@ -682,7 +682,7 @@ class Vg_postnord extends CarrierModule
 
         $carrier_selections = [];
 
-        // build setting fields for each carrier
+        // build setting fields for each carrier,
         // each carrier is prefixed with id_carrier_reference
         // and then their reference id
         // and then the setting
@@ -846,7 +846,7 @@ class Vg_postnord extends CarrierModule
 
             // TODO: swear there's a better way to do whatever the following lines do
 
-            if ($oneconfig["service_code_consigneecountry"] == false) {
+            if (!$oneconfig["service_code_consigneecountry"]) {
                 $oneconfig["mandatory_service_codes"] = [];
                 continue;
             }
