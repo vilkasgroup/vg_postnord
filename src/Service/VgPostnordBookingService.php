@@ -75,7 +75,7 @@ class VgPostnordBookingService
                 $mandatory_services = $carrier_settings[$carrier->id_reference]["mandatory_service_codes"] ?? [];
             }
             if (array_key_exists("additional_service_codes", $carrier_settings[$carrier->id_reference])) {
-                $additional_services = json_decode($carrier_settings[$carrier->id_reference]["additional_service_codes"]) ?? [];
+                $additional_services = $carrier_settings[$carrier->id_reference]["additional_service_codes"] ?? [];
             }
         }
         $additional_service_codes = implode(",", array_unique(array_merge($mandatory_services, $additional_services)));

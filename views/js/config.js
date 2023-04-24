@@ -31,6 +31,7 @@ $(document).ready(() => {
         'service_code_consigneecountry'
       )}`
     );
+
     /**
      * Add checkbox in place of hiddenInput field with value from countryValidCombinations
      * filtered with serviceCodeField
@@ -65,19 +66,16 @@ $(document).ready(() => {
       Object.keys(filteredCombination)
         .sort()
         .forEach(function (element) {
-          checkboxesContent += `<div class="checkbox">
-                        <label for='${hiddenInput.id}_${
-  filteredCombination[element].adnlServiceCode
-}'>
-                        <input type="checkbox" name="checkbox" ${
-  hiddenInput.value.includes(element) ? 'checked' : ''
-}
-                        id="${hiddenInput.id}_${
-  filteredCombination[element].adnlServiceCode
-}" value="${filteredCombination[element].adnlServiceCode}">
-                        ${filteredCombination[element].adnlServiceCode} - ${filteredCombination[element].adnlServiceName}
-                    </label>
-                </div>`;
+          checkboxesContent += `
+            <div class="checkbox">
+              <label for='${hiddenInput.id}_${filteredCombination[element].adnlServiceCode}'>
+              <input type="checkbox" name="checkbox" ${hiddenInput.value.includes(element) ? 'checked' : ''}
+                     id="${hiddenInput.id}_${filteredCombination[element].adnlServiceCode}"
+                     value="${filteredCombination[element].adnlServiceCode}">
+                ${filteredCombination[element].adnlServiceCode} - ${filteredCombination[element].adnlServiceName}
+              </label>
+            </div>
+          `;
         });
 
       // Add checkboxes then click to update/clear hiddenInputField
@@ -88,7 +86,7 @@ $(document).ready(() => {
     $(hiddenInput).parent().prepend('<div class="checkboxes"></div>');
     addCheckbox(hiddenInput, serviceCodeField, countryValidCombinations);
 
-    // Loopthrough checkboxes on click and add value to the hiddenInput
+    // Loop through checkboxes on click and add value to the hiddenInput
     $(this)
       .parent()
       .click(function () {

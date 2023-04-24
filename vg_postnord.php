@@ -31,7 +31,7 @@ class Vg_postnord extends CarrierModule
     {
         $this->name = 'vg_postnord';
         $this->tab = 'shipping_logistics';
-        $this->version = '1.1.1';
+        $this->version = '1.1.2';
         $this->author = 'Vilkas Group Oy';
         $this->need_instance = 0;
 
@@ -682,7 +682,7 @@ class Vg_postnord extends CarrierModule
 
         $carrier_selections = [];
 
-        // build setting fields for each carrier
+        // build setting fields for each carrier,
         // each carrier is prefixed with id_carrier_reference
         // and then their reference id
         // and then the setting
@@ -750,10 +750,13 @@ class Vg_postnord extends CarrierModule
             // just for the label (free text). always empty data
             $carrierValues['id_carrier_reference_' . $carrier['id_reference']] = '';
 
-            $keys = ['service_code_consigneecountry', 'service_codes', 'additional_service_codes'];
+            $keys = ['service_code_consigneecountry', 'service_codes'];
             foreach ($keys as $key) {
                 $carrierValues['id_carrier_reference_' . $carrier['id_reference'] . '_' . $key] = $carrierSettings[$carrier['id_reference']][$key] ?? '';
             }
+
+            // special case: convert additional service codes into a JSON string for the hidden text input
+            $carrierValues['id_carrier_reference_' . $carrier['id_reference'] . '_additional_service_codes'] = json_encode($carrierSettings[$carrier['id_reference']]['additional_service_codes']) ?? '';
         }
 
         return $carrierValues;
@@ -774,6 +777,27 @@ class Vg_postnord extends CarrierModule
     public function getCarrierConfiguration($id_carrier_reference): array
     {
         return $this->getCarrierConfigurations()[$id_carrier_reference];
+    }
+
+    /**
+     * Get both mandatory and additional service codes for a given carrier config
+     *
+     * @param array $carrier_config
+     *
+     * @return array
+     */
+    public function getCombinedServiceCodesForConfig(array $carrier_config): array
+    {
+        $mandatory = $additional = [];
+
+        if (array_key_exists("additional_service_codes", $carrier_config)) {
+            $additional = $carrier_config["additional_service_codes"];
+        }
+        if (array_key_exists("mandatory_service_codes", $carrier_config)) {
+            $mandatory = $carrier_config["mandatory_service_codes"];
+        }
+
+        return array_unique(array_merge($mandatory, $additional));
     }
 
     /**
@@ -844,9 +868,14 @@ class Vg_postnord extends CarrierModule
                 $this->setCarrierToPostNord($id_carrier_reference, false);
             }
 
+            // convert additional_service_codes from JSON string to array for storage,
+            // so it won't be double-encoded inside the database
+            $asc = json_decode($oneconfig["additional_service_codes"]) ?? [];
+            $oneconfig["additional_service_codes"] = $asc;
+
             // TODO: swear there's a better way to do whatever the following lines do
 
-            if ($oneconfig["service_code_consigneecountry"] == false) {
+            if (!$oneconfig["service_code_consigneecountry"]) {
                 $oneconfig["mandatory_service_codes"] = [];
                 continue;
             }
@@ -936,13 +965,15 @@ class Vg_postnord extends CarrierModule
      * If the selected carrier is marked as a postnord carrier that has pickup locations show a selection screen of
      * pickup point to the customer
      *
-     * The pickup point will be saved as a ajax request to be used for label creation later
+     * The pickup point will be saved as an ajax request to be used for label creation later
      */
     public function hookDisplayCarrierExtraContent($params)
     {
-        // don't show pickup point selection if "optional service point" isn't a mandatory additional service
+        // don't show pickup point selection if the "optional service point" additional service hasn't been
+        // selected and isn't mandatory
         $carrier_config = $this->getCarrierConfiguration((int) $params["carrier"]["id_reference"]);
-        if (!in_array("A7", $carrier_config["mandatory_service_codes"])) {
+        $service_codes = $this->getCombinedServiceCodesForConfig($carrier_config);
+        if (!in_array("A7", $service_codes)) {
             return null;
         }
 
@@ -1145,8 +1176,8 @@ class Vg_postnord extends CarrierModule
     /**
      * Operations when an order is created:
      * - Save id_order in cart data if shipping method is PostNord
-     * - Clear service point from cart data if it's not required
-     * - Pre-select the 'closest' service point if the customer didn't select any (and is required)
+     * - Clear service point from cart data if it's not applicable
+     * - Pre-select the 'closest' service point if the customer didn't select any (and is applicable)
      * - Fetch and save service point data to cart data if it has a service point id
      */
     public function hookActionValidateOrder(array $params)
@@ -1196,7 +1227,8 @@ class Vg_postnord extends CarrierModule
         }
 
         $carrier_config = $this->getCarrierConfiguration($carrier->id_reference);
-        if (!in_array("A7", $carrier_config["mandatory_service_codes"])) {
+        $service_codes = $this->getCombinedServiceCodesForConfig($carrier_config);
+        if (!in_array("A7", $service_codes)) {
             // have to make this check here and not right after fetching the cart data, since the else clause below
             // will have to create the data if it doesn't exist
             if (!$cartData) {
