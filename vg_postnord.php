@@ -86,7 +86,7 @@ class Vg_postnord extends CarrierModule
 
         return parent::install()
             && $this->installSQL()
-            && $this->registerHook('header')
+            && $this->registerHook('displayHeader')
             && $this->registerHook('actionAdminControllerSetMedia')
             && $this->registerHook('displayCarrierExtraContent')
             && $this->registerHook('displayAdminOrderMain')
@@ -953,7 +953,7 @@ class Vg_postnord extends CarrierModule
     /**
      * Add the CSS & JavaScript files you want to be added on the FO.
      */
-    public function hookHeader()
+    public function hookDisplayHeader()
     {
         $this->context->controller->addJS($this->_path . '/views/js/front.js');
         $this->context->controller->addCSS($this->_path . '/views/css/front.css');

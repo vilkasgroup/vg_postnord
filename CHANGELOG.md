@@ -3,6 +3,7 @@ NEXT VERSION
 * Convert additional_service_codes inside carrier configurations from JSON string to array
 * Take additional service codes into account when displaying pickup selector and doing order validation operations
 * Remove old licenses from files
+* Use the "displayHeader" hook instead of the deprecated "header" hook
 
 20230403 v1.1.1
 ========
