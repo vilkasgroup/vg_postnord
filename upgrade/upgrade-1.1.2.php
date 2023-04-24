@@ -18,5 +18,7 @@ function upgrade_module_1_1_2(Vg_postnord $module): bool
         }
     }
 
-    return Configuration::updateValue('VG_POSTNORD_CARRIER_SETTINGS', json_encode($carrier_config));
+    return Configuration::updateValue('VG_POSTNORD_CARRIER_SETTINGS', json_encode($carrier_config))
+        && $module->unregisterHook("header")
+        && $module->registerHook("displayHeader");
 }
