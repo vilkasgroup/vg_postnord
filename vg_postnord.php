@@ -77,6 +77,7 @@ class Vg_postnord extends CarrierModule
         Configuration::updateValue('VG_POSTNORD_HOST', '');
         Configuration::updateValue('VG_POSTNORD_APIKEY', '');
         Configuration::updateValue('VG_POSTNORD_ISSUER_COUNTRY', '');
+        Configuration::updateValue('VG_POSTNORD_PARTY_ID', '');
         Configuration::updateValue('VG_POSTNORD_EORI_NUMBER', '');
         Configuration::updateValue('VG_POSTNORD_DEFAULT_TARIFF_NUMBER', '');
         Configuration::updateValue('VG_POSTNORD_LABEL_PAPER_SIZE', 'A5');
@@ -121,6 +122,7 @@ class Vg_postnord extends CarrierModule
         Configuration::deleteByName('VG_POSTNORD_HOST');
         Configuration::deleteByName('VG_POSTNORD_APIKEY');
         Configuration::deleteByName('VG_POSTNORD_ISSUER_COUNTRY');
+        Configuration::deleteByName('VG_POSTNORD_PARTY_ID');
         Configuration::deleteByName('VG_POSTNORD_EORI_NUMBER');
         Configuration::deleteByName('VG_POSTNORD_DEFAULT_TARIFF_NUMBER');
         Configuration::deleteByName('VG_POSTNORD_LABEL_PAPER_SIZE');
@@ -370,6 +372,13 @@ class Vg_postnord extends CarrierModule
                     ],
                     [
                         'type' => 'text',
+                        'name' => 'VG_POSTNORD_PARTY_ID',
+                        'label' => $this->trans('Party ID', [], 'Modules.Vgpostnord.Admin'),
+                        'desc' => $this->trans('Get this information from Postnord', [], 'Modules.Vgpostnord.Admin'),
+                        'required' => true
+                    ],
+                    [
+                        'type' => 'text',
                         'name' => 'VG_POSTNORD_EORI_NUMBER',
                         'label' => $this->trans('EORI number', [], 'Modules.Vgpostnord.Admin'),
                         'desc' => $this->trans('Required for all customs declarations', [], 'Modules.Vgpostnord.Admin'),
@@ -416,6 +425,7 @@ class Vg_postnord extends CarrierModule
             'VG_POSTNORD_HOST' => Configuration::get('VG_POSTNORD_HOST'),
             'VG_POSTNORD_APIKEY' => Configuration::get('VG_POSTNORD_APIKEY'),
             'VG_POSTNORD_ISSUER_COUNTRY' => Configuration::get('VG_POSTNORD_ISSUER_COUNTRY'),
+            'VG_POSTNORD_PARTY_ID' => Configuration::get('VG_POSTNORD_PARTY_ID'),
             'VG_POSTNORD_EORI_NUMBER' => Configuration::get('VG_POSTNORD_EORI_NUMBER'),
             'VG_POSTNORD_DEFAULT_TARIFF_NUMBER' => Configuration::get('VG_POSTNORD_DEFAULT_TARIFF_NUMBER'),
             'VG_POSTNORD_LABEL_PAPER_SIZE' => Configuration::get('VG_POSTNORD_LABEL_PAPER_SIZE'),
@@ -440,12 +450,6 @@ class Vg_postnord extends CarrierModule
                         'name' => 'shop_name',
                         'label' => $this->trans('Shop name', [], 'Modules.Vgpostnord.Admin'),
                         'desc' => $this->trans('Sender name', [], 'Modules.Vgpostnord.Admin'),
-                    ],
-                    [
-                        'type' => 'text',
-                        'name' => 'shop_party_id',
-                        'label' => $this->trans('Shop party ID', [], 'Modules.Vgpostnord.Admin'),
-                        'desc' => $this->trans('Get this information from Postnord', [], 'Modules.Vgpostnord.Admin'),
                     ],
                     [
                         'type' => 'text',
@@ -507,7 +511,6 @@ class Vg_postnord extends CarrierModule
         if (empty($address)) {
             return [
                 'shop_name' => '',
-                'shop_party_id' => '',
                 'shop_street' => '',
                 'shop_postcode' => '',
                 'shop_city' => '',
