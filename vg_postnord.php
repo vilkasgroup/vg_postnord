@@ -375,7 +375,7 @@ class Vg_postnord extends CarrierModule
                         'type' => 'text',
                         'name' => 'VG_POSTNORD_PARTY_ID',
                         'label' => $this->trans('Party ID', [], 'Modules.Vgpostnord.Admin'),
-                        'desc' => $this->trans('Get this information from Postnord', [], 'Modules.Vgpostnord.Admin'),
+                        'desc' => $this->trans('10 digits long customer number (Party ID). Get this information from Postnord', [], 'Modules.Vgpostnord.Admin'),
                         'required' => true
                     ],
                     [
