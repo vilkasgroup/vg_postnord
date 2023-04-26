@@ -4,6 +4,8 @@ NEXT VERSION
 * Take additional service codes into account when displaying pickup selector and doing order validation operations
 * Remove old licenses from files
 * Use the "displayHeader" hook instead of the deprecated "header" hook
+* Move Party ID from address settings to basic settings
+* Check Party ID validity when saving module settings form
 
 20230403 v1.1.1
 ========

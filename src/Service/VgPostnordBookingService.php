@@ -182,9 +182,11 @@ class VgPostnordBookingService
             "reference"               => $order->reference
         ];
 
-        $shop_address  = json_decode(Configuration::get("VG_POSTNORD_SHOP_ADDRESS"), true);
-        $return_address  = json_decode(Configuration::get("VG_POSTNORD_RETURN_ADDRESS"), true);
-        $service_point = json_decode($booking->getServicePointData(), true);
+        $return_address = json_decode(Configuration::get("VG_POSTNORD_RETURN_ADDRESS"), true);
+        $service_point  = json_decode($booking->getServicePointData(), true);
+
+        $shop_address = json_decode(Configuration::get("VG_POSTNORD_SHOP_ADDRESS"), true);
+        $shop_address["shop_party_id"] = Configuration::get("VG_POSTNORD_PARTY_ID");
 
         $pickup_address = [];
         // add service point data if related additional service is found
