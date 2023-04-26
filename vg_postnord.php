@@ -15,6 +15,7 @@ use Vilkas\Postnord\Client\PostnordClient;
 use Vilkas\Postnord\Entity\VgPostnordBooking;
 use Vilkas\Postnord\Entity\VgPostnordCartData;
 use Vilkas\Postnord\Grid\Action\VgPostnordJavascriptAction;
+use Vilkas\Postnord\Validator\VgPostnordPartyIdValidator;
 
 if (!defined('_PS_VERSION_')) {
     exit;
@@ -814,6 +815,10 @@ class Vg_postnord extends CarrierModule
         $config_form_values = $this->getConfigFormValues();
         foreach (array_keys($config_form_values) as $key) {
             $result &= Configuration::updateValue($key, Tools::getValue($key));
+        }
+
+        if (!VgPostnordPartyIdValidator::partyIdIsValid(Tools::getValue("VG_POSTNORD_PARTY_ID"))) {
+            $this->context->controller->errors[] = $this->trans("Party ID does not seem to be valid.", [], "Modules.Vgpostnord.Admin");
         }
 
         // address config into json
