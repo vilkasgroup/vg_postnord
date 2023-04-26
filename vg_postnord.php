@@ -818,7 +818,7 @@ class Vg_postnord extends CarrierModule
         }
 
         if (!VgPostnordPartyIdValidator::partyIdIsValid(Tools::getValue("VG_POSTNORD_PARTY_ID"))) {
-            $this->context->controller->errors[] = $this->trans("Party ID does not seem to be valid.", [], "Modules.Vgpostnord.Admin");
+            $this->context->controller->errors[] = $this->trans("Party ID is not valid.", [], "Modules.Vgpostnord.Admin");
         }
 
         // address config into json
