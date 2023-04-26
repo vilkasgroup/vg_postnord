@@ -15,6 +15,9 @@ class VgPostnordPartyIdValidator
      */
     public static function partyIdIsValid(string $party_id): bool
     {
+        if (!is_numeric($party_id)) {
+            return false;
+        }
         if (strlen($party_id) !== 10) {
             return false;
         }
