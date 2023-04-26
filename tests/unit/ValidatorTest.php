@@ -64,6 +64,7 @@ class ValidatorTest extends TestCase
     {
         $inputs = [
             "",
+            "motivation",
             "7024721511",
             "4937275735",
             "9310593877"
