@@ -265,6 +265,22 @@ class PostnordClient
             throw $e;
         }
 
+        /*
+         * Filter out some service codes from the response:
+         * - InNight (48)
+         * - InNight Reverse (49)
+         * - Retail Delivery (59)
+         * - PostNord Part Loads (85)
+         * - Domestic Road (99)
+         */
+        $filtered_service_codes = ["48", "49", "59", "85", "99"];
+        foreach ($response["data"] as &$datum) {
+            $datum["serviceCodeDetails"] = array_filter($datum["serviceCodeDetails"], function($element) use ($filtered_service_codes) {
+                return !in_array($element["serviceCode"], $filtered_service_codes);
+            });
+        }
+        unset($datum);
+
         return $response;
     }
 
