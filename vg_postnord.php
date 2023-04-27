@@ -1277,7 +1277,7 @@ class Vg_postnord extends CarrierModule
                 ];
 
                 try {
-                    $response = $client->getServicePointsByAddress($params);
+                    $response = $client->getServicePointsByAddress($params, $service_codes);
                     if (
                         array_key_exists("servicePoints", $response)
                         && !empty($response["servicePoints"])

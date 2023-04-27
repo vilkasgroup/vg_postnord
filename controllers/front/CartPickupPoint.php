@@ -70,6 +70,7 @@ class Vg_postnordCartPickupPointModuleFrontController extends ModuleFrontControl
 
         $id_carrier_reference = Tools::getValue('carrierIdReference');
         $carrierSettings = $this->module->getCarrierConfiguration($id_carrier_reference);
+        $service_codes = Vg_postnord::getCombinedServiceCodesForConfig($carrierSettings);
 
         $typeId = $carrierSettings['service_codes'];
 
@@ -89,7 +90,7 @@ class Vg_postnordCartPickupPointModuleFrontController extends ModuleFrontControl
             'typeId' => $typeId // "type of the service point" or service code, see module configuration page
         ];
 
-        return $this->client->getServicePointsByAddress($params);
+        return $this->client->getServicePointsByAddress($params, $service_codes);
     }
 
     /**
