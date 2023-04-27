@@ -895,6 +895,11 @@ class Vg_postnord extends CarrierModule
             $valid_country_combinations = array_filter($valid_combinations, function ($element) use ($consignee_country) {
                 return $element['issuerCountryCode'] === $consignee_country ? $element : null;
             });
+            if (empty($valid_country_combinations)) {
+                $oneconfig["mandatory_service_codes"] = [];
+                continue;
+            }
+
             // find mandatory services for service code and consignee country
             $valid_country_combinations = reset($valid_country_combinations)["adnlServiceCodeCombDetails"];
             $mandatory_combinations = array_filter($valid_country_combinations, function ($element) use ($service_code, $consignee_country) {
