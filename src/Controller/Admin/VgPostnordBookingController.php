@@ -19,6 +19,7 @@ use PrestaShopBundle\Security\Annotation\ModuleActivated;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
+use Vg_postnord;
 use Vilkas\Postnord\Client\PostnordClient;
 use Vilkas\Postnord\Entity\VgPostnordBooking;
 use Vilkas\Postnord\Grid\Filter\VgPostnordBookingQueryFilter;
@@ -39,7 +40,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
     {
         parent::__construct();
 
-        $this->logger = \Vg_postnord::getLogger();
+        $this->logger = Vg_postnord::getLogger();
     }
 
     /**
@@ -110,6 +111,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
             Configuration::get('VG_POSTNORD_APIKEY')
         );
         $carrierSetting = json_decode(Configuration::get('VG_POSTNORD_CARRIER_SETTINGS'), true);
+        $service_codes = Vg_postnord::getCombinedServiceCodesForConfig($carrierSetting);
         $id_order = (int) $request->request->get('idOrder');
         $postalCode = $request->request->get('zipcode');
 
@@ -127,7 +129,7 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
         ];
 
         try {
-            $response = $client->getServicePointsByAddress($params);
+            $response = $client->getServicePointsByAddress($params, $service_codes);
 
             if (!empty($response['servicePoints'])) {
                 $servicePoints = $response['servicePoints'];

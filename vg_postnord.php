@@ -790,7 +790,7 @@ class Vg_postnord extends CarrierModule
      *
      * @return array
      */
-    public function getCombinedServiceCodesForConfig(array $carrier_config): array
+    public static function getCombinedServiceCodesForConfig(array $carrier_config): array
     {
         $mandatory = $additional = [];
 
@@ -985,7 +985,7 @@ class Vg_postnord extends CarrierModule
         // don't show pickup point selection if the "optional service point" additional service hasn't been
         // selected and isn't mandatory
         $carrier_config = $this->getCarrierConfiguration((int) $params["carrier"]["id_reference"]);
-        $service_codes = $this->getCombinedServiceCodesForConfig($carrier_config);
+        $service_codes = static::getCombinedServiceCodesForConfig($carrier_config);
         if (!in_array("A7", $service_codes)) {
             return null;
         }
@@ -1240,7 +1240,7 @@ class Vg_postnord extends CarrierModule
         }
 
         $carrier_config = $this->getCarrierConfiguration($carrier->id_reference);
-        $service_codes = $this->getCombinedServiceCodesForConfig($carrier_config);
+        $service_codes = static::getCombinedServiceCodesForConfig($carrier_config);
         if (!in_array("A7", $service_codes)) {
             // have to make this check here and not right after fetching the cart data, since the else clause below
             // will have to create the data if it doesn't exist
@@ -1277,7 +1277,7 @@ class Vg_postnord extends CarrierModule
                 ];
 
                 try {
-                    $response = $client->getServicePointsByAddress($params);
+                    $response = $client->getServicePointsByAddress($params, $service_codes);
                     if (
                         array_key_exists("servicePoints", $response)
                         && !empty($response["servicePoints"])

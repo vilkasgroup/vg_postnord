@@ -183,7 +183,7 @@ class PostnordClient
      *
      * @throws Exception|ExceptionInterface
      */
-    public function getServicePointsByAddress(array $parameters): array
+    public function getServicePointsByAddress(array $parameters, $service_codes = []): array
     {
         $defaults = [
             'returnType'            => 'json',
@@ -207,11 +207,22 @@ class PostnordClient
             ];
         }
 
-        if (array_key_exists('servicePointInformationResponse', $response)) {
-            return $response['servicePointInformationResponse'];
+        if (!array_key_exists('servicePointInformationResponse', $response)) {
+            throw new Exception('servicePointInformationResponse missing from response');
         }
 
-        throw new Exception('servicePointInformationResponse missing from response');
+        // filter out 'Outdoor' lockers if 'M7' (Not to outdoor parcel locker) is selected
+        if (in_array('M7', $service_codes)) {
+            $service_points = &$response['servicePointInformationResponse']['servicePoints'];
+            $service_points = array_filter($service_points, function ($element) {
+                if ($element['type']['boxType'] === null) {
+                    return true;
+                }
+                return $element['type']['boxType']['located'] !== 'Outdoor';
+            });
+        }
+
+        return $response['servicePointInformationResponse'];
     }
 
     /**
