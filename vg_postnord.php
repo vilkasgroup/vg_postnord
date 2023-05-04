@@ -1356,7 +1356,7 @@ class Vg_postnord extends CarrierModule
         try {
             $order = new Order($id_order);
         } catch (PrestaShopException $e) {
-            static::getLogger()->error('Error loading Product', [
+            static::getLogger()->error('Error loading Order', [
                 'exception' => $e->getMessage(),
                 'id_order' => $id_order,
             ]);
