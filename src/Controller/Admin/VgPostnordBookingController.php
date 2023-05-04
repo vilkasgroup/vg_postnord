@@ -307,7 +307,14 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
      */
     private function _ajaxFetchLabel(Request $request): Response
     {
-        $id_order       = (int) $request->request->get("id_order");
+        $id_order = (int) $request->request->get("id_order");
+        if (!Vg_postnord::isPostNordOrder($id_order)) {
+            return $this->returnErrorJsonResponse(
+                ["error" => $this->trans("Order %id_order% is not a PostNord order", "Modules.Vgpostnord.Admin", ["%id_order%" => $id_order])],
+                Response::HTTP_BAD_REQUEST
+            );
+        }
+
         $bookingService = $this->get("vilkas.postnord.service.vgpostnordbookingservice");
 
         try {
