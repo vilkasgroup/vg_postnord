@@ -23,6 +23,8 @@ if (!defined('_PS_VERSION_')) {
 
 class Vg_postnord extends CarrierModule
 {
+    const MODULE_NAME = 'vg_postnord';
+
     protected $config_form = false;
 
     /** @var AbstractLogger */
@@ -30,7 +32,7 @@ class Vg_postnord extends CarrierModule
 
     public function __construct()
     {
-        $this->name = 'vg_postnord';
+        $this->name = self::MODULE_NAME;
         $this->tab = 'shipping_logistics';
         $this->version = '1.1.2';
         $this->author = 'Vilkas Group Oy';
@@ -1363,7 +1365,7 @@ class Vg_postnord extends CarrierModule
         }
 
         $carrier = new Carrier($order->id_carrier);
-        return $carrier->external_module_name === "vg_postnord";
+        return $carrier->external_module_name === self::MODULE_NAME;
     }
 
     /**
