@@ -15,6 +15,7 @@ NEXT VERSION
 * Fix a bug where an error would be displayed when saving carrier settings if the save handler couldn't find any
   valid service code / country combinations
 * Filter out outdoor lockers if 'M7' additional service (Not to outdoor parcel locker) is selected
+* Check that the order is a PostNord order before trying to fetch label using ajax
 
 20230403 v1.1.1
 ========

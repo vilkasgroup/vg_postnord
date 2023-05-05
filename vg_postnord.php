@@ -23,6 +23,8 @@ if (!defined('_PS_VERSION_')) {
 
 class Vg_postnord extends CarrierModule
 {
+    const MODULE_NAME = 'vg_postnord';
+
     protected $config_form = false;
 
     /** @var AbstractLogger */
@@ -30,7 +32,7 @@ class Vg_postnord extends CarrierModule
 
     public function __construct()
     {
-        $this->name = 'vg_postnord';
+        $this->name = self::MODULE_NAME;
         $this->tab = 'shipping_logistics';
         $this->version = '1.1.2';
         $this->author = 'Vilkas Group Oy';
@@ -1097,7 +1099,7 @@ class Vg_postnord extends CarrierModule
     public function hookDisplayOrderPreview(array $params): ?string
     {
         $id_order = (int) $params['order_id'];
-        if (!$this->isPostNordOrder($id_order)) {
+        if (!static::isPostNordOrder($id_order)) {
             return null;
         }
 
@@ -1132,7 +1134,7 @@ class Vg_postnord extends CarrierModule
     public function hookActionGetAdminOrderButtons(array $params)
     {
         $id_order = (int) $params['id_order'];
-        if (!$this->isPostNordOrder($id_order)) {
+        if (!static::isPostNordOrder($id_order)) {
             return null;
         }
 
@@ -1349,12 +1351,12 @@ class Vg_postnord extends CarrierModule
      *
      * @return bool
      */
-    private function isPostNordOrder(int $id_order): bool
+    public static function isPostNordOrder(int $id_order): bool
     {
         try {
             $order = new Order($id_order);
         } catch (PrestaShopException $e) {
-            $this->logger->error('Error loading Product', [
+            static::getLogger()->error('Error loading Order', [
                 'exception' => $e->getMessage(),
                 'id_order' => $id_order,
             ]);
@@ -1363,7 +1365,7 @@ class Vg_postnord extends CarrierModule
         }
 
         $carrier = new Carrier($order->id_carrier);
-        return $carrier->external_module_name === $this->name;
+        return $carrier->external_module_name === self::MODULE_NAME;
     }
 
     /**
@@ -1397,7 +1399,7 @@ class Vg_postnord extends CarrierModule
         if (!$id_order) {
             return;
         }
-        if (!$this->isPostNordOrder($id_order)) {
+        if (!static::isPostNordOrder($id_order)) {
             return;
         }
 
@@ -1457,7 +1459,7 @@ class Vg_postnord extends CarrierModule
         if (!$id_order) {
             return;
         }
-        if (!$this->isPostNordOrder($id_order)) {
+        if (!static::isPostNordOrder($id_order)) {
             return;
         }
 
@@ -1589,7 +1591,7 @@ class Vg_postnord extends CarrierModule
         if (!$Order) {
             return "";
         }
-        if (!$this->isPostNordOrder($Order->id)) {
+        if (!static::isPostNordOrder($Order->id)) {
             return "";
         }
 
@@ -1662,7 +1664,7 @@ class Vg_postnord extends CarrierModule
         }
 
         $Order = new Order((int) $id_order);
-        if (!$this->isPostNordOrder($Order->id)) {
+        if (!static::isPostNordOrder($Order->id)) {
             return "";
         }
 
