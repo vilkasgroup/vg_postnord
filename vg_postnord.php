@@ -34,7 +34,7 @@ class Vg_postnord extends CarrierModule
     {
         $this->name = self::MODULE_NAME;
         $this->tab = 'shipping_logistics';
-        $this->version = '1.1.2';
+        $this->version = '1.1.3';
         $this->author = 'Vilkas Group Oy';
         $this->need_instance = 0;
 
@@ -762,7 +762,11 @@ class Vg_postnord extends CarrierModule
             }
 
             // special case: convert additional service codes into a JSON string for the hidden text input
-            $carrierValues['id_carrier_reference_' . $carrier['id_reference'] . '_additional_service_codes'] = json_encode($carrierSettings[$carrier['id_reference']]['additional_service_codes']) ?? '';
+            $additional_service_codes = '';
+            if (array_key_exists($carrier['id_reference'], $carrierSettings)) {
+                $additional_service_codes = json_encode($carrierSettings[$carrier['id_reference']]['additional_service_codes']);
+            }
+            $carrierValues['id_carrier_reference_' . $carrier['id_reference'] . '_additional_service_codes'] = $additional_service_codes;
         }
 
         return $carrierValues;
