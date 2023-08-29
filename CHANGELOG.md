@@ -1,6 +1,10 @@
 NEXT VERSION
 ========
 
+20230829 v1.1.3
+========
+* Fix undefined array key warning on module configuration page after module installation
+
 20230627 v1.1.2
 ========
 * Convert additional_service_codes inside carrier configurations from JSON string to array
