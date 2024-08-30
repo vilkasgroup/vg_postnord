@@ -26,8 +26,8 @@ class PostnordClientTest extends TestCase
         'shop_name' => 'Temp Dev',
         'shop_party_id' => '1111111111',
         'shop_street' => 'Finlaysoninkuja 19',
-        'shop_postcode' => '33210',
-        'shop_city' => 'Tampere',
+        'shop_postcode' => '00100',
+        'shop_city' => 'Helsinki',
         'shop_country' => 'FI',
         'shop_phone' => '+358123456789',
     ];
@@ -42,10 +42,10 @@ class PostnordClientTest extends TestCase
         'servicePointId' => '9325',
         'visitingAddress' => [
             'countryCode' => 'FI',
-            'city' => 'TAMPERE',
+            'city' => 'HELSINKI',
             'streetName' => 'Kuninkaankatu',
             'streetNumber' => '14',
-            'postalCode' => '33210',
+            'postalCode' => '00100',
             'additionalDescription' => null,
         ],
     ];
@@ -75,8 +75,8 @@ class PostnordClientTest extends TestCase
     private $returnAddress = [
         'return_name' => 'Temp Dev',
         'return_street' => 'Finlaysoninkuja 19',
-        'return_postcode' => '33210',
-        'return_city' => 'Tampere',
+        'return_postcode' => '00100',
+        'return_city' => 'Helsinki',
         'return_country' => 'FI',
     ];
 
@@ -134,8 +134,8 @@ class PostnordClientTest extends TestCase
         $params = [
             'countryCode' => 'FI',
             'agreementCountry' => 'FI',
-            'city' => 'Tampere',
-            'postalCode' => '33210',
+            'city' => 'Helsinki',
+            'postalCode' => '00100',
             'streetName' => 'Finlaysoninkuja',
             'streetNumber' => '19',
             'numberOfServicePoints' => 1,
