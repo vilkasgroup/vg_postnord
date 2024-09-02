@@ -267,7 +267,6 @@ class PostnordClientTest extends TestCase
         $labelInfo = [
             'paperSize' => 'LABEL',
         ];
-        $labelId = '00364300432996651506';
         $results = $this->client->getPDFLabelFromId($this->bookingId, $labelInfo);
         $this->assertArrayHasKey('printout', $results[0]);
     }
@@ -276,7 +275,6 @@ class PostnordClientTest extends TestCase
     {
         $this->markTestSkipped("Couldn't fetch labels. PostNord development server doesn't store booking information.");
 
-        $bookingId = '00364300432996662601';
         $results = $this->client->getReturnPDFLabelFromId($this->bookingId, $this->labelInfo);
         $this->assertArrayHasKey('bookingResponse', $results);
     }
