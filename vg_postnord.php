@@ -909,7 +909,7 @@ class Vg_postnord extends CarrierModule
             // find mandatory services for service code and consignee country
             $valid_country_combinations = reset($valid_country_combinations)["adnlServiceCodeCombDetails"];
             $mandatory_combinations = array_filter($valid_country_combinations, function ($element) use ($service_code, $consignee_country) {
-                return $element["mandatory"] === true
+                return $element["isMandatory"] === true
                     && $element["serviceCode"] === $service_code
                     && $element["allowedConsigneeCountry"] === $consignee_country;
             });
