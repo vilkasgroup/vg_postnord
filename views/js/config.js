@@ -8,17 +8,7 @@ $(document).ready(() => {
   // Get issuer country, onChange is not necessary since reload is required
   const issuerCountry = $('#VG_POSTNORD_ISSUER_COUNTRY').val();
 
-  // Using reduce to only get the value of adnlServiceCodeCombDetails
-  // from object with correct issuerCountryCode
-  const countryValidCombinations = validCombinations.reduce(
-    (previousValue, currentValue) => {
-      if (currentValue.issuerCountryCode === issuerCountry) {
-        return currentValue.adnlServiceCodeCombDetails;
-      }
-      return previousValue;
-    },
-    []
-  );
+  const countryValidCombinations = validCombinations;
 
   // use checkbox to fill in hidden text field
   $('.additional_service_codes').each(function () {

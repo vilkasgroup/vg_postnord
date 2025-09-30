@@ -657,8 +657,16 @@ class Vg_postnord extends CarrierModule
             $BasicServiceCodes = $client->getBasicServiceCodesFilterByIssuerCountryCode($issuerCountry);
 
             $valid_combinations = $client->getValidCombinationsOfServiceCodes()["data"];
+            // get additional service codes available for the issuer country
+            $country_specific_combinations = [];
+            foreach ($valid_combinations as $valid_combination) {
+                if ($valid_combination['issuerCountryCode'] === $issuerCountry) {
+                    $country_specific_combinations = $valid_combination['adnlServiceCodeCombDetails'];
+                    break;
+                }
+            }
             Media::addJsDef([
-                'validCombinations' => $valid_combinations
+                'validCombinations' => $country_specific_combinations
             ]);
 
             // sort by id and name and consignee country to have some resemblance of logic in the list
