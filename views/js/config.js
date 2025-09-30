@@ -5,9 +5,6 @@
 /* eslint-disable no-undef */
 /* eslint-disable no-shadow */
 $(document).ready(() => {
-  // Get issuer country, onChange is not necessary since reload is required
-  const issuerCountry = $('#VG_POSTNORD_ISSUER_COUNTRY').val();
-
   const countryValidCombinations = validCombinations;
 
   // use checkbox to fill in hidden text field
