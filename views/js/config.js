@@ -1,9 +1,3 @@
-/* eslint-disable prefer-arrow-callback */
-/* eslint-disable comma-dangle */
-/* eslint-disable no-param-reassign */
-/* eslint-disable func-names */
-/* eslint-disable no-undef */
-/* eslint-disable no-shadow */
 $(document).ready(() => {
   const countryValidCombinations = validCombinations;
 
