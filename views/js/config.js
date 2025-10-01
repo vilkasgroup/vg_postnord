@@ -27,33 +27,22 @@ $(document).ready(() => {
     ) {
       const [code, country] = serviceCodeField.val().split('_');
 
-      // There are a few duplications with different valid time
-      // So use reduce to avoid duplication of adnlServiceCode
-      const filteredCombination = countryValidCombinations.reduce(
-        (previousValue, currentValue) => {
-          if (
-            currentValue.serviceCode === code
-            && currentValue.allowedConsigneeCountry === country
-          ) {
-            previousValue[currentValue.adnlServiceCode] = currentValue;
-          }
-          return previousValue;
-        },
-        {}
+      // filter additional service codes by service code and country
+      const filteredCombinations = countryValidCombinations.filter(
+          (combination) => combination.serviceCode === code
+              && (combination.allowedConsigneeCountries.includes(country) || combination.allowedConsigneeCountries.includes('ALL'))
       );
 
       let checkboxesContent = '';
       // Sort then loop through the filteredCombination to create checkboxes
-      Object.keys(filteredCombination)
-        .sort()
-        .forEach(function (element) {
+      filteredCombinations.forEach(function (combination) {
           checkboxesContent += `
             <div class="checkbox">
-              <label for='${hiddenInput.id}_${filteredCombination[element].adnlServiceCode}'>
-              <input type="checkbox" name="checkbox" ${hiddenInput.value.includes(element) ? 'checked' : ''}
-                     id="${hiddenInput.id}_${filteredCombination[element].adnlServiceCode}"
-                     value="${filteredCombination[element].adnlServiceCode}">
-                ${filteredCombination[element].adnlServiceCode} - ${filteredCombination[element].adnlServiceName}
+              <label for='${hiddenInput.id}_${combination.adnlServiceCode}'>
+              <input type="checkbox" name="checkbox" ${hiddenInput.value.includes(combination.adnlServiceCode) ? 'checked' : ''}
+                     id="${hiddenInput.id}_${combination.adnlServiceCode}"
+                     value="${combination.adnlServiceCode}">
+                ${combination.adnlServiceCode} - ${combination.adnlServiceName}
               </label>
             </div>
           `;

@@ -656,17 +656,45 @@ class Vg_postnord extends CarrierModule
             $client = new PostnordClient($host, $apikey);
             $BasicServiceCodes = $client->getBasicServiceCodesFilterByIssuerCountryCode($issuerCountry);
 
+            // get a list of all additional service codes
             $valid_combinations = $client->getValidCombinationsOfServiceCodes()["data"];
-            // get additional service codes available for the issuer country
-            $country_specific_combinations = [];
+            $additional_service_codes = [];
             foreach ($valid_combinations as $valid_combination) {
+                // find additional service codes for the issuer country
                 if ($valid_combination['issuerCountryCode'] === $issuerCountry) {
-                    $country_specific_combinations = $valid_combination['adnlServiceCodeCombDetails'];
+                    $details = $valid_combination['adnlServiceCodeCombDetails'];
+
+                    foreach ($details as $detail) {
+                        // different service codes can have overlapping additional service codes,
+                        // so use a composite key to keep them separate
+                        $key = $detail['serviceCode'] . '_' . $detail['adnlServiceCode'];
+                        // the first time an additional service code for a service code is seen, add it to the list
+                        if (!isset($additional_service_codes[$key])) {
+                            $additional_service_codes[$key] = [
+                                'serviceCode' => $detail['serviceCode'],
+                                'adnlServiceCode' => $detail['adnlServiceCode'],
+                                'adnlServiceName' => $detail['adnlServiceName'],
+                                'allowedConsigneeCountries' => [],
+                            ];
+                        }
+                        // add the allowed consignee country to the additional service code
+                        $additional_service_codes[$key]['allowedConsigneeCountries'][] = $detail['allowedConsigneeCountry'];
+                    }
+
+                    // sort by service code
+                    ksort($additional_service_codes);
+                    // convert to a numerically indexed array
+                    $additional_service_codes = array_values($additional_service_codes);
+                    // remove duplicate country codes
+                    foreach ($additional_service_codes as &$additional_service_code) {
+                        $additional_service_code['allowedConsigneeCountries'] = array_unique($additional_service_code['allowedConsigneeCountries']);
+                    }
+
                     break;
                 }
             }
             Media::addJsDef([
-                'validCombinations' => $country_specific_combinations
+                'validCombinations' => $additional_service_codes
             ]);
 
             // sort by id and name and consignee country to have some resemblance of logic in the list
