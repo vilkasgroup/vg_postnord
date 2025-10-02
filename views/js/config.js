@@ -63,8 +63,8 @@ $(document).ready(() => {
   });
 
   // update the hidden input field when checkboxes are clicked
-  $(document.body).on('click', '.checkboxes', function () {
-    const checkboxesContainer = $(this);
+  $(document.body).on('change', '.checkboxes input[type="checkbox"]', function () {
+    const checkboxesContainer = $(this).closest('.checkboxes');
     const hiddenInput = checkboxesContainer.siblings('.additional_service_codes')[0];
 
     const inputValue = [];
