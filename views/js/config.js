@@ -56,24 +56,23 @@ $(document).ready(() => {
     $(hiddenInput).parent().prepend('<div class="checkboxes"></div>');
     addCheckbox(hiddenInput, serviceCodeField, countryValidCombinations);
 
-    // Loop through checkboxes on click and add value to the hiddenInput
-    $(this)
-      .parent()
-      .click(function () {
-        const inputValue = [];
-        $(this)
-          .find('input[name="checkbox"]')
-          .each(function () {
-            if (this.checked) {
-              inputValue.push(this.value);
-            }
-          });
-        hiddenInput.value = JSON.stringify(inputValue);
-      });
-
     // Update checkbox after service code changed
     $(serviceCodeField).change(() => {
       addCheckbox(hiddenInput, serviceCodeField, countryValidCombinations);
     });
   });
+
+  // update the hidden input field when checkboxes are clicked
+  $(document.body).on('click', '.checkboxes', function () {
+    const checkboxesContainer = $(this);
+    const hiddenInput = checkboxesContainer.siblings('.additional_service_codes')[0];
+
+    const inputValue = [];
+    checkboxesContainer.find('input[name="checkbox"]').each(function () {
+      if (this.checked) {
+        inputValue.push(this.value);
+      }
+    });
+    hiddenInput.value = JSON.stringify(inputValue);
+  })
 });
