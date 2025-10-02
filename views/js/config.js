@@ -36,9 +36,8 @@ $(document).ready(() => {
         `;
       });
 
-      // Add checkboxes then click to update/clear hiddenInputField
+      // Add checkboxes
       $(hiddenInput).parent().find('.checkboxes').html(checkboxesContent);
-      $(hiddenInput).parent().find('.checkboxes').click();
   }
 
   // use checkbox to fill in hidden text field
