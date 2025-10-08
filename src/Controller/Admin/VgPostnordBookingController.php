@@ -38,7 +38,12 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
 
     public function __construct()
     {
-        parent::__construct();
+        // for PrestaShop 8 compatibility
+        // TODO: FrameworkBundleAdminController is deprecated in PrestaShop 9,
+        //       migrate to PrestaShopAdminController in PrestaShop 10
+        if (method_exists(parent::class, '__construct')) {
+            parent::__construct();
+        }
 
         $this->logger = Vg_postnord::getLogger();
     }
