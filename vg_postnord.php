@@ -694,7 +694,7 @@ class Vg_postnord extends CarrierModule
                 }
             }
             Media::addJsDef([
-                'validCombinations' => $additional_service_codes
+                'additionalServiceCodes' => $additional_service_codes
             ]);
 
             // sort by id and name and consignee country to have some resemblance of logic in the list
