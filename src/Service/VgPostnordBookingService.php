@@ -14,7 +14,7 @@ use OrderCarrier;
 use PrestaShop\PrestaShop\Adapter\LegacyContext;
 use PrestaShopException;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\Translation\TranslatorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 use Vilkas\Postnord\Client\PostnordClient;
 use Vilkas\Postnord\Entity\VgPostnordBooking;
