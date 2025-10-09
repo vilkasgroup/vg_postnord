@@ -137,7 +137,8 @@ class VgPostnordBookingService
         $customer_country = new Country($address_delivery->id_country);
 
         $carrier_settings = json_decode(Configuration::get("VG_POSTNORD_CARRIER_SETTINGS"), true);
-        $service_code     = explode("_", $carrier_settings[$carrier->id_reference]["service_code_consigneecountry"])[0];
+        $carrier_config   = $carrier_settings[$carrier->id_reference];
+        $service_code     = explode("_", $carrier_config["service_code_consigneecountry"])[0];
 
         $additional_service_codes = !empty($booking->getAdditionalServices()) ? explode(",", $booking->getAdditionalServices()) : [];
 
@@ -183,8 +184,8 @@ class VgPostnordBookingService
         $shop_address["shop_party_id"] = Configuration::get("VG_POSTNORD_PARTY_ID");
 
         $pickup_address = [];
-        // add service point data if related additional service is found
-        if (in_array("A7", $additional_service_codes)) {
+        // add service point data if they are enabled for the carrier
+        if ($carrier_config["enable_pickup_point_selection"] === "1") {
             // technically these can be empty if changing carriers from one without service points to one with them
             if (empty($service_point) || empty($booking->getServicepointid())) {
                 $msg = $this->translator->trans("Service point ID or data missing from booking.", [], "Modules.Vgpostnord.Service");

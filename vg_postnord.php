@@ -749,6 +749,27 @@ class Vg_postnord extends CarrierModule
                 'desc' => $this->trans('Service code for this carrier', [], 'Modules.Vgpostnord.Admin'),
             ];
 
+            // whether to enable pickup point selection
+            $carrier_selections[] = [
+                'type' => 'switch',
+                'name' => 'id_carrier_reference_' . $carrier['id_reference'] . '_enable_pickup_point_selection',
+                'label' => $this->trans('Enable pickup point selection', [], 'Modules.Vgpostnord.Admin'),
+                'desc' => $this->trans('Display pickup point selector to the customer during checkout.', [], 'Modules.Vgpostnord.Admin'),
+                'is_bool' => true,
+                'values' => [
+                    [
+                        'id' => 'active_on',
+                        'value' => true,
+                        'label' => $this->trans('Enabled', [], 'Modules.Vgpostnord.Admin'),
+                    ],
+                    [
+                        'id' => 'active_off',
+                        'value' => false,
+                        'label' => $this->trans('Disabled', [], 'Modules.Vgpostnord.Admin'),
+                    ],
+                ]
+            ];
+
             // which service codes to fetch pickup locations for
             $carrier_selections[] = [
                 'type' => 'text',
@@ -790,7 +811,7 @@ class Vg_postnord extends CarrierModule
             // just for the label (free text). always empty data
             $carrierValues['id_carrier_reference_' . $carrier['id_reference']] = '';
 
-            $keys = ['service_code_consigneecountry', 'service_codes'];
+            $keys = ['service_code_consigneecountry', 'enable_pickup_point_selection', 'service_codes'];
             foreach ($keys as $key) {
                 $carrierValues['id_carrier_reference_' . $carrier['id_reference'] . '_' . $key] = $carrierSettings[$carrier['id_reference']][$key] ?? '';
             }
@@ -1022,11 +1043,9 @@ class Vg_postnord extends CarrierModule
      */
     public function hookDisplayCarrierExtraContent($params)
     {
-        // don't show pickup point selection if the "optional service point" additional service hasn't been
-        // selected and isn't mandatory
+        // don't show pickup point selector if it's not enabled for the carrier
         $carrier_config = $this->getCarrierConfiguration((int) $params["carrier"]["id_reference"]);
-        $service_codes = static::getCombinedServiceCodesForConfig($carrier_config);
-        if (!in_array("A7", $service_codes)) {
+        if ($carrier_config["enable_pickup_point_selection"] !== "1") {
             return null;
         }
 
@@ -1288,13 +1307,13 @@ class Vg_postnord extends CarrierModule
 
         $carrier_config = $this->getCarrierConfiguration($carrier->id_reference);
         $service_codes = static::getCombinedServiceCodesForConfig($carrier_config);
-        if (!in_array("A7", $service_codes)) {
+        if ($carrier_config["enable_pickup_point_selection"] !== "1") {
             // have to make this check here and not right after fetching the cart data, since the else clause below
             // will have to create the data if it doesn't exist
             if (!$cartData) {
                 return; // no cart data and it's not needed, can return
             }
-            // clear service point from cart data if "optional service point" isn't mandatory
+            // clear service point from cart data
             // reason: service point id might be saved to cart data even if selected carrier doesn't support them,
             //         since it is saved as soon as the service point is clicked, even if the user ends up choosing
             //         another carrier later
