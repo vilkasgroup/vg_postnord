@@ -285,7 +285,7 @@ class VgPostnordBookingType extends TranslatorAwareType
             function ($carry, $element) use ($service_code, $consignee_country) {
                 if (
                     $element['serviceCode'] === $service_code
-                    && $element['allowedConsigneeCountry'] === $consignee_country
+                    && ($element['allowedConsigneeCountry'] === $consignee_country || $element['allowedConsigneeCountry'] === 'ALL')
                 ) {
                     $carry[] = [$element['adnlServiceName'] => $element['adnlServiceCode']];
                     if ($element['isMandatory'] === true) {
