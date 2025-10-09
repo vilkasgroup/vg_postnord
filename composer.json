@@ -27,7 +27,7 @@
     "preferred-install": "dist"
   },
   "scripts": {
-    "test": "./vendor/bin/phpunit --debug --verbose tests"
+    "test": "./vendor/bin/phpunit --debug tests"
   },
   "authors": [
     {
