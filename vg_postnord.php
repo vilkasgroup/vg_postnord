@@ -1176,6 +1176,13 @@ class Vg_postnord extends CarrierModule
             return null;
         }
 
+        // PrestaShop 8 compatibility
+        if (class_exists("\PrestaShop\PrestaShop\Core\Action\ActionsBarButton")) {
+            $buttonClass = "\PrestaShop\PrestaShop\Core\Action\ActionsBarButton";
+        } else {
+            $buttonClass = "\PrestaShopBundle\Controller\Admin\Sell\Order\ActionsBarButton";
+        }
+
         /** @var ActionsBarButtonsCollection $collection */
         $collection = $params['actions_bar_buttons_collection'];
 
@@ -1188,7 +1195,7 @@ class Vg_postnord extends CarrierModule
             ]);
 
             $collection->add(
-                new ActionsBarButton(
+                new $buttonClass(
                     'btn-primary btn-generate-label',
                     [
                         'name' => 'vg-postnord-generate-label-button',
