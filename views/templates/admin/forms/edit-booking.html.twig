@@ -171,10 +171,11 @@
   });
 
   $("body").on("click", ".vg-postnord-remove-parcel, .vg-postnord-remove-detailed-description", function() {
-    let parcels = $("#vg_postnord_booking_parcel_data > div").length;
+    const parcelCount = $("#vg_postnord_booking_parcel_data > div").length;
+    const isRemoveContentLineButton = $(this).hasClass("vg-postnord-remove-detailed-description");
 
     // don't allow deleting the last parcel
-    if (parcels > 1) {
+    if (isRemoveContentLineButton || parcelCount > 1) {
       $(this).parent().closest(".form-group.row").remove();
     }
   });
