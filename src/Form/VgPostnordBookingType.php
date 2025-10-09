@@ -288,7 +288,7 @@ class VgPostnordBookingType extends TranslatorAwareType
                     && $element['allowedConsigneeCountry'] === $consignee_country
                 ) {
                     $carry[] = [$element['adnlServiceName'] => $element['adnlServiceCode']];
-                    if ($element['mandatory'] === true) {
+                    if ($element['isMandatory'] === true) {
                         $this->mandatory_service_codes[] = $element['adnlServiceCode'];
                     }
                 }
