@@ -4,10 +4,8 @@ use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\ORMException;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
-use PrestaShop\PrestaShop\Adapter\SymfonyContainer;
+use PrestaShop\PrestaShop\Core\Action\ActionsBarButtonsCollection;
 use PrestaShop\PrestaShop\Core\Grid\Definition\GridDefinition;
-use PrestaShopBundle\Controller\Admin\Sell\Order\ActionsBarButton;
-use PrestaShopBundle\Controller\Admin\Sell\Order\ActionsBarButtonsCollection;
 use Psr\Log\AbstractLogger;
 use Symfony\Bundle\FrameworkBundle\Routing\Router;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
@@ -1758,7 +1756,7 @@ class Vg_postnord extends CarrierModule
 
         try {
             /** @var Twig\Environment $twig */
-            $twig = SymfonyContainer::getInstance()->get("twig");
+            $twig = $this->get("twig");
             return $twig->render("@Modules/vg_postnord/views/templates/admin/fetch_label_modal.html.twig");
         } catch (Exception $e) {
             $this->logger->error("Could not render Twig template", [
