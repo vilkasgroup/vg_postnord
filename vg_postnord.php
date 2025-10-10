@@ -46,7 +46,7 @@ class Vg_postnord extends CarrierModule
         $this->displayName = $this->trans('Postnord', [], 'Modules.Vgpostnord.Admin');
         $this->description = $this->trans('Postnord shipping for your Prestashop', [], 'Modules.Vgpostnord.Admin');
 
-        $this->ps_versions_compliancy = ['min' => '1.7.7', 'max' => _PS_VERSION_];
+        $this->ps_versions_compliancy = ['min' => '8.0.0', 'max' => '9.99.99'];
 
         $this->tabs = [
             [
