@@ -1,5 +1,8 @@
 NEXT VERSION
 ========
+
+20251010 v1.1.4
+========
 * Add support for PrestaShop 9
 * Drop support for PrestaShop 1.7
 * Raise minimum PHP version to 8.1
