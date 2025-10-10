@@ -358,7 +358,13 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
      */
     private function _ajaxCombineLabels(Request $request): Response
     {
-        $booking_ids       = array_map("intval", $request->request->all("booking_ids"));
+        // PrestaShop 8 compatibility: get booking ids from request data manually,
+        // because the implementations of get() and all() differ greatly between Symfony 4 and 6.
+        // TODO: refactor to $request->request->all("booking_ids") when dropping support for PrestaShop 8
+        $post_data = $request->request->all();
+        $booking_ids = $post_data["booking_ids"] ?? [];
+        $booking_ids = array_map("intval", $booking_ids);
+
         $bookingRepository = $this->get("vilkas.postnord.repository.vgpostnordbooking");
 
         $data = [];
