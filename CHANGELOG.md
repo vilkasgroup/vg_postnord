@@ -1,5 +1,17 @@
 NEXT VERSION
 ========
+* Add support for PrestaShop 9
+* Drop support for PrestaShop 1.7
+* Raise minimum PHP version to 8.1
+* Add a new carrier setting: Enable pickup point selection
+  * Pickup point selector no longer depends on the PostNord API reporting the "A7" (Optional service point)
+    additional service as mandatory
+* Fix pickup point selector compatibility with the Hummingbird theme
+* Fix a bug where removing booking content lines depended on the number of parcels in the booking
+* Refactor and optimize carrier settings JavaScript
+  * Do most of the additional service filtering in PHP instead
+* Fix "ALL" countries additional services not being selectable
+* Update field names that have changed in the PostNord API
 
 20230829 v1.1.3
 ========
