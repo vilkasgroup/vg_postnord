@@ -4,7 +4,6 @@
   {{ form_start(vgPostnordBookingEditForm) }}
     <div class="card">
       <h3 class="card-header">
-        <i class="material-icons">pencil</i>
         {{ 'Postnord Booking'|trans({}, 'Modules.Vgpostnord.Admin') }}
       </h3>
       <div class="card-block row" id="vg_postnord_edit_booking" data-ajaxurl="{{ajaxurl}}">
@@ -171,10 +170,11 @@
   });
 
   $("body").on("click", ".vg-postnord-remove-parcel, .vg-postnord-remove-detailed-description", function() {
-    let parcels = $("#vg_postnord_booking_parcel_data > div").length;
+    const parcelCount = $("#vg_postnord_booking_parcel_data > div").length;
+    const isRemoveContentLineButton = $(this).hasClass("vg-postnord-remove-detailed-description");
 
     // don't allow deleting the last parcel
-    if (parcels > 1) {
+    if (isRemoveContentLineButton || parcelCount > 1) {
       $(this).parent().closest(".form-group.row").remove();
     }
   });

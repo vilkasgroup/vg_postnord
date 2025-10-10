@@ -240,7 +240,7 @@ class PostnordClientTest extends TestCase
 
         $this->assertArrayHasKey('bookingId', $results);
         $this->assertArrayHasKey('value', $results['idInformation'][0]['ids'][0]);
-        $this->assertRegExp('/\d{20}/m', $results['idInformation'][0]['ids'][0]['value']);
+        $this->assertMatchesRegularExpression('/\d{20}/m', $results['idInformation'][0]['ids'][0]['value']);
         $this->bookingId = $results['idInformation'][0]['ids'][0]['value'];
     }
 

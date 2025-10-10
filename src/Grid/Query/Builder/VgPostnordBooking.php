@@ -37,14 +37,7 @@ class VgPostnordBooking extends AbstractDoctrineQueryBuilder
         // base query
         $qb = $this->getBaseQuery();
 
-        // order and pagination
-        $qb->select('vpb.id_booking, vpb.id_order, vpb.finalized, vpb.servicepointid, vpb.additional_services')
-            ->orderBy(
-                $searchCriteria->getOrderBy(),
-                $searchCriteria->getOrderWay()
-            )
-            ->setFirstResult($searchCriteria->getOffset())
-            ->setMaxResults($searchCriteria->getLimit());
+        $qb->select('vpb.id_booking, vpb.id_order, vpb.finalized, vpb.servicepointid, vpb.additional_services');
 
         $this->searchCriteriaApplicator
             ->applySorting($searchCriteria, $qb)

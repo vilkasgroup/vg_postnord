@@ -24,7 +24,7 @@ use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
-use Symfony\Component\Translation\TranslatorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 use Vilkas\Postnord\Client\PostnordClient;
 
@@ -285,10 +285,10 @@ class VgPostnordBookingType extends TranslatorAwareType
             function ($carry, $element) use ($service_code, $consignee_country) {
                 if (
                     $element['serviceCode'] === $service_code
-                    && $element['allowedConsigneeCountry'] === $consignee_country
+                    && ($element['allowedConsigneeCountry'] === $consignee_country || $element['allowedConsigneeCountry'] === 'ALL')
                 ) {
                     $carry[] = [$element['adnlServiceName'] => $element['adnlServiceCode']];
-                    if ($element['mandatory'] === true) {
+                    if ($element['isMandatory'] === true) {
                         $this->mandatory_service_codes[] = $element['adnlServiceCode'];
                     }
                 }

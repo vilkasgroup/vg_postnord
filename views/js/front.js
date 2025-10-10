@@ -146,6 +146,10 @@ $(document).ready(function () {
                 resp.servicePoints.forEach((element, i) =>
                     $resultsDiv.append(renderPickupPoint(element, i))
                 );
+
+                // resize wrapper if needed (Hummingbird theme)
+                resizeCarrierExtraContentWrapper($resultsDiv);
+
                 // and now that we have results rendered, select the first one
                 $resultsDiv.find('.vg_postnord_pickupPoint').first().click();
                 $('button[name="confirmDeliveryOption"]').attr("disabled", false)
@@ -213,6 +217,30 @@ $(document).ready(function () {
         }
 
         return html;
+    }
+
+    /**
+     * Adjusts the maximum height of the carrier extra content wrapper to fit the height of its inner content.
+     *
+     * Background: The Hummingbird theme uses Element.clientHeight to determine the height of the carrier extra
+     * content wrapper. However, since we show dummy service points before we get a response from the service points
+     * API, the max height is set to the height of the dummy data. Thus, we need to resize the wrapper to fit the
+     * actual content; otherwise most of the content will be hidden.
+     *
+     * @param {jQuery} $searchResultsContainer - jQuery object for the search results container (i.e., the inner content).
+     */
+    function resizeCarrierExtraContentWrapper($searchResultsContainer) {
+      const extraContentWrapper = $searchResultsContainer.closest('.js-carrier-extra-content');
+      if (extraContentWrapper.length === 0) {
+          return;
+      }
+
+      const innerContent = extraContentWrapper.find('.vg_postnord_pickupselection_container');
+      if (innerContent.length === 0) {
+          return;
+      }
+
+      extraContentWrapper.css('max-height', innerContent[0].scrollHeight + 'px');
     }
 });
 

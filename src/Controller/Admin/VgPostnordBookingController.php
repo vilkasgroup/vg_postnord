@@ -38,7 +38,12 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
 
     public function __construct()
     {
-        parent::__construct();
+        // for PrestaShop 8 compatibility
+        // TODO: FrameworkBundleAdminController is deprecated in PrestaShop 9,
+        //       migrate to PrestaShopAdminController in PrestaShop 10
+        if (method_exists(parent::class, '__construct')) {
+            parent::__construct();
+        }
 
         $this->logger = Vg_postnord::getLogger();
     }
@@ -353,7 +358,13 @@ class VgPostnordBookingController extends FrameworkBundleAdminController
      */
     private function _ajaxCombineLabels(Request $request): Response
     {
-        $booking_ids       = array_map("intval", $request->request->get("booking_ids"));
+        // PrestaShop 8 compatibility: get booking ids from request data manually,
+        // because the implementations of get() and all() differ greatly between Symfony 4 and 6.
+        // TODO: refactor to $request->request->all("booking_ids") when dropping support for PrestaShop 8
+        $post_data = $request->request->all();
+        $booking_ids = $post_data["booking_ids"] ?? [];
+        $booking_ids = array_map("intval", $booking_ids);
+
         $bookingRepository = $this->get("vilkas.postnord.repository.vgpostnordbooking");
 
         $data = [];

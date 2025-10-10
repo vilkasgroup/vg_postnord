@@ -96,7 +96,7 @@ services:
 
   vilkas.postnord.form.identifiable_object.builder.vg_postnord_booking_form_builder:
     class: 'PrestaShop\PrestaShop\Core\Form\IdentifiableObject\Builder\FormBuilder'
-    factory: 'prestashop.core.form.builder.form_builder_factory:create'
+    factory: ['@prestashop.core.form.builder.form_builder_factory', 'create']
     arguments:
       - 'Vilkas\Postnord\Form\VgPostnordBookingType'
       - '@vilkas.postnord.form.identifiable_object.data_provider.vg_postnord_booking_form_data_provider'
@@ -109,6 +109,6 @@ services:
 
   vilkas.postnord.form.identifiable_object.handler.vg_postnord_booking_form_handler:
     class: 'PrestaShop\PrestaShop\Core\Form\IdentifiableObject\Handler\FormHandler'
-    factory: 'prestashop.core.form.identifiable_object.handler.form_handler_factory:create'
+    factory: ['@prestashop.core.form.identifiable_object.handler.form_handler_factory', 'create']
     arguments:
       - '@vilkas.postnord.form.identifiable_object.data_handler.vg_postnord_booking_form_data_handler'

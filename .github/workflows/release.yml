@@ -11,9 +11,9 @@ jobs:
       # setup PHP action
       # https://github.com/marketplace/actions/setup-php-action
       - name: Setup PHP Action
-        uses: shivammathur/setup-php@2.17.1
+        uses: shivammathur/setup-php@2.35.5
         with:
-          php-version: '7.2'
+          php-version: '8.1'
           tools: composer
 
       # catch the repository name

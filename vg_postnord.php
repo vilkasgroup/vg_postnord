@@ -4,10 +4,8 @@ use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\ORMException;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
-use PrestaShop\PrestaShop\Adapter\SymfonyContainer;
+use PrestaShop\PrestaShop\Core\Action\ActionsBarButtonsCollection;
 use PrestaShop\PrestaShop\Core\Grid\Definition\GridDefinition;
-use PrestaShopBundle\Controller\Admin\Sell\Order\ActionsBarButton;
-use PrestaShopBundle\Controller\Admin\Sell\Order\ActionsBarButtonsCollection;
 use Psr\Log\AbstractLogger;
 use Symfony\Bundle\FrameworkBundle\Routing\Router;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
@@ -48,7 +46,7 @@ class Vg_postnord extends CarrierModule
         $this->displayName = $this->trans('Postnord', [], 'Modules.Vgpostnord.Admin');
         $this->description = $this->trans('Postnord shipping for your Prestashop', [], 'Modules.Vgpostnord.Admin');
 
-        $this->ps_versions_compliancy = ['min' => '1.7.7', 'max' => _PS_VERSION_];
+        $this->ps_versions_compliancy = ['min' => '8.0.0', 'max' => '9.99.99'];
 
         $this->tabs = [
             [
@@ -656,9 +654,45 @@ class Vg_postnord extends CarrierModule
             $client = new PostnordClient($host, $apikey);
             $BasicServiceCodes = $client->getBasicServiceCodesFilterByIssuerCountryCode($issuerCountry);
 
+            // get a list of all additional service codes
             $valid_combinations = $client->getValidCombinationsOfServiceCodes()["data"];
+            $additional_service_codes = [];
+            foreach ($valid_combinations as $valid_combination) {
+                // find additional service codes for the issuer country
+                if ($valid_combination['issuerCountryCode'] === $issuerCountry) {
+                    $details = $valid_combination['adnlServiceCodeCombDetails'];
+
+                    foreach ($details as $detail) {
+                        // different service codes can have overlapping additional service codes,
+                        // so use a composite key to keep them separate
+                        $key = $detail['serviceCode'] . '_' . $detail['adnlServiceCode'];
+                        // the first time an additional service code for a service code is seen, add it to the list
+                        if (!isset($additional_service_codes[$key])) {
+                            $additional_service_codes[$key] = [
+                                'serviceCode' => $detail['serviceCode'],
+                                'adnlServiceCode' => $detail['adnlServiceCode'],
+                                'adnlServiceName' => $detail['adnlServiceName'],
+                                'allowedConsigneeCountries' => [],
+                            ];
+                        }
+                        // add the allowed consignee country to the additional service code
+                        $additional_service_codes[$key]['allowedConsigneeCountries'][] = $detail['allowedConsigneeCountry'];
+                    }
+
+                    // sort by service code
+                    ksort($additional_service_codes);
+                    // convert to a numerically indexed array
+                    $additional_service_codes = array_values($additional_service_codes);
+                    // remove duplicate country codes
+                    foreach ($additional_service_codes as &$additional_service_code) {
+                        $additional_service_code['allowedConsigneeCountries'] = array_unique($additional_service_code['allowedConsigneeCountries']);
+                    }
+
+                    break;
+                }
+            }
             Media::addJsDef([
-                'validCombinations' => $valid_combinations
+                'additionalServiceCodes' => $additional_service_codes
             ]);
 
             // sort by id and name and consignee country to have some resemblance of logic in the list
@@ -715,6 +749,27 @@ class Vg_postnord extends CarrierModule
                 'desc' => $this->trans('Service code for this carrier', [], 'Modules.Vgpostnord.Admin'),
             ];
 
+            // whether to enable pickup point selection
+            $carrier_selections[] = [
+                'type' => 'switch',
+                'name' => 'id_carrier_reference_' . $carrier['id_reference'] . '_enable_pickup_point_selection',
+                'label' => $this->trans('Enable pickup point selection', [], 'Modules.Vgpostnord.Admin'),
+                'desc' => $this->trans('Display pickup point selector to the customer during checkout.', [], 'Modules.Vgpostnord.Admin'),
+                'is_bool' => true,
+                'values' => [
+                    [
+                        'id' => 'active_on',
+                        'value' => true,
+                        'label' => $this->trans('Enabled', [], 'Modules.Vgpostnord.Admin'),
+                    ],
+                    [
+                        'id' => 'active_off',
+                        'value' => false,
+                        'label' => $this->trans('Disabled', [], 'Modules.Vgpostnord.Admin'),
+                    ],
+                ]
+            ];
+
             // which service codes to fetch pickup locations for
             $carrier_selections[] = [
                 'type' => 'text',
@@ -756,7 +811,7 @@ class Vg_postnord extends CarrierModule
             // just for the label (free text). always empty data
             $carrierValues['id_carrier_reference_' . $carrier['id_reference']] = '';
 
-            $keys = ['service_code_consigneecountry', 'service_codes'];
+            $keys = ['service_code_consigneecountry', 'enable_pickup_point_selection', 'service_codes'];
             foreach ($keys as $key) {
                 $carrierValues['id_carrier_reference_' . $carrier['id_reference'] . '_' . $key] = $carrierSettings[$carrier['id_reference']][$key] ?? '';
             }
@@ -909,7 +964,7 @@ class Vg_postnord extends CarrierModule
             // find mandatory services for service code and consignee country
             $valid_country_combinations = reset($valid_country_combinations)["adnlServiceCodeCombDetails"];
             $mandatory_combinations = array_filter($valid_country_combinations, function ($element) use ($service_code, $consignee_country) {
-                return $element["mandatory"] === true
+                return $element["isMandatory"] === true
                     && $element["serviceCode"] === $service_code
                     && $element["allowedConsigneeCountry"] === $consignee_country;
             });
@@ -988,11 +1043,9 @@ class Vg_postnord extends CarrierModule
      */
     public function hookDisplayCarrierExtraContent($params)
     {
-        // don't show pickup point selection if the "optional service point" additional service hasn't been
-        // selected and isn't mandatory
+        // don't show pickup point selector if it's not enabled for the carrier
         $carrier_config = $this->getCarrierConfiguration((int) $params["carrier"]["id_reference"]);
-        $service_codes = static::getCombinedServiceCodesForConfig($carrier_config);
-        if (!in_array("A7", $service_codes)) {
+        if ($carrier_config["enable_pickup_point_selection"] !== "1") {
             return null;
         }
 
@@ -1142,6 +1195,13 @@ class Vg_postnord extends CarrierModule
             return null;
         }
 
+        // PrestaShop 8 compatibility
+        if (class_exists("\PrestaShop\PrestaShop\Core\Action\ActionsBarButton")) {
+            $buttonClass = "\PrestaShop\PrestaShop\Core\Action\ActionsBarButton";
+        } else {
+            $buttonClass = "\PrestaShopBundle\Controller\Admin\Sell\Order\ActionsBarButton";
+        }
+
         /** @var ActionsBarButtonsCollection $collection */
         $collection = $params['actions_bar_buttons_collection'];
 
@@ -1154,7 +1214,7 @@ class Vg_postnord extends CarrierModule
             ]);
 
             $collection->add(
-                new ActionsBarButton(
+                new $buttonClass(
                     'btn-primary btn-generate-label',
                     [
                         'name' => 'vg-postnord-generate-label-button',
@@ -1247,13 +1307,13 @@ class Vg_postnord extends CarrierModule
 
         $carrier_config = $this->getCarrierConfiguration($carrier->id_reference);
         $service_codes = static::getCombinedServiceCodesForConfig($carrier_config);
-        if (!in_array("A7", $service_codes)) {
+        if ($carrier_config["enable_pickup_point_selection"] !== "1") {
             // have to make this check here and not right after fetching the cart data, since the else clause below
             // will have to create the data if it doesn't exist
             if (!$cartData) {
                 return; // no cart data and it's not needed, can return
             }
-            // clear service point from cart data if "optional service point" isn't mandatory
+            // clear service point from cart data
             // reason: service point id might be saved to cart data even if selected carrier doesn't support them,
             //         since it is saved as soon as the service point is clicked, even if the user ends up choosing
             //         another carrier later
@@ -1722,7 +1782,7 @@ class Vg_postnord extends CarrierModule
 
         try {
             /** @var Twig\Environment $twig */
-            $twig = SymfonyContainer::getInstance()->get("twig");
+            $twig = $this->get("twig");
             return $twig->render("@Modules/vg_postnord/views/templates/admin/fetch_label_modal.html.twig");
         } catch (Exception $e) {
             $this->logger->error("Could not render Twig template", [
