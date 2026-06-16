@@ -321,4 +321,11 @@ class PostnordClientTest extends TestCase
             // }
         }
     }
+
+    public function testValidateCustomerNumber(): void
+    {
+        // 0111111118 is a locally valid number (leading zero + Luhn) that the
+        // API reports as VALID on the FI test environment.
+        $this->assertTrue($this->client->validateCustomerNumber('0111111118', 'FI'));
+    }
 }
