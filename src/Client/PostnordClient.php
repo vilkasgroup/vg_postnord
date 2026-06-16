@@ -388,6 +388,49 @@ class PostnordClient
     }
 
     /**
+     * Validate a customer number (Party ID) against the PostNord API.
+     *
+     * Unlike the other endpoints this one responds with a 200 and a plain
+     * text body of either "VALID" or "INVALID" (not JSON), so it bypasses
+     * doRequest() and reads the raw response instead.
+     *
+     * https://guide.developer.postnord.com/#398cb751-436a-49fb-b48d-a86db51c5ad6
+     *
+     * @return bool true only when the API reports the number as VALID
+     *
+     * @throws ExceptionInterface on network/transport errors
+     */
+    public function validateCustomerNumber(string $customerNumber, string $countryCode): bool
+    {
+        $options = [
+            'query' => [
+                'apikey' => $this->apikey,
+                'customerNumber' => $customerNumber,
+                'countryCode' => $countryCode,
+            ],
+            'timeout' => 7,
+        ];
+        $url = $this->buildUrl('/rest/shipment/v1/validate/customernumber');
+
+        try {
+            $response = $this->httpClient->request('GET', $url, $options);
+            $content = $response->getContent();
+        } catch (ExceptionInterface $e) {
+            $this->logger->error('Error validating customer number', ['exception' => $e->getMessage()]);
+            throw $e;
+        }
+
+        // The endpoint returns a plain text "VALID"/"INVALID" body despite its
+        // application/json content-type. If PostNord fixes that to a proper
+        // JSON string (e.g. "VALID"), json_decode unwraps it; otherwise we fall
+        // back to the raw text.
+        $decoded = json_decode($content);
+        $status = is_string($decoded) ? $decoded : $content;
+
+        return 0 === strcasecmp('VALID', trim($status));
+    }
+
+    /**
      * Helper for merging defaults and options. Options will overwrite defaults.
      *
      * Always injects apikey into parameters, it seems to be required for almost everything.
