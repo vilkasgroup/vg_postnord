@@ -1,5 +1,8 @@
 NEXT VERSION
 ========
+
+20260617 v1.1.5
+========
 * Add validator support for 8-character Party IDs 
 * Validate Party ID against PostNord API when saving module settings
 
