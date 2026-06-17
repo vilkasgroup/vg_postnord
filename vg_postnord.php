@@ -375,7 +375,7 @@ class Vg_postnord extends CarrierModule
                         'type' => 'text',
                         'name' => 'VG_POSTNORD_PARTY_ID',
                         'label' => $this->trans('Party ID', [], 'Modules.Vgpostnord.Admin'),
-                        'desc' => $this->trans('10 digits long customer number (Party ID). Get this information from Postnord', [], 'Modules.Vgpostnord.Admin'),
+                        'desc' => $this->trans('8 or 10 digits long customer number (Party ID). Get this information from Postnord', [], 'Modules.Vgpostnord.Admin'),
                         'required' => true
                     ],
                     [
@@ -878,8 +878,21 @@ class Vg_postnord extends CarrierModule
             $result &= Configuration::updateValue($key, Tools::getValue($key));
         }
 
-        if (!VgPostnordPartyIdValidator::partyIdIsValid(Tools::getValue("VG_POSTNORD_PARTY_ID"))) {
+        $party_id = Tools::getValue("VG_POSTNORD_PARTY_ID");
+        if (!VgPostnordPartyIdValidator::partyIdIsValid($party_id)) {
             $this->context->controller->errors[] = $this->trans("Party ID is not valid.", [], "Modules.Vgpostnord.Admin");
+        } else {
+            try {
+                $client = new PostnordClient(
+                    Tools::getValue("VG_POSTNORD_HOST"),
+                    Tools::getValue("VG_POSTNORD_APIKEY")
+                );
+                if (!$client->validateCustomerNumber($party_id, Tools::getValue("VG_POSTNORD_ISSUER_COUNTRY"))) {
+                    $this->context->controller->errors[] = $this->trans("Party ID is not valid.", [], "Modules.Vgpostnord.Admin");
+                }
+            } catch (Exception | ExceptionInterface $e) {
+                $this->logger->error("Could not validate Party ID against the API", ["exception" => $e->getMessage()]);
+            }
         }
 
         // address config into json

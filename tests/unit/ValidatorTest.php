@@ -29,6 +29,24 @@ class ValidatorTest extends TestCase
         }
     }
 
+    public function testPartyIdIsValidWithValid8CharacterInputs()
+    {
+        // Old 8-character customer numbers have no local validation rules
+        // (no leading-zero requirement, no Luhn check); any numeric 8-digit
+        // string is accepted and verified against the PostNord API instead.
+        $inputs = [
+            "00000000",
+            "12345678",
+            "87654321",
+            "18675309",
+            "10000000",
+        ];
+
+        foreach ($inputs as $value) {
+            $this->assertTrue(VgPostnordPartyIdValidator::partyIdIsValid($value));
+        }
+    }
+
     public function testPartyIdIsValidWithInvalidChecksums()
     {
         $inputs = [
@@ -51,7 +69,6 @@ class ValidatorTest extends TestCase
             "09481110474569577",
             "0347971946948596584",
             "015111586",
-            "09481110",
             "0347971",
         ];
 

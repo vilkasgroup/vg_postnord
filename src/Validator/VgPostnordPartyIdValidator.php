@@ -7,8 +7,12 @@ namespace Vilkas\Postnord\Validator;
 class VgPostnordPartyIdValidator
 {
     /**
-     * Checks that a given Party ID is valid (according to the Luhn algorithm
-     * and other restrictions given by PostNord)
+     * Checks that a given Party ID (customer number) is valid.
+     *
+     * New 10-character numbers are validated locally (leading zero and the
+     * Luhn check digit). Older 8-character numbers are still in use and are
+     * only checked for being numeric here; their actual validity is verified
+     * against the PostNord API.
      *
      * @param string $party_id
      * @return bool
@@ -18,9 +22,15 @@ class VgPostnordPartyIdValidator
         if (!is_numeric($party_id)) {
             return false;
         }
-        if (strlen($party_id) !== 10) {
+
+        $length = strlen($party_id);
+        if (8 === $length) {
+            return true;
+        }
+        if (10 !== $length) {
             return false;
         }
+
         $first_number = substr($party_id, 0, 1);
         if ((int) $first_number !== 0) {
             return false;
