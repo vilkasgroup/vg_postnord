@@ -1,6 +1,17 @@
 NEXT VERSION
 ========
 
+20261001 v1.1.6
+========
+* Quick-tested against PrestaShop 9.2.0 and its new ps_onepagecheckout module; pickup point
+  selector works on the new checkout layout (not yet end-to-end tested with a live PostNord
+  test account)
+* Fix pickup point postcode prefill relying on a 'cart' hook parameter that PrestaShop core
+  no longer passes to displayCarrierExtraContent
+* Fix carrier-change detection in the pickup point selector not matching the Hummingbird theme's
+  (and ps_onepagecheckout's) carrier markup
+* Re-trigger the pickup point search after ps_onepagecheckout refreshes the carrier list via ajax
+
 20260617 v1.1.5
 ========
 * Add validator support for 8-character Party IDs 

@@ -32,7 +32,7 @@ class Vg_postnord extends CarrierModule
     {
         $this->name = self::MODULE_NAME;
         $this->tab = 'shipping_logistics';
-        $this->version = '1.1.5';
+        $this->version = '1.1.6';
         $this->author = 'Vilkas Group Oy';
         $this->need_instance = 0;
 
@@ -1063,7 +1063,10 @@ class Vg_postnord extends CarrierModule
         }
 
         // prefill with the zipcode user has already given
-        $id_address = $params['cart']->id_address_delivery;
+        // note: core only passes 'carrier' to this hook (see DeliveryOptionsFinder /
+        // DeliveryOptionsProvider), never 'cart', so we have to use the context cart instead
+        $cart = $params['cart'] ?? $this->context->cart;
+        $id_address = $cart->id_address_delivery;
         $address = new Address($id_address);
         $this->context->smarty->assign('vg_postnord_carrier_id', intval($params['carrier']['id']));
         $this->context->smarty->assign('vg_postnord_carrier_reference', intval($params['carrier']['id_reference']));
