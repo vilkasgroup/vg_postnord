@@ -174,7 +174,9 @@ $(document).ready(function () {
 
     // when carrier changes if we have our search then click it to prefill if
     // there are no results yet
-    $('body').on('change', '.delivery-option input[type=radio]', function (e) {
+    // .delivery-option is the old (PS 1.6/1.7/8 "classic" theme) markup, .js-delivery-option
+    // is the current default (Hummingbird) theme markup, also used by ps_onepagecheckout
+    $('body').on('change', '.delivery-option input[type=radio], .js-delivery-option input[type=radio]', function (e) {
         // Enable continue button in case it's disabled by failed postnord
         $('button[name="confirmDeliveryOption"]').attr("disabled", false)
         // the radio value is actually id_carrier
@@ -194,6 +196,19 @@ $(document).ready(function () {
             }
         });
     }
+
+    // ps_onepagecheckout (PrestaShop 9.2+) reloads the carrier list via its own ajax
+    // controllers instead of a full page reload, so the radio "change" listener above never
+    // runs for the initial render of a refreshed carrier list. Tag along on its ajax responses
+    // the same way we do for "thecheckout" above.
+    $(document).ajaxComplete(function (event, xhr, settings) {
+        if (xhr.responseJSON && xhr.responseJSON.delivery_options) {
+            setTimeout(function () {
+                console.debug('shipping updated by ps_onepagecheckout, triggering postnord pickuplocation search if required');
+                $(".vg_postnord_pickupselection_container:visible button.vg_postnord_searchbutton").click();
+            }, 50)
+        }
+    });
 
     /**
      * Render one pickup point as html. data from pickupoint api
